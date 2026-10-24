@@ -8,6 +8,8 @@ license = { text = "Apache-2.0" }
 
 dependencies = [
     "strands-agents==1.54.0",
+    # Strands OpenAIModel, used by the mubit provider.
+    "openai==2.54.0",
     "fastapi==0.141.1",
     "uvicorn==0.52.4",
     "pydantic==2.13.5",

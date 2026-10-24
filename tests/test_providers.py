@@ -38,3 +38,22 @@ def test_bedrock_request_has_no_temperature():
     request = model.format_request(MESSAGES)
 
     assert "temperature" not in request["inferenceConfig"]
+
+
+def test_mubit_request_targets_configured_model_through_gateway(monkeypatch):
+    monkeypatch.setenv("MUBIT_API_KEY", "test-key-not-real")
+    model = resolve_model(_settings("mubit"))
+
+    request = model.format_request(MESSAGES)
+
+    assert request["model"] == "gemini-3.8-flash"
+    assert "temperature" not in request
+    assert model.client_args["base_url"] == "https://api.mubit.ai/gemini/v1beta/openai"
+
+
+def test_mubit_without_key_is_unavailable(monkeypatch):
+    from app.agent.providers import ModelProviderUnavailable
+
+    monkeypatch.delenv("MUBIT_API_KEY", raising=False)
+    with pytest.raises(ModelProviderUnavailable):
+        resolve_model(_settings("mubit"))

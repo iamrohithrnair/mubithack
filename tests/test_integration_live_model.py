@@ -13,6 +13,11 @@ or, with an Anthropic API key:
     ONEDECISION_MODEL_PROVIDER=anthropic ANTHROPIC_API_KEY=... \
         pytest -m integration tests/test_integration_live_model.py
 
+or, through the Mubit gateway:
+
+    ONEDECISION_MODEL_PROVIDER=mubit MUBIT_API_KEY=... \
+        pytest -m integration tests/test_integration_live_model.py
+
 It asserts the same contract the offline provider satisfies: a real Strands
 agent, real tool calls, typed structured output. If a hosted model returns a
 weaker report than the offline provider, that is a finding, not a flake — the
@@ -28,7 +33,7 @@ import pytest
 
 pytestmark = pytest.mark.integration
 
-LIVE_PROVIDERS = {"bedrock", "anthropic"}
+LIVE_PROVIDERS = {"bedrock", "anthropic", "mubit"}
 
 # Read at import, before any fixture runs. The autouse temp_db fixture in
 # conftest.py forces the offline provider for every test, so reading the variable
@@ -42,7 +47,7 @@ def live_settings(monkeypatch):
     provider = REQUESTED_PROVIDER
     if provider not in LIVE_PROVIDERS:
         pytest.skip(
-            "set ONEDECISION_MODEL_PROVIDER=bedrock|anthropic to run the live integration test"
+            "set ONEDECISION_MODEL_PROVIDER=bedrock|anthropic|mubit to run the live integration test"
         )
     from app import config
 

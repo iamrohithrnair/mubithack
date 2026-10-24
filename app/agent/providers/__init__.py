@@ -6,6 +6,7 @@ The rest of the application never imports a model class directly. It asks for
   scripted  - deterministic, offline, no credentials. Tests, CI, offline demo.
   bedrock   - Amazon Bedrock (Strands `BedrockModel`).
   anthropic - Anthropic API (Strands `AnthropicModel`).
+  mubit     - Mubit gateway, OpenAI-compatible (Strands `OpenAIModel`).
 
 Every provider drives the *same* Strands `Agent`, the same tools, and the same
 typed structured outputs. Swapping providers changes who does the reasoning, not
@@ -15,6 +16,7 @@ activation gate sit downstream of all of them.
 
 from __future__ import annotations
 
+import os
 from typing import Any
 
 from strands.models.model import Model
@@ -26,7 +28,7 @@ class ModelProviderUnavailable(RuntimeError):
     """Raised when the configured provider cannot be constructed."""
 
 
-SUPPORTED_PROVIDERS = ("scripted", "bedrock", "anthropic")
+SUPPORTED_PROVIDERS = ("scripted", "bedrock", "anthropic", "mubit")
 
 
 def resolve_model(settings: Settings | None = None, **overrides: Any) -> Model:
@@ -76,6 +78,25 @@ def resolve_model(settings: Settings | None = None, **overrides: Any) -> Model:
             **overrides,
         )
 
+    if provider == "mubit":
+        try:
+            from strands.models.openai import OpenAIModel
+        except ImportError as exc:  # pragma: no cover - dependency is pinned
+            raise ModelProviderUnavailable(f"OpenAIModel unavailable: {exc}") from exc
+        api_key = os.environ.get("MUBIT_API_KEY", "").strip()
+        if not api_key:
+            raise ModelProviderUnavailable("the mubit provider requires MUBIT_API_KEY")
+        # The key is read at construction and handed to the client; it is never
+        # stored on Settings or logged.
+        return OpenAIModel(
+            client_args=overrides.pop(
+                "client_args", {"base_url": cfg.mubit_base_url, "api_key": api_key}
+            ),
+            model_id=overrides.pop("model_id", cfg.mubit_model_id),
+            params=overrides.pop("params", None),
+            **overrides,
+        )
+
     raise ModelProviderUnavailable(
         f"unknown provider '{provider}'; supported: {', '.join(SUPPORTED_PROVIDERS)}"
     )
@@ -90,5 +111,7 @@ def provider_label(settings: Settings | None = None) -> str:
             return f"bedrock · {cfg.bedrock_model_id}"
         case "anthropic":
             return f"anthropic · {cfg.anthropic_model_id}"
+        case "mubit":
+            return f"mubit · {cfg.mubit_model_id}"
         case other:
             return other

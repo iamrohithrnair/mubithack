@@ -97,6 +97,8 @@ class Settings:
     model_provider: str
     bedrock_model_id: str
     anthropic_model_id: str
+    mubit_model_id: str
+    mubit_base_url: str
     aws_region: str
     database_url: str
     db_path: Path
@@ -154,6 +156,14 @@ def load_settings() -> Settings:
         anthropic_model_id=os.environ.get(
             # Current model IDs carry no date suffix.
             "ONEDECISION_ANTHROPIC_MODEL_ID", "claude-opus-5"
+        ),
+        # Mubit is an LLM gateway. Its /gemini/ route mirrors Google's own paths,
+        # including Google's OpenAI-compatible endpoint, so the OpenAI client
+        # reaches Gemini through it. The Gemini provider key lives in the Mubit
+        # console, not here; only the Mubit key (MUBIT_API_KEY) is sent.
+        mubit_model_id=os.environ.get("ONEDECISION_MUBIT_MODEL_ID", "gemini-3.8-flash"),
+        mubit_base_url=os.environ.get(
+            "ONEDECISION_MUBIT_BASE_URL", "https://api.mubit.ai/gemini/v1beta/openai"
         ),
         aws_region=os.environ.get("AWS_REGION", "us-west-2"),
         database_url=resolve_database_url(),
