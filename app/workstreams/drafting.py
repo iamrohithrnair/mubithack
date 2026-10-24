@@ -69,6 +69,7 @@ def draft_conditions(
     amount = contract.amount_field
     conditions: list[dict[str, Any]] = []
     cap: float | None = None
+    unknown: list[str] = []
 
     for spec in contract.fields:
         name, seen = spec.name, values.get(spec.name)
@@ -77,12 +78,14 @@ def draft_conditions(
                 cap = float(amount.ceiling)  # type: ignore[arg-type]
                 conditions.append({"field": name, "operator": "lte", "value": _number(cap)})
             continue
+        if seen is None and not (spec.kind in ("amount", "count") and name in up_to):
+            # Dropping it silently would widen the precedent to every value of
+            # a field the person never saw. They have to say it doesn't matter.
+            unknown.append(name)
+            continue
         if spec.kind in ("flag", "category"):
-            if seen is not None:
-                conditions.append({"field": name, "operator": "eq", "value": seen})
+            conditions.append({"field": name, "operator": "eq", "value": seen})
         elif spec.kind == "amount":
-            if seen is None and name not in up_to:
-                continue
             bound = max(float(seen or 0.0), float(up_to.get(name, 0.0)))
             conditions.append({"field": name, "operator": "lte", "value": _number(round(bound, 2))})
             if amount is not None and name == amount.name:
@@ -94,6 +97,13 @@ def draft_conditions(
             elif seen is not None:
                 conditions.append({"field": name, "operator": "eq", "value": int(seen)})
 
+    if unknown:
+        one = len(unknown) == 1
+        raise DraftError(
+            f"{', '.join(unknown)} {'is' if one else 'are'} unknown on this case, so the precedent "
+            f"could not say what {'it covers' if one else 'they cover'}: list {'it' if one else 'them'} "
+            "in ignore if it doesn't matter, or answer a case that states it"
+        )
     if not conditions:
         raise DraftError("nothing left to match: a precedent needs at least one field")
     if amount is not None:

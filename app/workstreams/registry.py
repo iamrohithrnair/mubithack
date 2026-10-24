@@ -165,3 +165,18 @@ def unregister(family: str) -> None:
     with _lock:
         domains.unregister(family)
         engines._ENGINES.pop(family, None)
+
+
+def forget_planted() -> list[str]:
+    """Forget every planted workstream in this process, e.g. after a reset wiped
+    the tables. Built-in domains and engines stay. Returns the ids forgotten."""
+    from app.workstreams.contract import BUILT_IN_IDS
+
+    with _lock:
+        planted = sorted(
+            {f for f, e in engines._ENGINES.items() if isinstance(e, PlantedEngine)}
+            | (set(domains.families()) - BUILT_IN_IDS)
+        )
+        for family in planted:
+            unregister(family)
+        return planted

@@ -111,8 +111,16 @@ class PlantedEngine:
         contract, case_ref = self.contract, request.case_ref
         text = (request.text or "").strip() or None
 
+        stored = cases.load(conn, self.family, case_ref)
+        if stored is not None and stored.source == cases.SOURCE_HISTORY:
+            # A template's past answer is ground truth for replay; a new case
+            # under its reference must neither rewrite it nor inherit its answer.
+            return Assessment.ask(
+                f"{case_ref} is one of this workstream's past answers; send a new "
+                f"{contract.subject} under a case_ref of its own"
+            )
+
         if request.facts is None and text is None:
-            stored = cases.load(conn, self.family, case_ref)
             if stored is None:
                 return Assessment.ask(
                     f"no facts or text for {contract.subject} {case_ref}: send them with the case"

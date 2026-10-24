@@ -64,6 +64,22 @@ def decide(body: DecideBody, caller: str = Depends(caller_label)) -> dict[str, A
         raise HTTPException(status_code=404, detail=str(exc.args[0])) from None
     except service.IdempotencyConflict as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from None
+    except Exception as exc:
+        # The receipt could not be written because another writer held the
+        # database. Nothing was decided; the same idempotency key is safe to retry.
+        if _database_busy(exc):
+            raise HTTPException(
+                status_code=503,
+                detail="the database is busy with another decision; retry with the same idempotency key",
+                headers={"Retry-After": "2"},
+            ) from None
+        raise
+
+
+def _database_busy(exc: Exception) -> bool:
+    import sqlite3
+
+    return isinstance(exc, sqlite3.OperationalError) or type(exc).__name__ == "OperationalError"
 
 
 @router.get("/decisions")

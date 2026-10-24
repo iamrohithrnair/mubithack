@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import json
 import math
+import re
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import TYPE_CHECKING, Any
@@ -27,9 +28,12 @@ SOURCE_READER = "reader"
 SOURCE_BOTH = "caller+reader"
 SOURCE_HISTORY = "history"
 SOURCE_UNCONFIRMED = "unconfirmed"
+SOURCE_ANSWER = "answer"  # a past answer's own snapshot, as replay reads it
 
 _TRUE = {"true", "yes", "y", "1"}
 _FALSE = {"false", "no", "n", "0"}
+_PLAIN_NUMBER = re.compile(r"^\d+(\.\d+)?$")
+_GROUPED_NUMBER = re.compile(r"^\$?\d{1,3}(,\d{3})*(\.\d+)?$")
 
 
 @dataclass(frozen=True)
@@ -85,10 +89,13 @@ def coerce(spec: "FieldSpec", value: Any) -> Any:
         if isinstance(value, (int, float)):
             number = float(value)
         elif isinstance(value, str):
-            try:
-                number = float(value.strip().replace(",", "").lstrip("$"))
-            except ValueError:
-                raise ValueError(f"{name} must be a number, got {value!r}") from None
+            # Only unambiguous text: "1000.50", "$62.40", "1,000.50". "1.000,50"
+            # (a decimal comma) must never quietly become 1.00 and slip under a
+            # ceiling, so anything else is not a number and the case asks.
+            cleaned = value.strip()
+            if not (_PLAIN_NUMBER.match(cleaned) or _GROUPED_NUMBER.match(cleaned)):
+                raise ValueError(f"{name} must be a number, got {value!r}")
+            number = float(cleaned.lstrip("$").replace(",", ""))
         else:
             raise ValueError(f"{name} must be a number, got {value!r}")
         if not math.isfinite(number) or number < 0:
@@ -132,6 +139,17 @@ def normalize(
 def full_view(contract: "WorkstreamContract", values: dict[str, Any]) -> dict[str, Any]:
     """Every contract field, in contract order, with None for the unknown ones."""
     return {spec.name: values.get(spec.name) for spec in contract.fields}
+
+
+def known(values: dict[str, Any]) -> dict[str, Any]:
+    """Only the known values, so two snapshots compare by what they state."""
+    return {k: v for k, v in sorted(values.items()) if v is not None}
+
+
+def snapshot(contract: "WorkstreamContract", raw: dict[str, Any] | None) -> dict[str, Any]:
+    """A stored snapshot (a decision's or an answer's facts), normalized."""
+    values, _, _ = normalize(contract, raw or {})
+    return known(values)
 
 
 def same(spec: "FieldSpec", a: Any, b: Any) -> bool:

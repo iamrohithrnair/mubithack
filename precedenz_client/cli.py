@@ -7,13 +7,16 @@
     precedenz watch
 
 Environment: PRECEDENZ_URL (default http://127.0.0.1:8000), PRECEDENZ_API_TOKEN,
-PRECEDENZ_APPROVAL_TOKEN. Unset tokens fall back to the server's shipped local
-demo tokens, and the CLI says so on stderr: they are placeholders, not secrets.
+PRECEDENZ_APPROVAL_TOKEN. An unset API token falls back to the server's shipped
+local demo token, and the CLI says so on stderr. The approval token never falls
+back: answer, overrule and plant are a person's decisions, so they need
+PRECEDENZ_APPROVAL_TOKEN set, or a person typing it at an interactive prompt.
 """
 
 from __future__ import annotations
 
 import argparse
+import getpass
 import json
 import os
 import shutil
@@ -433,6 +436,34 @@ def _token(name: str, demo: str, note: Callable[[str], None]) -> str:
     return demo
 
 
+class ApprovalRequired(Exception):
+    """A person-only command ran without a person's approval token."""
+
+
+def _approval_token() -> str:
+    """The approval token, from the environment or typed by a person. Never a default.
+
+    Answering, overruling and planting are a person's decisions. Falling back to
+    the shipped demo token would let anything with a shell (an AI agent
+    included) make them, so the token must be set explicitly, or typed at an
+    interactive prompt.
+    """
+    value = os.environ.get("PRECEDENZ_APPROVAL_TOKEN", "").strip()
+    if value:
+        return value
+    if hasattr(sys.stdin, "isatty") and sys.stdin.isatty():
+        try:
+            typed = getpass.getpass("precedenz: approval token (only a person answers): ").strip()
+        except (EOFError, KeyboardInterrupt):
+            typed = ""
+        if typed:
+            return typed
+    raise ApprovalRequired(
+        "answer, overrule and plant are a person's decisions: set PRECEDENZ_APPROVAL_TOKEN, "
+        "or run the command in a terminal and type the approval token"
+    )
+
+
 def make_client(args: argparse.Namespace) -> Precedenz:
     """The client for this invocation, from flags and the environment."""
     err = Paint(_color_enabled(sys.stderr))
@@ -445,7 +476,7 @@ def make_client(args: argparse.Namespace) -> Precedenz:
     api_token = _token("PRECEDENZ_API_TOKEN", DEMO_API_TOKEN, (lambda m: None) if quiet else note)
     approval = None
     if args.command in PERSON_COMMANDS:
-        approval = _token("PRECEDENZ_APPROVAL_TOKEN", DEMO_APPROVAL_TOKEN, note)
+        approval = _approval_token()
     return Precedenz(url, api_token=api_token, approval_token=approval, caller=args.caller)
 
 
@@ -561,7 +592,11 @@ def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     paint = Paint()
     err = Paint(_color_enabled(sys.stderr))
-    client = make_client(args)
+    try:
+        client = make_client(args)
+    except ApprovalRequired as exc:
+        print(err("bad", f"precedenz: {exc}"), file=sys.stderr)
+        return 2
     try:
         return run(args, client, paint)
     except PrecedenzError as exc:

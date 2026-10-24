@@ -270,7 +270,8 @@ def plant(
                 cases.save(conn, parsed.id, case_ref, facts=values, text=text, source=cases.SOURCE_HISTORY)
                 conn.execute(
                     """INSERT INTO harness_answers (answer_id, decision_id, answer, remembered,
-                           precedent_id, actor, note, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+                           precedent_id, actor, note, created_at, facts)
+                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                     (
                         f"ans_{uuid.uuid4().hex[:12]}",
                         domain.history_decision_id(parsed.id, case_ref),
@@ -280,6 +281,7 @@ def plant(
                         HISTORY_ACTOR,
                         note,
                         _now(),
+                        json.dumps(cases.known(values), sort_keys=True),
                     ),
                 )
         stored = conn.execute("SELECT * FROM workstreams WHERE id = ?", (parsed.id,)).fetchone()
@@ -374,6 +376,18 @@ def answer(
                 f"decision '{decision_id}' followed a precedent; overrule the precedent instead"
             )
         family, case_ref = decision["workstream"], decision["case_ref"]
+        later = conn.execute(
+            """SELECT decision_id FROM harness_decisions
+                WHERE workstream = ? AND case_ref = ? AND decision_id <> ?
+                  AND (created_at > ? OR resolves = ?)
+                ORDER BY created_at DESC, decision_id DESC LIMIT 1""",
+            (family, case_ref, decision_id, decision["created_at"], decision_id),
+        ).fetchone()
+        if later is not None:
+            raise Conflict(
+                f"decision '{decision_id}' is superseded: {case_ref} was decided again later "
+                f"({later['decision_id']}); answer that decision instead"
+            )
         found = _stored_contract(conn, family)
         if found is not None:
             contract = found[0]
@@ -405,10 +419,16 @@ def answer(
 
         trace_id = decision["trace_id"] or _trace_id()
         answer_id = f"ans_{uuid.uuid4().hex[:12]}"
+        # The answer keeps the facts of the decision it answers: what the person
+        # saw is what replay will hold any later precedent to.
+        seen = json.loads(decision.get("facts") or "{}")
+        if contract is not None:
+            seen = cases.snapshot(contract, seen)
         conn.execute(
             """INSERT INTO harness_answers (answer_id, decision_id, answer, remembered,
-                   precedent_id, actor, note, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
-            (answer_id, decision_id, answer, False, None, actor, note, _now()),
+                   precedent_id, actor, note, created_at, facts) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            (answer_id, decision_id, answer, False, None, actor, note, _now(),
+             json.dumps(seen, sort_keys=True, default=str)),
         )
         if remember and contract is not None:
             precedent, replay = _remember(
@@ -497,10 +517,20 @@ def _remember(
     trace_id: str,
 ) -> tuple[policy_store.PolicyRecord, dict[str, Any]]:
     case_ref = decision["case_ref"]
-    try:
-        facts = cases.facts_for(conn, contract, case_ref)
-    except LookupError as exc:
-        raise Conflict(f"{exc}; it cannot become a precedent") from exc
+    # Draft from the decision being answered, never from whatever arrived last
+    # under this case_ref; and refuse if the case on file no longer says the same.
+    seen = cases.snapshot(contract, json.loads(decision.get("facts") or "{}"))
+    stored = cases.load(conn, contract.id, case_ref)
+    if stored is None:
+        raise Conflict(f"no facts on file for {contract.subject} {case_ref}; it cannot become a precedent")
+    if cases.snapshot(contract, stored.facts) != seen:
+        raise Conflict(
+            f"{case_ref} changed after decision '{decision['decision_id']}' was made; "
+            "send the case again and answer its new decision"
+        )
+    facts = cases.PlantedFacts(
+        case_id=case_ref, values=cases.full_view(contract, seen), text=stored.text, source=stored.source
+    )
     _, hard = domain.guard_checks(contract, facts)
     if hard:
         raise Conflict("this case cannot become a precedent: " + "; ".join(hard), hard)
