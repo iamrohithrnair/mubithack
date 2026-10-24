@@ -45,7 +45,7 @@ PRECEDENZ_DB_PATH=var/demo.db make run                                  # open h
 .venv/bin/precedenz plant expenses.meal_claim                           # a new workstream, live
 .venv/bin/python scripts/demo_traffic.py --workstream expenses.meal_claim --count 6
 .venv/bin/precedenz open                                                # what waits for a person
-.venv/bin/precedenz answer <decision_id> approve --remember --up-to amount_usd=75 --ignore client_meeting --ignore attendees
+.venv/bin/precedenz answer <decision_id> approve --remember --up-to amount_usd=75 --ignore client_meeting --ignore attendees  # asks for the approval token
 .venv/bin/precedenz watch                                               # the live event tail
 ```
 

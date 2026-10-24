@@ -117,8 +117,10 @@ precedenz watch                                                   # live, colore
 ```
 
 Global flags go before the command: `--url`, `--caller` (default `cli`), and `--json` to print
-raw JSON instead of a card. If a token is unset, the CLI uses the local demo token and says so on
-stderr. To send demo traffic, run `python scripts/demo_traffic.py --workstream expenses.meal_claim --count 8 --pace 1.5`.
+raw JSON instead of a card. If the API token is unset, the CLI uses the local demo API token and
+says so on stderr. The person-only commands (`answer`, `overrule`, `plant`) never fall back: they
+need `PRECEDENZ_APPROVAL_TOKEN` set, or they ask for it when run in a terminal, so an agent with a
+shell cannot answer for you. To send demo traffic, run `python scripts/demo_traffic.py --workstream expenses.meal_claim --count 8 --pace 1.5`.
 It sends one case at a time, and `--max-model-calls N` keeps a live run within budget.
 
 ## 4. MCP, for AI agents
