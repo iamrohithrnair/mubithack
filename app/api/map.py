@@ -108,7 +108,12 @@ async def map_events(
     request: Request,
     since: int | None = Query(default=None, description="Send events after this seq"),
     last_event_id: str | None = Header(default=None),
+    # EventSource cannot set a header on its first connect, so the map sends the
+    # snapshot's last_seq as a query parameter; a reconnect's header still wins.
+    last_event_id_query: int | None = Query(default=None, alias="last_event_id"),
 ) -> StreamingResponse:
+    if since is None:
+        since = last_event_id_query
     return StreamingResponse(
         event_stream(start_seq(last_event_id, since), is_disconnected=request.is_disconnected),
         media_type="text/event-stream",
