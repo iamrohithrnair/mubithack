@@ -1,0 +1,480 @@
+{
+  "_notice": "Synthetic data for the Precedenz demo. Every person, company, amount and message here is invented (example.* domains); any resemblance to a real person or organization is coincidental.",
+  "demo": {
+    "answer_case": "EXP-1031",
+    "answer": "approve",
+    "remember": true,
+    "up_to": {
+      "amount_usd": 75
+    },
+    "ignore": [
+      "client_meeting",
+      "attendees"
+    ],
+    "expected_precedent": "Approve meal claims up to $75.00 when a receipt is attached and it is not alcohol only.",
+    "contradiction_example": "up_to amount_usd 100 is refused: EXP-0907 ($95.40) was declined"
+  },
+  "contract": {
+    "id": "expenses.meal_claim",
+    "label": "Meal expense claims",
+    "subject": "meal claim",
+    "question": "Should this meal claim be approved?",
+    "owner": "Finance operations",
+    "audience": "team",
+    "fields": [
+      {
+        "name": "amount_usd",
+        "kind": "amount",
+        "label": "Amount (USD)",
+        "ceiling": 200
+      },
+      {
+        "name": "receipt_attached",
+        "kind": "flag",
+        "label": "Receipt attached",
+        "when_true": "a receipt is attached",
+        "when_false": "no receipt is attached"
+      },
+      {
+        "name": "alcohol_only",
+        "kind": "flag",
+        "label": "Alcohol only",
+        "when_true": "it is alcohol only",
+        "when_false": "it is not alcohol only"
+      },
+      {
+        "name": "client_meeting",
+        "kind": "flag",
+        "label": "Client meeting",
+        "when_true": "it was a client meeting",
+        "when_false": "it was not a client meeting"
+      },
+      {
+        "name": "attendees",
+        "kind": "count",
+        "label": "Attendees",
+        "ceiling": 12
+      }
+    ],
+    "repeatable_answer": "approve",
+    "other_answers": [
+      "decline",
+      "ask_for_receipt"
+    ],
+    "always_ask": [
+      {
+        "field": "amount_usd",
+        "operator": "gt",
+        "value": 150
+      },
+      {
+        "field": "alcohol_only",
+        "operator": "eq",
+        "value": true
+      }
+    ],
+    "reader": false,
+    "evidence": "text",
+    "version": 1
+  },
+  "history": [
+    {
+      "case_ref": "EXP-0901",
+      "facts": {
+        "amount_usd": 42.8,
+        "receipt_attached": true,
+        "alcohol_only": false,
+        "client_meeting": true,
+        "attendees": 2
+      },
+      "text": "Lunch with the Northwind Traders buyer to go over the spring order. Receipt attached. $42.80 for 2 people.",
+      "answer": "approve",
+      "note": "client lunch with a receipt"
+    },
+    {
+      "case_ref": "EXP-0902",
+      "facts": {
+        "amount_usd": 68.5,
+        "receipt_attached": true,
+        "alcohol_only": false,
+        "client_meeting": false,
+        "attendees": 4
+      },
+      "text": "Team lunch after the quarterly planning session, 4 people. Receipt attached. Total $68.50, food and soft drinks.",
+      "answer": "approve",
+      "note": "team lunch with a receipt"
+    },
+    {
+      "case_ref": "EXP-0903",
+      "facts": {
+        "amount_usd": 23.1,
+        "receipt_attached": true,
+        "alcohol_only": false,
+        "client_meeting": false,
+        "attendees": 1
+      },
+      "text": "Working dinner on my own while travelling to the Leeds site. Receipt attached. $23.10.",
+      "answer": "approve",
+      "note": "travel dinner with a receipt"
+    },
+    {
+      "case_ref": "EXP-0904",
+      "facts": {
+        "amount_usd": 77.9,
+        "receipt_attached": true,
+        "alcohol_only": false,
+        "client_meeting": true,
+        "attendees": 3
+      },
+      "text": "Dinner with two people from Contoso after the site visit. Receipt attached. $77.90 for 3, mains and water.",
+      "answer": "approve",
+      "note": "client dinner just under 80 with a receipt"
+    },
+    {
+      "case_ref": "EXP-0905",
+      "facts": {
+        "amount_usd": 55.0,
+        "receipt_attached": false,
+        "alcohol_only": false,
+        "client_meeting": true,
+        "attendees": 2
+      },
+      "text": "Lunch with a lead engineer from Fabrikam, $55.00 for 2. I lost the receipt; I can send the card statement.",
+      "answer": "ask_for_receipt",
+      "note": "no receipt"
+    },
+    {
+      "case_ref": "EXP-0906",
+      "facts": {
+        "amount_usd": 36.0,
+        "receipt_attached": true,
+        "alcohol_only": true,
+        "client_meeting": false,
+        "attendees": 3
+      },
+      "text": "Drinks at the pub after the release, 3 of us. Receipt attached. $36.00, drinks only, no food.",
+      "answer": "decline",
+      "note": "drinks only"
+    },
+    {
+      "case_ref": "EXP-0907",
+      "facts": {
+        "amount_usd": 95.4,
+        "receipt_attached": true,
+        "alcohol_only": false,
+        "client_meeting": false,
+        "attendees": 5
+      },
+      "text": "Team dinner for 5 to celebrate the launch. Receipt attached. $95.40, food and soft drinks.",
+      "answer": "decline",
+      "note": "over the usual limit for a team meal"
+    },
+    {
+      "case_ref": "EXP-0908",
+      "facts": {
+        "amount_usd": 142.0,
+        "receipt_attached": true,
+        "alcohol_only": false,
+        "client_meeting": true,
+        "attendees": 6
+      },
+      "text": "Client dinner with the Tailspin Toys team, 6 people. Receipt attached. $142.00, food only.",
+      "answer": "decline",
+      "note": "client dinner far over the limit"
+    },
+    {
+      "case_ref": "EXP-0909",
+      "facts": {
+        "amount_usd": 61.25,
+        "receipt_attached": true,
+        "alcohol_only": false,
+        "client_meeting": true,
+        "attendees": 2
+      },
+      "text": "Lunch with a prospective partner from Litware. Receipt attached. $61.25 for 2, food and coffee.",
+      "answer": "approve",
+      "note": "client lunch with a receipt"
+    },
+    {
+      "case_ref": "EXP-0910",
+      "facts": {
+        "amount_usd": 18.4,
+        "receipt_attached": true,
+        "alcohol_only": false,
+        "client_meeting": false,
+        "attendees": 1
+      },
+      "text": "Breakfast before the early workshop, just me. Receipt attached. $18.40.",
+      "answer": "approve",
+      "note": "breakfast with a receipt"
+    },
+    {
+      "case_ref": "EXP-0911",
+      "facts": {
+        "amount_usd": 47.0,
+        "receipt_attached": false,
+        "alcohol_only": false,
+        "client_meeting": false,
+        "attendees": 3
+      },
+      "text": "Sandwiches for the 3 people on call over the weekend, $47.00. Receipt not attached yet.",
+      "answer": "ask_for_receipt",
+      "note": "no receipt"
+    },
+    {
+      "case_ref": "EXP-0912",
+      "facts": {
+        "amount_usd": 180.0,
+        "receipt_attached": true,
+        "alcohol_only": false,
+        "client_meeting": true,
+        "attendees": 8
+      },
+      "text": "Dinner for 8 with the Adventure Works board. Receipt attached. $180.00, food only.",
+      "answer": "decline",
+      "note": "board dinner far over the limit"
+    }
+  ],
+  "incoming": [
+    {
+      "case_ref": "EXP-1031",
+      "facts": {
+        "amount_usd": 48.6,
+        "receipt_attached": true,
+        "alcohol_only": false,
+        "client_meeting": true,
+        "attendees": 2
+      },
+      "text": "Lunch with the Northwind Traders buyer to review the Q4 order. Receipt attached. $48.60 for 2, food and coffee.",
+      "demo_note": "matches: answer this one first (approve, up to $75)"
+    },
+    {
+      "case_ref": "EXP-1032",
+      "facts": {
+        "amount_usd": 62.4,
+        "receipt_attached": true,
+        "alcohol_only": false,
+        "client_meeting": true,
+        "attendees": 3
+      },
+      "text": "Lunch with the Northwind Traders buyer and her colleague. Receipt attached. $62.40 for 3, food only.",
+      "demo_note": "matches"
+    },
+    {
+      "case_ref": "EXP-1033",
+      "facts": {
+        "amount_usd": 31.75,
+        "receipt_attached": true,
+        "alcohol_only": false,
+        "client_meeting": false,
+        "attendees": 1
+      },
+      "text": "Dinner on the road after the Bristol install, just me. Receipt attached. $31.75.",
+      "demo_note": "matches"
+    },
+    {
+      "case_ref": "EXP-1034",
+      "facts": {
+        "amount_usd": 54.0,
+        "receipt_attached": true,
+        "alcohol_only": true,
+        "client_meeting": false,
+        "attendees": 4
+      },
+      "text": "Drinks for the support team after the incident review, 4 people. Receipt attached. $54.00, drinks only, no food.",
+      "demo_note": "alcohol only: always asks"
+    },
+    {
+      "case_ref": "EXP-1035",
+      "facts": {
+        "amount_usd": 140.0,
+        "receipt_attached": true,
+        "alcohol_only": false,
+        "client_meeting": true,
+        "attendees": 5
+      },
+      "text": "Client dinner with Tailspin Toys, 5 people. Receipt attached. $140.00, food and soft drinks.",
+      "demo_note": "above the precedent's $75: asks"
+    },
+    {
+      "case_ref": "EXP-1036",
+      "facts": {
+        "amount_usd": 72.1,
+        "receipt_attached": true,
+        "alcohol_only": false,
+        "client_meeting": false,
+        "attendees": 6
+      },
+      "text": "Team lunch for the six new starters on their first day. Receipt attached. $72.10, food only.",
+      "demo_note": "matches"
+    },
+    {
+      "case_ref": "EXP-1037",
+      "facts": {
+        "amount_usd": 39.9,
+        "receipt_attached": false,
+        "alcohol_only": false,
+        "client_meeting": true,
+        "attendees": 2
+      },
+      "text": "Lunch with an engineer from Fabrikam, $39.90 for 2. No receipt: the restaurant's card machine was down.",
+      "demo_note": "no receipt: asks"
+    },
+    {
+      "case_ref": "EXP-1038",
+      "facts": {
+        "amount_usd": 25.3,
+        "receipt_attached": true,
+        "alcohol_only": false,
+        "client_meeting": false,
+        "attendees": 1
+      },
+      "text": "Working lunch at my desk during the audit. Receipt attached. $25.30.",
+      "demo_note": "matches"
+    },
+    {
+      "case_ref": "EXP-1039",
+      "facts": {
+        "amount_usd": 66.0,
+        "receipt_attached": true,
+        "alcohol_only": false,
+        "client_meeting": true,
+        "attendees": 3
+      },
+      "text": "Drinks with the Contoso team after the demo, $66.00 for 3. Card slip attached; the itemised bill will follow.",
+      "demo_note": "ambiguous note: Sapling should ask"
+    },
+    {
+      "case_ref": "EXP-1040",
+      "facts": {
+        "amount_usd": 44.2,
+        "receipt_attached": true,
+        "alcohol_only": false,
+        "client_meeting": true,
+        "attendees": 2
+      },
+      "text": "Breakfast meeting with the Litware CFO. Receipt attached. $44.20 for 2, food and coffee.",
+      "demo_note": "matches"
+    },
+    {
+      "case_ref": "EXP-1041",
+      "facts": {
+        "amount_usd": 58.75,
+        "receipt_attached": true,
+        "alcohol_only": false,
+        "client_meeting": false,
+        "attendees": 4
+      },
+      "text": "Pizza for the four people on the weekend migration. Receipt attached. $58.75, food only.",
+      "demo_note": "matches"
+    },
+    {
+      "case_ref": "EXP-1042",
+      "facts": {
+        "amount_usd": 88.3,
+        "receipt_attached": true,
+        "alcohol_only": false,
+        "client_meeting": true,
+        "attendees": 4
+      },
+      "text": "Dinner with the Wide World Importers buyers, 4 people. Receipt attached. $88.30, food only.",
+      "demo_note": "above the precedent's $75: asks"
+    },
+    {
+      "case_ref": "EXP-1043",
+      "facts": {
+        "amount_usd": 29.0,
+        "receipt_attached": true,
+        "alcohol_only": true,
+        "client_meeting": true,
+        "attendees": 2
+      },
+      "text": "Two glasses of wine with the Proseware founder after the pitch. Receipt attached. $29.00, drinks only.",
+      "demo_note": "alcohol only: always asks"
+    },
+    {
+      "case_ref": "EXP-1044",
+      "facts": {
+        "amount_usd": 70.0,
+        "receipt_attached": true,
+        "alcohol_only": false,
+        "client_meeting": true,
+        "attendees": 3
+      },
+      "text": "Lunch with two buyers from Alpine Ski House. Receipt attached. $70.00 for 3, food only.",
+      "demo_note": "matches"
+    },
+    {
+      "case_ref": "EXP-1045",
+      "facts": {
+        "amount_usd": 34.5,
+        "receipt_attached": true,
+        "alcohol_only": false,
+        "client_meeting": false,
+        "attendees": 2
+      },
+      "text": "Lunch with a new hire in their first week. Receipt attached. $34.50 for 2.",
+      "demo_note": "matches"
+    },
+    {
+      "case_ref": "EXP-1046",
+      "facts": {
+        "amount_usd": 52.8,
+        "receipt_attached": false,
+        "alcohol_only": false,
+        "client_meeting": false,
+        "attendees": 3
+      },
+      "text": "Team lunch during the offsite, 3 people, $52.80. I'll forward the receipt once the hotel emails it.",
+      "demo_note": "no receipt: asks"
+    },
+    {
+      "case_ref": "EXP-1047",
+      "facts": {
+        "amount_usd": 61.9,
+        "receipt_attached": true,
+        "alcohol_only": false,
+        "client_meeting": false,
+        "attendees": 5
+      },
+      "text": "Team social, 5 people, $61.90. Receipt attached. Mostly the bar tab, plus a few bowls of chips.",
+      "demo_note": "ambiguous note: Sapling should ask"
+    },
+    {
+      "case_ref": "EXP-1048",
+      "facts": {
+        "amount_usd": 46.0,
+        "receipt_attached": true,
+        "alcohol_only": false,
+        "client_meeting": true,
+        "attendees": 2
+      },
+      "text": "Lunch with the Woodgrove Bank account manager. Receipt attached. $46.00 for 2, food only.",
+      "demo_note": "matches"
+    },
+    {
+      "case_ref": "EXP-1049",
+      "facts": {
+        "amount_usd": 19.8,
+        "receipt_attached": true,
+        "alcohol_only": false,
+        "client_meeting": false,
+        "attendees": 1
+      },
+      "text": "Late dinner after the overnight release, just me. Receipt attached. $19.80.",
+      "demo_note": "matches"
+    },
+    {
+      "case_ref": "EXP-1050",
+      "facts": {
+        "amount_usd": 74.5,
+        "receipt_attached": true,
+        "alcohol_only": false,
+        "client_meeting": true,
+        "attendees": 6
+      },
+      "text": "Lunch for six at the Contoso quarterly review. Receipt attached. $74.50, food and soft drinks.",
+      "demo_note": "matches"
+    }
+  ]
+}
