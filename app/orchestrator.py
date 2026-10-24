@@ -7,6 +7,10 @@
 Everything that can act lives here, not in a tool. `execute_approved_policy`,
 `verify_action`, and the decision/teaching flow are ordinary Python functions
 that the model has no way to call.
+
+`assess_case` is the path up to the point of acting (investigate through the
+Banyan Sapling check) and returns follow or ask. The inbox runs it and then
+acts; the decision harness (app/harness) runs it and only reports.
 """
 
 from __future__ import annotations
@@ -45,13 +49,24 @@ from app.domain import (
     VerificationResult,
 )
 from app.facts import derive_facts, reconcile
+from app.harness import events
+from app.harness.engines import ASK, FOLLOW, Assessment, Check
+from app.harness.store import precedent_view
 from app.policy import store as policy_store
 from app.policy.diff import diff_policies
 from app.policy.engine import select_matching_policies
 from app.policy.guardrails import evaluate_guardrails
 from app.policy.proposal import proposal_to_payload, revised_payload
 from app.policy.replay import replay_candidate_policy
-from app.policy.schema import PolicyDefinition, spec_for, PolicyValidationError
+from app.policy.schema import POLICY_FAMILY, PolicyDefinition, spec_for, PolicyValidationError
+
+# The inbox handles one workstream: return cases. Its precedents are the
+# policies of this family and no other.
+RETURNS_FAMILY = POLICY_FAMILY
+
+NO_PRECEDENT_REASON = "no precedent yet: a person decides once"
+OUTSIDE_PRECEDENT_REASON = "case falls outside every approved policy for this exception family"
+SAPLING_CHECK = "Banyan Sapling: evidence supports it"
 
 
 def semantic_check(
@@ -60,7 +75,7 @@ def semantic_check(
     definition: PolicyDefinition,
     *,
     trace_id: str,
-    exception_id: str,
+    exception_id: str | None,
     policy_id: str,
 ) -> str | None:
     """Banyan Sapling's read of the raw evidence against the matched policy.
@@ -69,13 +84,41 @@ def semantic_check(
     after the engine has matched and before anything is written, so it can only
     ever stop an action, never start one. See app/sapling.py.
     """
+    return semantic_verdict(
+        conn,
+        case_id,
+        definition,
+        trace_id=trace_id,
+        exception_id=exception_id,
+        policy_id=policy_id,
+    )[0]
+
+
+def semantic_verdict(
+    conn: "Connection",
+    case_id: str,
+    definition: PolicyDefinition,
+    *,
+    trace_id: str,
+    exception_id: str | None,
+    policy_id: str,
+) -> tuple[str | None, str]:
+    """`semantic_check`, plus one line saying what Sapling said, for a receipt.
+
+    Returns (the reason the action may not proceed, or None; the detail). A check
+    that did not run says why it did not, so a receipt never implies a reading
+    that never happened.
+    """
     spec = spec_for(definition.family)
-    if not settings.sapling_enforced or spec.policy_text is None or spec.evidence_text is None:
-        return None
+    if not settings.sapling_enforced:
+        return None, "not run: the semantic check is off in this environment"
+    if spec.policy_text is None or spec.evidence_text is None:
+        return None, "not run: this workstream renders no evidence for it"
     try:
         evidence = spec.evidence_text(conn, case_id)
     except AdapterError as exc:
-        return f"could not render evidence for the semantic check: {exc}"
+        reason = f"could not render evidence for the semantic check: {exc}"
+        return reason, reason
 
     verdict = sapling.verify(spec.policy_text(definition), evidence, settings=settings)
     passed = verdict.passed(settings.sapling_min_support)
@@ -102,7 +145,11 @@ def semantic_check(
             **({"reasons": [reason]} if reason else {}),
         },
     )
-    return reason
+    if verdict.error is not None:
+        return reason, reason or verdict.error
+    label = verdict.raw_label or "unknown"
+    top = verdict.probabilities.get(label, 0.0)
+    return reason, f"{label.replace('_', ' ')}, p={top:.2f}"
 
 
 class OrchestratorError(RuntimeError):
@@ -442,14 +489,16 @@ def _handle_event(
             actor="system",
             payload={"event_key": key, "reasons": [reason]},
         )
-        return HandlingResult(
-            case_id=case_id,
-            exception_id="",
-            trace_id=trace_id,
-            outcome=Outcome.ESCALATED,
-            status=ExceptionStatus.ESCALATED,
-            escalation_reasons=[reason],
-            duration_ms=int((time.perf_counter() - started) * 1000),
+        return _announce_inbox_decision(
+            HandlingResult(
+                case_id=case_id,
+                exception_id="",
+                trace_id=trace_id,
+                outcome=Outcome.ESCALATED,
+                status=ExceptionStatus.ESCALATED,
+                escalation_reasons=[reason],
+                duration_ms=int((time.perf_counter() - started) * 1000),
+            )
         )
 
     if reuse_exception_id:
@@ -493,25 +542,12 @@ def _handle_event(
         payload={"event_key": key, "source": "SYNTHETIC returns dock check-in event"},
     )
     _set_status(conn, exception_id, ExceptionStatus.INVESTIGATING)
-    audit.record(
-        conn,
-        trace_id=trace_id,
-        event_type=AuditEventType.INVESTIGATION_STARTED,
-        actor="agent",
-        case_id=case_id,
-        exception_id=exception_id,
-        payload={"provider": settings.model_provider},
-    )
+    _announce_inbox_started(case_id)
 
-    ctx = AgentContext(
-        conn=conn,
-        trace_id=trace_id,
-        case_id=case_id,
-        exception_id=exception_id,
-        progress_key=case_id,
+    assessed = _assess(
+        conn, case_id, trace_id=trace_id, exception_id=exception_id, progress_key=case_id
     )
-    progress.step(case_id, "Asking the agent to investigate")
-    outcome = _run_investigation(ctx, case_id)
+    ctx, report = assessed.ctx, assessed.report
 
     def escalate(reasons: list[str], report: InvestigationReport | None = None) -> HandlingResult:
         _set_status(
@@ -530,30 +566,223 @@ def _handle_event(
             exception_id=exception_id,
             payload={"reasons": reasons},
         )
-        return HandlingResult(
+        return _announce_inbox_decision(
+            HandlingResult(
+                case_id=case_id,
+                exception_id=exception_id,
+                trace_id=trace_id,
+                outcome=Outcome.ESCALATED,
+                status=ExceptionStatus.ESCALATED,
+                escalation_reasons=reasons,
+                report=report,
+                tool_calls=ctx.tool_names,
+                duration_ms=int((time.perf_counter() - started) * 1000),
+            )
+        )
+
+    assessment = assessed.assessment
+    if assessment.verdict == FOLLOW:
+        policy_id = assessed.policy_id
+        assert policy_id is not None and assessed.facts is not None
+        record = policy_store.get(conn, policy_id)
+        base_key = idempotency_key(case_id, policy_id, str(record.version))
+        actions = execute_approved_policy(
+            conn,
+            case_id,
+            policy_id,
+            base_key,
+            trace_id=trace_id,
+            exception_id=exception_id,
+            facts=assessed.facts,
+        )
+        if not all(a.ok for a in actions):
+            failed = next(a for a in actions if not a.ok)
+            return escalate([f"action failed during automatic handling: {failed.detail}"], report)
+
+        verification = verify_action(
+            conn, case_id, policy_id, trace_id=trace_id, exception_id=exception_id
+        )
+        if not verification.ok:
+            return escalate(
+                ["verification failed after automatic action"] + verification.failures, report
+            )
+
+        audit.record(
+            conn,
+            trace_id=trace_id,
+            event_type=AuditEventType.EXCEPTION_RESOLVED,
+            actor="system",
+            case_id=case_id,
+            exception_id=exception_id,
+            policy_id=policy_id,
+            payload={"policy": record.label, "actions": [a.action for a in actions]},
+        )
+        return _announce_inbox_decision(
+            HandlingResult(
+                case_id=case_id,
+                exception_id=exception_id,
+                trace_id=trace_id,
+                outcome=Outcome.AUTO_RESOLVED,
+                status=ExceptionStatus.RESOLVED,
+                policy_id=policy_id,
+                actions=actions,
+                verification=verification,
+                report=report,
+                tool_calls=ctx.tool_names,
+                duration_ms=int((time.perf_counter() - started) * 1000),
+            )
+        )
+
+    if not assessed.no_precedent:
+        return escalate(list(assessment.reasons), report)
+
+    # This family has no approved policy at all: a person decides it once.
+    progress.step(case_id, "Writing the decision card for a person")
+    card = _build_decision_card(ctx, conn, case_id, exception_id, trace_id)
+    if card is None:
+        return escalate(["agent could not produce a decision card"], report)
+
+    _set_status(
+        conn,
+        exception_id,
+        ExceptionStatus.WAITING_DECISION,
+        summary=card.headline,
+    )
+    return _announce_inbox_decision(
+        HandlingResult(
             case_id=case_id,
             exception_id=exception_id,
             trace_id=trace_id,
-            outcome=Outcome.ESCALATED,
-            status=ExceptionStatus.ESCALATED,
-            escalation_reasons=reasons,
+            outcome=Outcome.DECISION_REQUESTED,
+            status=ExceptionStatus.WAITING_DECISION,
+            decision_card=card,
             report=report,
             tool_calls=ctx.tool_names,
             duration_ms=int((time.perf_counter() - started) * 1000),
         )
+    )
 
+
+# --------------------------------------------------------------- assessment
+
+
+@dataclass
+class _Assessed:
+    """An assessment, plus what only the inbox path needs to act on it.
+
+    The decision harness reads `assessment` alone. The inbox also needs the run
+    (for the decision card and its tool-call list), the agent's report, and the
+    derived facts its executor writes from.
+    """
+
+    assessment: Assessment
+    ctx: AgentContext
+    report: InvestigationReport | None = None
+    facts: CaseFacts | None = None
+    policy_id: str | None = None  # the matched policy, on a follow
+    no_precedent: bool = False  # the family has no active policy: a person decides once
+
+
+def assess_case(
+    conn: "Connection",
+    case_id: str,
+    *,
+    trace_id: str,
+    exception_id: str | None = None,
+    progress_key: str | None = None,
+    call_log: Any = None,
+) -> Assessment:
+    """Follow or ask for one return case: everything up to the point of acting.
+
+    The investigation, re-derived facts, reconciliation, the hard guardrails,
+    the precedent match, the precedent's own minimum confidence, and Banyan
+    Sapling, in that order and with the same audit entries as the inbox. It
+    executes nothing, changes no exception, and builds no decision card: the
+    inbox path does those with the result, and the decision harness only
+    reports it. `call_log` (an `app.agent.providers.CallLog`) collects the
+    gateway calls the investigation makes.
+    """
+    return _assess(
+        conn,
+        case_id,
+        trace_id=trace_id,
+        exception_id=exception_id,
+        progress_key=progress_key,
+        call_log=call_log,
+    ).assessment
+
+
+def _assess(
+    conn: "Connection",
+    case_id: str,
+    *,
+    trace_id: str,
+    exception_id: str | None = None,
+    progress_key: str | None = None,
+    call_log: Any = None,
+) -> _Assessed:
+    audit.record(
+        conn,
+        trace_id=trace_id,
+        event_type=AuditEventType.INVESTIGATION_STARTED,
+        actor="agent",
+        case_id=case_id,
+        exception_id=exception_id,
+        payload={"provider": settings.model_provider},
+    )
+
+    ctx = AgentContext(
+        conn=conn,
+        trace_id=trace_id,
+        case_id=case_id,
+        exception_id=exception_id,
+        progress_key=progress_key,
+        call_log=call_log,
+    )
+    checks: list[Check] = []
+
+    def ask(
+        *reasons: str,
+        report: InvestigationReport | None = None,
+        facts: CaseFacts | None = None,
+        precedent: policy_store.PolicyRecord | None = None,
+        no_precedent: bool = False,
+    ) -> _Assessed:
+        return _Assessed(
+            assessment=Assessment(
+                verdict=ASK,
+                reasons=tuple(reasons),
+                checks=tuple(checks),
+                precedent_id=precedent.policy_id if precedent else None,
+                precedent_version=precedent.version if precedent else None,
+                facts=dict(facts.policy_view()) if facts else {},
+            ),
+            ctx=ctx,
+            report=report,
+            facts=facts,
+            no_precedent=no_precedent,
+        )
+
+    progress.step(progress_key, "Asking the agent to investigate")
+    outcome = _run_investigation(ctx, case_id)
     if outcome.error is not None:
-        return escalate([f"agent investigation failed: {outcome.error}"])
+        checks.append(Check("agent investigation", False, outcome.error))
+        return ask(f"agent investigation failed: {outcome.error}")
 
     report = outcome.report
     assert report is not None
+    checks.append(
+        Check("agent investigation", True, f"{len(ctx.calls)} read-only tool call(s)")
+    )
 
     # Facts come from the systems, not from the agent.
-    progress.step(case_id, "Re-deriving every fact from the source systems")
+    progress.step(progress_key, "Re-deriving every fact from the source systems")
     try:
         facts = derive_facts(conn, case_id)
     except AdapterError as exc:
-        return escalate([f"could not derive case facts: {exc}"], report)
+        checks.append(Check("facts re-derived from the source systems", False, str(exc)))
+        return ask(f"could not derive case facts: {exc}", report=report)
+    checks.append(Check("facts re-derived from the source systems", True))
 
     audit.record(
         conn,
@@ -581,14 +810,25 @@ def _handle_event(
             exception_id=exception_id,
             payload={"discrepancies": discrepancies},
         )
-        return escalate(
-            ["agent report does not reconcile with the source systems"] + discrepancies, report
+        checks.append(
+            Check("agent report reconciles with the source systems", False, "; ".join(discrepancies))
         )
+        return ask(
+            "agent report does not reconcile with the source systems",
+            *discrepancies,
+            report=report,
+            facts=facts,
+        )
+    checks.append(Check("agent report reconciles with the source systems", True))
 
-    active = [(p.policy_id, p.definition) for p in policy_store.list_active(conn)]
+    # Only this family's precedents. Another workstream's active policy is not
+    # a boundary for a return case, and must not stop one getting a decision card.
+    active_records = [p for p in policy_store.list_active(conn) if p.family == RETURNS_FAMILY]
+    active = [(p.policy_id, p.definition) for p in active_records]
     matches = select_matching_policies(active, facts)
+    nearest = active_records[-1] if active_records else None
 
-    progress.step(case_id, "Running the hard guardrails")
+    progress.step(progress_key, "Running the hard guardrails")
     guard = evaluate_guardrails(
         facts,
         confidence=report.confidence,
@@ -617,19 +857,28 @@ def _handle_event(
             exception_id=exception_id,
             payload={"reasons": list(guard.reasons)},
         )
-        return escalate(list(guard.reasons), report)
+        checks.append(Check("hard guardrails", False, "; ".join(guard.reasons)))
+        return ask(*guard.reasons, report=report, facts=facts, precedent=nearest)
+    checks.append(Check("hard guardrails", True))
 
     if matches:
         policy_id, definition, _match = matches[0]
         record = policy_store.get(conn, policy_id)
+        checks.append(Check(f"matches precedent v{record.version}", True))
         if report.confidence < definition.min_confidence:
-            return escalate(
-                [
-                    f"agent confidence {report.confidence:.2f} is below the policy's own minimum "
-                    f"{definition.min_confidence:.2f}"
-                ],
-                report,
+            reason = (
+                f"agent confidence {report.confidence:.2f} is below the policy's own minimum "
+                f"{definition.min_confidence:.2f}"
             )
+            checks.append(Check("agent confidence meets the precedent's minimum", False, reason))
+            return ask(reason, report=report, facts=facts, precedent=record)
+        checks.append(
+            Check(
+                "agent confidence meets the precedent's minimum",
+                True,
+                f"{report.confidence:.2f} against {definition.min_confidence:.2f}",
+            )
+        )
         audit.record(
             conn,
             trace_id=trace_id,
@@ -640,8 +889,8 @@ def _handle_event(
             policy_id=policy_id,
             payload={"policy": record.label, "conditions": definition.condition_summary()},
         )
-        progress.step(case_id, "Asking Banyan Sapling to verify the evidence")
-        blocked_by = semantic_check(
+        progress.step(progress_key, "Asking Banyan Sapling to verify the evidence")
+        blocked_by, detail = semantic_verdict(
             conn,
             case_id,
             definition,
@@ -649,53 +898,24 @@ def _handle_event(
             exception_id=exception_id,
             policy_id=policy_id,
         )
+        checks.append(Check(SAPLING_CHECK, blocked_by is None, detail))
         if blocked_by is not None:
-            return escalate([blocked_by], report)
+            return ask(blocked_by, report=report, facts=facts, precedent=record)
 
-        base_key = idempotency_key(case_id, policy_id, str(record.version))
-        actions = execute_approved_policy(
-            conn,
-            case_id,
-            policy_id,
-            base_key,
-            trace_id=trace_id,
-            exception_id=exception_id,
-            facts=facts,
-        )
-        if not all(a.ok for a in actions):
-            failed = next(a for a in actions if not a.ok)
-            return escalate([f"action failed during automatic handling: {failed.detail}"], report)
-
-        verification = verify_action(
-            conn, case_id, policy_id, trace_id=trace_id, exception_id=exception_id
-        )
-        if not verification.ok:
-            return escalate(
-                ["verification failed after automatic action"] + verification.failures, report
-            )
-
-        audit.record(
-            conn,
-            trace_id=trace_id,
-            event_type=AuditEventType.EXCEPTION_RESOLVED,
-            actor="system",
-            case_id=case_id,
-            exception_id=exception_id,
-            policy_id=policy_id,
-            payload={"policy": record.label, "actions": [a.action for a in actions]},
-        )
-        return HandlingResult(
-            case_id=case_id,
-            exception_id=exception_id,
-            trace_id=trace_id,
-            outcome=Outcome.AUTO_RESOLVED,
-            status=ExceptionStatus.RESOLVED,
-            policy_id=policy_id,
-            actions=actions,
-            verification=verification,
+        return _Assessed(
+            assessment=Assessment(
+                verdict=FOLLOW,
+                reasons=(),
+                checks=tuple(checks),
+                precedent_id=policy_id,
+                precedent_version=record.version,
+                actions=tuple(a.model_dump() for a in definition.actions),
+                facts=dict(facts.policy_view()),
+            ),
+            ctx=ctx,
             report=report,
-            tool_calls=ctx.tool_names,
-            duration_ms=int((time.perf_counter() - started) * 1000),
+            facts=facts,
+            policy_id=policy_id,
         )
 
     # No approved policy applies.
@@ -715,32 +935,74 @@ def _handle_event(
     # with no approved policy at all produces a fresh decision card.
     if active:
         near = _near_miss_reasons(active, facts)
-        return escalate(
-            ["case falls outside every approved policy for this exception family"] + near,
-            report,
+        checks.append(Check("matches a precedent", False, "; ".join(near)))
+        return ask(
+            OUTSIDE_PRECEDENT_REASON, *near, report=report, facts=facts, precedent=nearest
         )
-    progress.step(case_id, "Writing the decision card for a person")
-    card = _build_decision_card(ctx, conn, case_id, exception_id, trace_id)
-    if card is None:
-        return escalate(["agent could not produce a decision card"], report)
+    checks.append(Check("matches a precedent", False, "no active precedent in this workstream"))
+    return ask(NO_PRECEDENT_REASON, report=report, facts=facts, no_precedent=True)
 
-    _set_status(
-        conn,
-        exception_id,
-        ExceptionStatus.WAITING_DECISION,
-        summary=card.headline,
-    )
-    return HandlingResult(
-        case_id=case_id,
-        exception_id=exception_id,
-        trace_id=trace_id,
-        outcome=Outcome.DECISION_REQUESTED,
-        status=ExceptionStatus.WAITING_DECISION,
-        decision_card=card,
-        report=report,
-        tool_calls=ctx.tool_names,
-        duration_ms=int((time.perf_counter() - started) * 1000),
-    )
+
+# ------------------------------------------------------------ live events
+
+
+def _announce_inbox_started(case_id: str) -> None:
+    """Tell the live map the inbox started on a case. A side channel; never raises."""
+    try:
+        events.publish(
+            "decision.started",
+            workstream=RETURNS_FAMILY,
+            case_ref=case_id,
+            caller="inbox",
+            via="inbox",
+        )
+    except Exception:  # pragma: no cover - publishing must never break the inbox
+        pass
+
+
+def _announce_inbox_decision(result: HandlingResult) -> HandlingResult:
+    """Tell the live map what the inbox decided, and hand the result back.
+
+    A follow is a case resolved under a precedent; everything else (an
+    escalation, a decision card) is an ask. Nothing that decides reads this.
+    """
+    try:
+        follow = result.outcome is Outcome.AUTO_RESOLVED
+        reasons = list(result.escalation_reasons)
+        if result.outcome is Outcome.DECISION_REQUESTED and not reasons:
+            reasons = [NO_PRECEDENT_REASON]
+        events.publish(
+            "decision.finished",
+            decision_id=result.exception_id or None,
+            workstream=RETURNS_FAMILY,
+            case_ref=result.case_id,
+            verdict=FOLLOW if follow else ASK,
+            precedent_id=result.policy_id,
+            reasons=reasons,
+            resolves=None,
+            caller="inbox",
+            via="inbox",
+        )
+    except Exception:  # pragma: no cover - publishing must never break the inbox
+        pass
+    return result
+
+
+def _announce_precedent(record: policy_store.PolicyRecord) -> None:
+    """Tell the live map a person just decided a precedent. Never raises."""
+    try:
+        view = precedent_view(record)
+        events.publish(
+            "precedent.decided",
+            precedent_id=record.policy_id,
+            workstream=record.family,
+            version=record.version,
+            decided_by=view["decided_by"],
+            origin_case=view["origin_case"],
+            text=view["text"],
+        )
+    except Exception:  # pragma: no cover - publishing must never break activation
+        pass
 
 
 def _outcome_for(status: ExceptionStatus) -> Outcome:
@@ -968,6 +1230,7 @@ def activate_policy(
         activated_by=activated_by,
         trace_id=trace_id,
     )
+    _announce_precedent(activated)
 
     # The supervisor approved the action on the case that taught this policy, so
     # that case should now be handled under it rather than sitting in the inbox.
