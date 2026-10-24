@@ -4,8 +4,8 @@ One public surface, two backends:
 
 * **postgres** — the deployment target. Selected by setting
   `PRECEDENZ_DATABASE_URL`.
-* **sqlite** — the zero-setup demo backend. The default, so the product runs
-  from a fresh clone with no server and no credentials.
+* **sqlite** - the zero-setup demo backend. The default, so local runs need
+  no database server or database credentials.
 
 Application code never imports a driver. It calls `session()` / `read_only()`,
 writes ANSI SQL with `?` placeholders, and reads rows as mappings. Both backends

@@ -38,7 +38,7 @@ test-pg: ## Run the whole suite against BOTH SQLite and a local PostgreSQL
 smoke: ## Minimal Strands agent smoke test (prints real tool calls)
 	$(PY) scripts/smoke_strands.py
 
-demo: ## Run the full scripted golden-path demo end to end in the terminal
+demo: ## Run the golden path through the configured hosted model (uses API credits)
 	$(PY) scripts/run_demo.py
 
 eval: ## Run the evaluation harness and write docs/evaluation-results.md

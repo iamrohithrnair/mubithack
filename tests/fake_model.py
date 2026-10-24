@@ -1,17 +1,11 @@
-"""A deterministic Strands model provider.
+"""Test-only Strands model fake. Never shipped as an application provider.
 
 This is a real implementation of the Strands `Model` interface. The Strands
 `Agent`, its event loop, its tool registry, its tool execution, and its
 structured-output machinery all run exactly as they do against a hosted model —
 only the token source is deterministic.
 
-Why it exists:
-  * unit tests and CI must be hermetic (no network, no credentials, no spend),
-  * the demo must run for anyone with no model credentials,
-  * the AWS credentials available while this project was built are not valid
-    for Bedrock (see docs/provenance.md).
-
-What it is not: it is not a shortcut around the safety architecture. It emits
+It keeps regression tests hermetic: no network, credentials, or spend. It emits
 proposals like any other model, and every proposal goes through the same
 schema validation, guardrails, replay, and human activation gate.
 """
@@ -19,6 +13,7 @@ schema validation, guardrails, replay, and human activation gate.
 from __future__ import annotations
 
 import json
+import re
 from typing import Any, AsyncGenerator, AsyncIterable, Optional, TypeVar
 
 from pydantic import BaseModel
@@ -29,7 +24,7 @@ from strands.types.tools import ToolSpec
 
 T = TypeVar("T", bound=BaseModel)
 
-# Fixed order the scripted planner works through during an investigation.
+# Fixed tool sequence for deterministic regression tests.
 INVESTIGATION_PLAN = (
     "get_return_case",
     "compare_expected_and_received",
@@ -44,11 +39,11 @@ REDUCED_CONFIDENCE = 0.62
 LOW_CONFIDENCE = 0.35
 
 
-class ScriptedModel(Model):
+class DeterministicTestModel(Model):
     """Deterministic planner over the Precedenz tool set."""
 
     def __init__(self, **config: Any) -> None:
-        self._config: dict[str, Any] = {"model_id": "scripted-deterministic-v1", **config}
+        self._config: dict[str, Any] = {"model_id": "test-model-v1", **config}
 
     # ------------------------------------------------------------- Model API
     def get_config(self) -> dict[str, Any]:
@@ -110,7 +105,7 @@ class ScriptedModel(Model):
         payload = build_structured_payload(output_model.__name__, observations)
         if payload is None:
             raise ValueError(
-                f"scripted provider has no builder for output model '{output_model.__name__}'"
+                f"test model has no builder for output model '{output_model.__name__}'"
             )
         yield {"output": output_model(**payload)}
 
@@ -138,6 +133,15 @@ def _collect_observations(messages: list[Message]) -> dict[str, Any]:
         for block in message.get("content", []) or []:
             if not isinstance(block, dict):
                 continue
+            text = block.get("text", "")
+            if message.get("role") == "user" and text:
+                case = re.search(r"\bcase (CASE-[A-Za-z0-9-]+)", text)
+                if case:
+                    results.setdefault("_case_id", case.group(1))
+                marker = "Verified source facts:\n"
+                if marker in text:
+                    facts, _ = json.JSONDecoder().raw_decode(text.split(marker, 1)[1])
+                    results["compare_expected_and_received"] = facts
             use = block.get("toolUse")
             if use:
                 pending[use["toolUseId"]] = use["name"]
@@ -176,7 +180,7 @@ def _structured_tool_name(specs: set[str]) -> str | None:
 def _tool_input(tool_name: str, observations: dict[str, Any]) -> dict[str, Any] | None:
     case = observations.get("get_return_case") or {}
     comparison = observations.get("compare_expected_and_received") or {}
-    case_id = case.get("case_id") or comparison.get("case_id") or _CURRENT_CASE.get("case_id")
+    case_id = case.get("case_id") or comparison.get("case_id") or observations.get("_case_id")
 
     match tool_name:
         case "get_return_case":
@@ -191,20 +195,9 @@ def _tool_input(tool_name: str, observations: dict[str, Any]) -> dict[str, Any] 
         case "find_approved_policy":
             return {"case_id": case_id} if case_id else None
         case "replay_candidate_policy":
-            proposal = _CURRENT_CASE.get("candidate_policy")
+            proposal = build_structured_payload("PolicyProposal", observations)
             return {"policy_json": json.dumps(proposal)} if proposal else None
     return None
-
-
-# The scripted provider needs a case id before any tool result exists. The
-# orchestrator sets this immediately before invoking the agent. A hosted model
-# reads the same value out of the prompt instead.
-_CURRENT_CASE: dict[str, Any] = {}
-
-
-def set_scripted_context(**values: Any) -> None:
-    _CURRENT_CASE.clear()
-    _CURRENT_CASE.update(values)
 
 
 # ------------------------------------------------------ structured payloads
@@ -266,7 +259,7 @@ def _derive(observations: dict[str, Any]) -> dict[str, Any]:
         "confidence": confidence,
         "recommendation": recommendation,
         "matched_policy": matched_policy,
-        "case_id": case.get("case_id") or comparison.get("case_id") or _CURRENT_CASE.get("case_id", ""),
+        "case_id": case.get("case_id") or comparison.get("case_id") or observations.get("_case_id", ""),
     }
 
 
@@ -478,7 +471,7 @@ def _closing_text(observations: dict[str, Any]) -> str:
 
 def _tool_use_events(name: str, payload: dict[str, Any], index: int = 0) -> list[StreamEvent]:
     """Emit the Bedrock-shaped stream events for a single tool call."""
-    tool_use_id = f"scripted_{name}_{index}"
+    tool_use_id = f"test_{name}_{index}"
     return [
         {"messageStart": {"role": "assistant"}},
         {

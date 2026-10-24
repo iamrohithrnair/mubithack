@@ -1,4 +1,6 @@
-# Precedenz — Scope Lock
+# Precedenz - Product scope
+
+Last updated: 2026-10-24.
 
 **Tagline:** Teach the agent once; it safely handles the next hundred decisions.
 
@@ -23,8 +25,8 @@ without interrupting anybody. Anything outside the approved boundary escalates.
 high-value camera / electronics kits.**
 
 Nothing else in the UI or the agent loop. Not refunds. Not shipping. Not a generic
-workflow builder. (A second exception family, accounts-payable invoice variance, was
-added later to the governance path and its tests; see the README.)
+workflow builder. A second exception family, accounts-payable invoice variance,
+exercises the shared governance path and its tests; see the README.
 
 ## 3. Fictional company and synthetic data
 
@@ -39,7 +41,7 @@ All data in this repository is invented for the demo.
 | Customers | Synthetic names and IDs; **no real people, no PII** |
 
 Every business system Precedenz touches is a **synthetic adapter** in
-`app/adapters/` — an in-repo simulation over SQLite. They are labeled as
+`app/adapters/` - an in-repo simulation over SQLite or PostgreSQL. They are labeled as
 synthetic in the UI and in code. They are **not** production integrations, and
 nothing in this project talks to a real WMS, ERP, payment system, or customer.
 
@@ -96,7 +98,11 @@ The separation between *reasoning* and *acting* is the product.
 10. **Append-only audit.** The audit log is hash-chained and protected by database
    triggers that reject `UPDATE` and `DELETE` — and, on PostgreSQL, by a `REVOKE`
    so a non-owner application role cannot rewrite history at all.
-11. **No hidden chain-of-thought.** The agent returns a short, structured
+11. **Banyan Sapling can veto an action.** In the hosted returns workflow, it
+    checks the raw source record, including inspector notes, against the policy.
+    A failed or unavailable check escalates; it cannot authorize an action the
+    deterministic gates rejected.
+12. **No hidden chain-of-thought.** The agent returns a short, structured
     rationale intended for a human reader. Raw reasoning is never surfaced or
     stored.
 
@@ -105,7 +111,8 @@ The separation between *reasoning* and *acting* is the product.
 Serial mismatch · incomplete evidence · new damage · missing or excessive
 replacement cost · serialized, safety-critical, or essential missing component ·
 more than one missing component · conflicting policies · tool failure ·
-confidence below threshold.
+confidence below threshold; a blocked or unavailable semantic check when Sapling
+is enforced.
 
 ## 6. Explicitly out of scope
 
@@ -119,24 +126,22 @@ generated executable code · computer vision or OCR · billing.
 
 | # | Decision | Rationale | Reversible? |
 | --- | --- | --- | --- |
-| 1 | Python 3.11 + FastAPI + Jinja2, PostgreSQL in deployment and SQLite for the offline demo | Zero-build and server-rendered; the demo needs no database server, a deployment gets a real one. Both run the same suite. See docs/database.md | Yes |
+| 1 | Python 3.11 + FastAPI + Jinja2, PostgreSQL in deployment and SQLite for the local demo | Zero-build and server-rendered; the demo needs no database server, a deployment gets a real one. Both support the same suite. See docs/database.md | Yes |
 | 2 | Exactly one Strands agent | The product is governance, not agent count | Yes |
-| 3 | Model provider behind an adapter (`app/agent/providers/`) | AWS credentials are unavailable in the build environment; the runtime must not care which model backs it | Yes |
-| 4 | A deterministic `scripted` Strands `Model` implementation | Gives hermetic tests, CI, and an offline demo while still exercising the **real** Strands agent loop and real tool calls | Yes |
+| 3 | Model provider behind an adapter (`app/agent/providers/`) | Demo calls use the Mubit gateway; tests inject a model fake without changing the safety path | Yes |
+| 4 | A deterministic test-only Strands `Model` fake | Gives hermetic regression tests while exercising the real Strands agent loop and real tool calls; it is not an app provider | Yes |
 | 5 | Policy DSL as a closed Pydantic schema | Makes "the model cannot widen its own authority" a type error, not a prompt instruction | Hard to reverse (core) |
 | 6 | Facts re-derived deterministically, agent report reconciled | Prevents a hallucinated or injected fact from driving an action | Hard to reverse (core) |
 | 7 | Hash-chained append-only audit, serialized by an advisory lock and guarded by `UNIQUE(prev_hash)` | Tamper-evidence that survives more than one writer | Yes |
-| 8 | AgentCore compatibility kept as a thin entrypoint, not a dependency | Local golden path first, per the brief | Yes |
+| 8 | Hosted model access stays separate from business-system writes | Changing the model provider cannot change its authority or bypass the policy gates | Yes |
 | 9 | A revision creates a new candidate rather than editing one | The record keeps what the agent proposed alongside what the human changed; lineage is auditable | Hard to reverse (core) |
 
 ## 8. Assumptions
 
-- **A1.** Anyone may run the project locally, so `make setup && make seed && make run`
-  must work with no cloud account and no credentials.
-- **A2.** For most of the build, the AWS credentials in the environment were invalid
-  (`sts:GetCallerIdentity` returned `InvalidClientTokenId`). Valid credentials were
-  added later: the Bedrock path passes the smoke and integration tests live,
-  and the agent is deployed to AgentCore Runtime. See `docs/provenance.md`.
+- **A1.** Anyone with a Mubit key may run the project locally with
+  `make setup && make seed && make run`. `make test` needs no model credentials.
+- **A2.** The hosted demo uses `PRECEDENZ_MODEL_PROVIDER=mubit` and a Mubit key.
+  Its model calls need network access; test-only fakes do not.
 - **A3.** "One approved non-serialized accessory" means exactly one missing
   line item, quantity one.
 - **A4.** Replacement cost is authoritative from the synthetic parts catalog,

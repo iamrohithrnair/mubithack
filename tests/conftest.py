@@ -9,8 +9,8 @@ Every test runs against **both** database backends:
 Running the identical suite against both is the point: the deployment target and
 the zero-setup demo backend cannot drift without a test going red.
 
-Everything here is hermetic — the deterministic `scripted` model provider, no
-network to any model, no credentials. The one live-model test is marked
+Everything here is hermetic - a test-only deterministic model fake, no
+network to any model, no credentials. Live-model tests are marked
 `integration` and is deselected by default.
 """
 
@@ -22,7 +22,7 @@ from pathlib import Path
 import pytest
 
 # Set before any app module reads settings.
-os.environ.setdefault("PRECEDENZ_MODEL_PROVIDER", "scripted")
+os.environ.setdefault("PRECEDENZ_MODEL_PROVIDER", "mubit")
 os.environ.setdefault("PRECEDENZ_APPROVAL_TOKEN", "test-approval-token")
 # The Sapling semantic check calls a hosted endpoint; tests that need it stub it.
 os.environ["PRECEDENZ_SAPLING_MODE"] = "off"
@@ -56,7 +56,7 @@ def temp_db(request, tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     """Point the app at a throwaway database and seed it from the fixtures."""
     from app import config, db, seed
 
-    monkeypatch.setenv("PRECEDENZ_MODEL_PROVIDER", "scripted")
+    monkeypatch.setenv("PRECEDENZ_MODEL_PROVIDER", "mubit")
     monkeypatch.setenv("PRECEDENZ_APPROVAL_TOKEN", "test-approval-token")
     monkeypatch.setenv("PRECEDENZ_SAPLING_MODE", "off")
 
@@ -99,6 +99,16 @@ def conn(temp_db):
         yield connection
     finally:
         connection.close()
+
+
+@pytest.fixture(autouse=True)
+def offline_model(request, monkeypatch):
+    if request.node.get_closest_marker("integration"):
+        return
+    from app.agent import build
+    from tests.fake_model import DeterministicTestModel
+
+    monkeypatch.setattr(build, "resolve_model", lambda: DeterministicTestModel())
 
 
 @pytest.fixture()

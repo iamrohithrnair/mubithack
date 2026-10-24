@@ -14,7 +14,7 @@ import uuid
 
 from app.agent.tools import AgentContext, build_tools
 from app.facts import derive_facts
-from app.orchestrator import _provisional_policy_payload
+from tests.conftest import DEMO_CONDITIONS
 
 
 def _replay_tool(conn):
@@ -23,14 +23,20 @@ def _replay_tool(conn):
     return ctx, tool
 
 
-def _candidate(conn) -> dict:
-    return _provisional_policy_payload(derive_facts(conn, "CASE-2001"))
+def _candidate() -> dict:
+    return {
+        "name": "Single low-cost accessory replacement",
+        "description": "One missing accessory with complete inspection evidence.",
+        "conditions": [dict(c) for c in DEMO_CONDITIONS],
+        "max_cost_usd": 25.0,
+        "min_confidence": 0.75,
+    }
 
 
 def test_replay_accepts_the_proposal_shape(conn):
     ctx, replay = _replay_tool(conn)
-    candidate = _candidate(conn)
-    assert "actions" not in candidate  # the scripted candidate has the proposal's shape too
+    candidate = _candidate()
+    assert "actions" not in candidate
 
     result = json.loads(replay(policy_json=json.dumps(candidate)))
 
@@ -42,7 +48,7 @@ def test_replay_accepts_the_proposal_shape(conn):
 
 def test_actions_sent_by_the_model_are_ignored_not_trusted(conn):
     ctx, replay = _replay_tool(conn)
-    candidate = _candidate(conn) | {
+    candidate = _candidate() | {
         "family": "something.else",
         "actions": [{"type": "create_work_order", "work_order_type": "REPLACEMENT_PARTS", "max_cost_usd": 5000}],
     }
@@ -56,7 +62,7 @@ def test_actions_sent_by_the_model_are_ignored_not_trusted(conn):
 
 def test_a_malformed_candidate_says_what_the_tool_expects(conn):
     ctx, replay = _replay_tool(conn)
-    candidate = _candidate(conn)
+    candidate = _candidate()
     del candidate["max_cost_usd"]
 
     result = json.loads(replay(policy_json=json.dumps(candidate)))
@@ -65,3 +71,27 @@ def test_a_malformed_candidate_says_what_the_tool_expects(conn):
     assert any(d.startswith("max_cost_usd") for d in result["details"])
     assert "max_cost_usd" in result["expected_fields"]
     assert not ctx.calls[-1].ok
+
+
+def test_policy_proposal_receives_verified_source_facts(conn, monkeypatch):
+    from app import orchestrator
+
+    first = orchestrator.handle_event("CASE-2001", conn=conn)
+    factory = orchestrator.policy_proposal_agent
+    prompts = []
+
+    def capture(ctx):
+        agent = factory(ctx)
+
+        def invoke(prompt, **kwargs):
+            prompts.append(prompt)
+            return agent(prompt, **kwargs)
+
+        return invoke
+
+    monkeypatch.setattr(orchestrator, "policy_proposal_agent", capture)
+
+    orchestrator.approve_and_teach(conn, first.exception_id, decided_by="test-supervisor")
+
+    facts, _ = json.JSONDecoder().raw_decode(prompts[0].split("Verified source facts:\n", 1)[1])
+    assert facts == derive_facts(conn, "CASE-2001").model_dump(mode="json")

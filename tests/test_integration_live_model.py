@@ -18,10 +18,8 @@ or, through the Mubit gateway:
     PRECEDENZ_MODEL_PROVIDER=mubit MUBIT_API_KEY=... \
         pytest -m integration tests/test_integration_live_model.py
 
-It asserts the same contract the offline provider satisfies: a real Strands
-agent, real tool calls, typed structured output. If a hosted model returns a
-weaker report than the offline provider, that is a finding, not a flake — the
-guardrails downstream are identical either way.
+It asserts the same contract exercised with the test-only model fake: a real
+Strands agent, real tool calls, and typed structured output.
 """
 
 from __future__ import annotations
@@ -35,11 +33,8 @@ pytestmark = pytest.mark.integration
 
 LIVE_PROVIDERS = {"bedrock", "anthropic", "mubit"}
 
-# Read at import, before any fixture runs. The autouse temp_db fixture in
-# conftest.py forces the offline provider for every test, so reading the variable
-# inside a fixture always saw "scripted" and these tests skipped even when a live
-# provider was requested.
-REQUESTED_PROVIDER = os.environ.get("PRECEDENZ_MODEL_PROVIDER", "scripted")
+# Capture the selected provider before test fixtures reload settings.
+REQUESTED_PROVIDER = os.environ.get("PRECEDENZ_MODEL_PROVIDER", "mubit")
 
 
 @pytest.fixture()
@@ -54,9 +49,6 @@ def live_settings(monkeypatch):
     monkeypatch.setenv("PRECEDENZ_MODEL_PROVIDER", provider)
     new_settings = config.reload_settings()
 
-    import app.agent.providers as providers
-
-    monkeypatch.setattr(providers, "default_settings", new_settings, raising=False)
     return new_settings
 
 

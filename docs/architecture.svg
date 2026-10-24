@@ -18,22 +18,17 @@
 <rect x="40" y="998" width="3" height="158" fill="#5eead4" opacity="0.55" rx="1.5"/><text x="54" y="1016" class="t" font-size="12.5" font-weight="700" letter-spacing="1.1">SYSTEMS OF RECORD</text>
 <text x="54" y="1038" class="faint" font-size="12">Synthetic business</text>
 <text x="54" y="1053" class="faint" font-size="12">systems, real evidence</text>
-<rect x="236" y="132" width="376" height="110" rx="10" fill="#171b24" stroke="#2a3140"/>
+<rect x="236" y="132" width="573" height="110" rx="10" fill="#171b24" stroke="#2a3140"/>
 <rect x="249" y="145" width="17" height="18" rx="9" fill="#5eead4" opacity="0.15"/><text x="257" y="158" text-anchor="middle" font-size="11" font-weight="700" fill="#5eead4" class="mono">1</text>
 <text x="270" y="158" class="t" font-size="14.5" font-weight="650">Returns-dock check-in</text>
 <text x="250" y="176" class="faint mono" font-size="11">POST /events/{case_id}</text>
 <text x="250" y="202" class="dim" font-size="12">An event from the dock, not a chat prompt</text>
 <text x="250" y="219" class="dim" font-size="12">Nine demo cases, one per boundary</text>
-<rect x="630" y="132" width="376" height="110" rx="10" fill="#171b24" stroke="#2a3140"/>
-<text x="644" y="158" class="t" font-size="14.5" font-weight="650">AgentCore Runtime</text>
-<text x="644" y="176" class="faint mono" font-size="11">POST /invocations · us-west-2</text>
-<text x="644" y="202" class="dim" font-size="12">The same handler, deployed to AWS</text>
-<text x="644" y="219" class="dim" font-size="12">Returns the decision card as JSON</text>
-<rect x="1024" y="132" width="376" height="110" rx="10" fill="#171b24" stroke="#2a3140"/>
-<text x="1038" y="158" class="t" font-size="14.5" font-weight="650">Web app</text>
-<text x="1038" y="176" class="faint mono" font-size="11">Inbox · Decision · Policies · Dashboard</text>
-<text x="1038" y="202" class="dim" font-size="12">Where a supervisor reads and decides</text>
-<text x="1038" y="219" class="dim" font-size="12">Phone, tablet, desktop</text>
+<rect x="827" y="132" width="573" height="110" rx="10" fill="#171b24" stroke="#2a3140"/>
+<text x="841" y="158" class="t" font-size="14.5" font-weight="650">Web app</text>
+<text x="841" y="176" class="faint mono" font-size="11">Inbox · Decision · Policies · Dashboard</text>
+<text x="841" y="202" class="dim" font-size="12">Where a supervisor reads and decides</text>
+<text x="841" y="219" class="dim" font-size="12">Phone, tablet, desktop</text>
 <rect x="236" y="316" width="376" height="127" rx="10" fill="#171b24" stroke="#2a3140"/>
 <rect x="249" y="329" width="17" height="18" rx="9" fill="#5eead4" opacity="0.15"/><text x="257" y="342" text-anchor="middle" font-size="11" font-weight="700" fill="#5eead4" class="mono">3</text>
 <text x="270" y="342" class="t" font-size="14.5" font-weight="650">One Strands agent</text>
@@ -44,7 +39,7 @@
 <text x="644" y="342" class="t" font-size="14.5" font-weight="650">Mubit gateway</text>
 <text x="644" y="360" class="faint mono" font-size="11">gpt-6-luna · Responses API</text>
 <text x="644" y="386" class="dim" font-size="12">One key routes every model call</text>
-<text x="644" y="403" class="dim" font-size="12">Bedrock, Anthropic, offline swap in</text>
+<text x="644" y="403" class="dim" font-size="12">Provider choice cannot change authority</text>
 <rect x="1024" y="316" width="376" height="127" rx="10" fill="#171b24" stroke="#2a3140"/>
 <text x="1038" y="342" class="t" font-size="14.5" font-weight="650">Read-only tools</text>
 <text x="1038" y="360" class="faint mono" font-size="11">five, all side-effect free</text>

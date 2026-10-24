@@ -18,15 +18,6 @@
           ]
         },
         {
-          "id": "agentcore",
-          "name": "AgentCore Runtime",
-          "meta": "POST /invocations · us-west-2",
-          "functions": [
-            "The same handler, deployed to AWS",
-            "Returns the decision card as JSON"
-          ]
-        },
-        {
           "id": "web",
           "name": "Web app",
           "meta": "Inbox · Decision · Policies · Dashboard",
@@ -57,7 +48,7 @@
           "meta": "gpt-6-luna · Responses API",
           "functions": [
             "One key routes every model call",
-            "Bedrock, Anthropic, offline swap in"
+            "Provider choice cannot change authority"
           ]
         },
         {
@@ -308,12 +299,6 @@
       "kind": "control",
       "label": "no policy applies",
       "step": 8
-    },
-    {
-      "from": "agentcore",
-      "to": "orchestrator",
-      "kind": "control",
-      "label": "invocation"
     },
     {
       "from": "web",

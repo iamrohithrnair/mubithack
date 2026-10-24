@@ -11,14 +11,42 @@ import dataclasses
 
 import pytest
 
-from app.agent.providers import resolve_model
-from app.config import get_settings
+from app.agent.providers import ModelProviderUnavailable, SUPPORTED_PROVIDERS, resolve_model
+from app.config import get_settings, load_settings
 
 MESSAGES = [{"role": "user", "content": [{"text": "hello"}]}]
 
 
 def _settings(provider: str):
     return dataclasses.replace(get_settings(), model_provider=provider)
+
+
+def test_defaults_use_mubit_with_semantic_verification(monkeypatch):
+    monkeypatch.delenv("PRECEDENZ_MODEL_PROVIDER", raising=False)
+    monkeypatch.delenv("PRECEDENZ_SAPLING_MODE", raising=False)
+
+    settings = load_settings()
+
+    assert settings.model_provider == "mubit"
+    assert settings.sapling_enforced
+    assert settings.mubit_base_url == "https://api.mubit.ai/openai/v1"
+
+
+def test_removed_scripted_provider_is_not_selectable():
+    assert "scripted" not in SUPPORTED_PROVIDERS
+    with pytest.raises(ModelProviderUnavailable, match="unknown provider 'scripted'"):
+        resolve_model(_settings("scripted"))
+
+
+def test_provider_reads_current_settings(monkeypatch):
+    from app import config
+
+    monkeypatch.setenv("MUBIT_API_KEY", "test-key-not-real")
+    monkeypatch.setattr(
+        config, "settings", dataclasses.replace(get_settings(), mubit_model_id="test-model")
+    )
+
+    assert resolve_model()._format_request(MESSAGES)["model"] == "test-model"
 
 
 def test_anthropic_request_has_max_tokens_and_no_temperature(monkeypatch):

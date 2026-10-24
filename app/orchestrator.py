@@ -128,13 +128,6 @@ def idempotency_key(*parts: str) -> str:
     return hashlib.sha256(material.encode("utf-8")).hexdigest()[:32]
 
 
-def _prepare_scripted_context(**values: Any) -> None:
-    if settings.is_offline_provider:
-        from app.agent.providers.scripted import set_scripted_context
-
-        set_scripted_context(**values)
-
-
 # ---------------------------------------------------------------- exceptions
 
 
@@ -353,8 +346,8 @@ def _record_agent_run(
 ) -> None:
     """Record what one agent invocation consumed, for the usage dashboard.
 
-    Token counts are whatever the model provider reported. The offline scripted
-    model reports none, so they are recorded as zero rather than estimated. Tool
+    Token counts are whatever the model provider reported. Missing counts are
+    recorded as zero rather than estimated. Tool
     calls are counted from the context, not from Strands' tool metrics, which also
     count the internal tool Strands uses to return structured output.
     """
@@ -386,7 +379,6 @@ def _record_agent_run(
 
 
 def _run_investigation(ctx: AgentContext, case_id: str) -> _AgentOutcome:
-    _prepare_scripted_context(case_id=case_id)
     agent = investigation_agent(ctx)
     started, calls_before = time.perf_counter(), len(ctx.calls)
     try:
@@ -917,16 +909,12 @@ def approve_and_teach(
     )
     progress.step(exception_id, "Asking the agent to draft the narrowest policy")
     facts = derive_facts(conn, case_id)
-    _prepare_scripted_context(
-        case_id=case_id,
-        candidate_policy=_provisional_policy_payload(facts),
-    )
-
     agent = policy_proposal_agent(ctx)
     started, calls_before = time.perf_counter(), len(ctx.calls)
     result = agent(
         (
             f"The supervisor approved the recommended action on case {case_id}. "
+            f"Verified source facts:\n{facts.model_dump_json()}\n"
             "Propose the narrowest policy that covers this decision and nothing wider."
         ),
         structured_output_model=PolicyProposal,
@@ -958,38 +946,6 @@ def approve_and_teach(
         ready_to_activate=report.passed,
         blocking_reasons=report.blocking_reasons,
     )
-
-
-def _provisional_policy_payload(facts: CaseFacts) -> dict[str, Any]:
-    """The candidate the scripted agent dry-runs through `replay_candidate_policy`.
-
-    Derived from the case that was just approved, so the agent's own replay call
-    exercises the real evaluator rather than a hypothetical. It has the shape of a
-    `PolicyProposal`, the same as a hosted model's replay call: conditions and a
-    spend cap, with the fixed actions added by the tool.
-    """
-    threshold = 25.0
-    if facts.replacement_cost_usd is not None and facts.replacement_cost_usd > threshold:
-        threshold = min(50.0, round(facts.replacement_cost_usd + 1.0, 2))
-    return {
-        "name": "Single low-cost accessory replacement",
-        "description": (
-            "Exactly one missing non-serialized accessory, clean evidence, matching serial, "
-            f"no new damage, replacement cost ${threshold:.2f} or less."
-        ),
-        "conditions": [
-            {"field": "missing_component_count", "operator": "eq", "value": 1},
-            {"field": "missing_component_serialized", "operator": "eq", "value": False},
-            {"field": "missing_component_safety_critical", "operator": "eq", "value": False},
-            {"field": "missing_component_essential", "operator": "eq", "value": False},
-            {"field": "serial_match", "operator": "eq", "value": True},
-            {"field": "new_damage_present", "operator": "eq", "value": False},
-            {"field": "evidence_complete", "operator": "eq", "value": True},
-            {"field": "replacement_cost_usd", "operator": "lte", "value": threshold},
-        ],
-        "max_cost_usd": threshold,
-        "min_confidence": 0.75,
-    }
 
 
 def activate_policy(

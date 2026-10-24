@@ -21,7 +21,6 @@ from app import db, seed  # noqa: E402
 from app.agent.build import investigation_agent  # noqa: E402
 from app.agent.providers import provider_label  # noqa: E402
 from app.agent.tools import AgentContext  # noqa: E402
-from app.config import settings  # noqa: E402
 from app.domain import InvestigationReport  # noqa: E402
 
 CASE_ID = "CASE-2001"
@@ -39,11 +38,6 @@ def main() -> int:
 
     with db.session() as conn:
         ctx = AgentContext(conn=conn, trace_id=f"trc_{uuid.uuid4().hex[:12]}", case_id=CASE_ID)
-
-        if settings.is_offline_provider:
-            from app.agent.providers.scripted import set_scripted_context
-
-            set_scripted_context(case_id=CASE_ID)
 
         agent = investigation_agent(ctx)
         result = agent(

@@ -1,12 +1,12 @@
-# Database: moving off SQLite
+# Database backends
 
 **Status: implemented and tested, not deployed.**
 
 PostgreSQL is the deployment target. SQLite remains as an explicitly-labeled
 zero-setup demo backend so anyone can run the product from a fresh
 clone with no server and no credentials. Both are real, both run the same
-migrations, and **the entire test suite runs against both** in CI, so they cannot
-drift without CI going red.
+migrations, and **the same test suite supports both**. `make test-pg` includes
+PostgreSQL when its configured test database is reachable.
 
 Switching is one environment variable:
 
@@ -19,17 +19,12 @@ most managed platforms inject that name.
 
 ---
 
-## Why this was the right next piece of work
+## Shared state across workers
 
-`docs/deployment-agentcore.md` named it as the one genuine gap between the demo
-and production: *"The demo uses local SQLite, which does not survive a stateless
-runtime."* AgentCore Runtime is stateless and horizontally scaled. A file-backed
-database in that setting is not slow — it is **wrong**: each instance would hold
-its own private copy of the policy set and the audit log.
-
-The interesting part was never "put the tables somewhere else". It was that
-three pieces of this system were only correct because SQLite has exactly one
-writer.
+Multiple app workers need one shared policy store and audit log. Independent
+SQLite files would give each worker a different view of approved automation.
+PostgreSQL provides that shared state, with explicit concurrency protections for
+audit appends, event deduplication, and idempotent business writes.
 
 ---
 
@@ -213,8 +208,8 @@ priority order. None of it is faked in the repository.
    possible.
 3. **TLS.** Require it: append `?sslmode=verify-full&sslrootcert=...`. The code
    passes the DSN through untouched, so this is configuration, not a change.
-4. **Connection management for a serverless runtime.** AgentCore Runtime scales
-   horizontally, and *N* instances × `pool_max` can exhaust a database's
+4. **Connection management across workers.** *N* instances times `pool_max`
+   can exhaust a database's
    connection limit. Put RDS Proxy (or PgBouncer in transaction mode) in front
    and set `PRECEDENZ_DB_POOL_MAX` to 2–5. Note that transaction-mode pooling
    forbids session-scoped state — this codebase uses only

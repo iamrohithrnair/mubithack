@@ -104,7 +104,6 @@ def _base_context(request: Request) -> dict[str, Any]:
         "company": COMPANY_NAME,
         "facility": FACILITY_ID,
         "provider": provider_label(),
-        "offline": settings.is_offline_provider,
         "sapling_enforced": settings.sapling_enforced,
         "operator": OPERATOR,
         "status_labels": STATUS_LABELS,

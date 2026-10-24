@@ -257,7 +257,7 @@ html[data-theme="dark"] {
 }
 
 /* ================================================================= fonts */
-/* Self-hosted so the offline demo looks the same. Geist (OFL), latin subset. */
+/* Self-hosted for consistent rendering. Geist (OFL), latin subset. */
 @font-face {
   font-family: "Geist"; font-style: normal; font-weight: 400; font-display: swap;
   src: url("/static/fonts/geist-sans-latin-400-normal.woff2") format("woff2");

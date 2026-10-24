@@ -3,10 +3,9 @@
 The rest of the application never imports a model class directly. It asks for
 `resolve_model()` and gets whatever the environment is configured for:
 
-  scripted  - deterministic, offline, no credentials. Tests, CI, offline demo.
+  mubit     - default, OpenAI Responses API through the Mubit gateway.
   bedrock   - Amazon Bedrock (Strands `BedrockModel`).
   anthropic - Anthropic API (Strands `AnthropicModel`).
-  mubit     - Mubit gateway, OpenAI Responses API (Strands `OpenAIResponsesModel`).
 
 Every provider drives the *same* Strands `Agent`, the same tools, and the same
 typed structured outputs. Swapping providers changes who does the reasoning, not
@@ -21,25 +20,20 @@ from typing import Any
 
 from strands.models.model import Model
 
-from app.config import Settings, settings as default_settings
+from app.config import Settings, get_settings
 
 
 class ModelProviderUnavailable(RuntimeError):
     """Raised when the configured provider cannot be constructed."""
 
 
-SUPPORTED_PROVIDERS = ("scripted", "bedrock", "anthropic", "mubit")
+SUPPORTED_PROVIDERS = ("mubit", "bedrock", "anthropic")
 
 
 def resolve_model(settings: Settings | None = None, **overrides: Any) -> Model:
     """Build the configured Strands model provider."""
-    cfg = settings or default_settings
+    cfg = settings or get_settings()
     provider = cfg.model_provider
-
-    if provider == "scripted":
-        from app.agent.providers.scripted import ScriptedModel
-
-        return ScriptedModel(**overrides)
 
     if provider == "bedrock":
         try:
@@ -105,10 +99,8 @@ def resolve_model(settings: Settings | None = None, **overrides: Any) -> Model:
 
 
 def provider_label(settings: Settings | None = None) -> str:
-    cfg = settings or default_settings
+    cfg = settings or get_settings()
     match cfg.model_provider:
-        case "scripted":
-            return "scripted (deterministic, offline)"
         case "bedrock":
             return f"bedrock · {cfg.bedrock_model_id}"
         case "anthropic":

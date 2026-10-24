@@ -1,7 +1,7 @@
 """Runtime configuration.
 
-Everything is read from the environment with safe local defaults so the demo
-runs with no credentials and no cloud account.
+Settings come from the environment. Hosted model calls use Mubit by default and
+require MUBIT_API_KEY; regression tests inject their own model fake.
 """
 
 from __future__ import annotations
@@ -115,10 +115,6 @@ class Settings:
     sapling_timeout_seconds: int
 
     @property
-    def is_offline_provider(self) -> bool:
-        return self.model_provider == "scripted"
-
-    @property
     def sapling_enforced(self) -> bool:
         return self.sapling_mode == "enforce"
 
@@ -149,21 +145,19 @@ def resolve_database_url() -> str:
 SAPLING_DEFAULT_URL = "https://6adbee0669a00298cd4774c9.endpoints.huggingface.cloud"
 
 
-def _sapling_mode(model_provider: str) -> str:
-    """`enforce` or `off`. Unset follows the model provider: the offline
-    scripted provider promises a demo with no network, so it leaves Sapling off
-    unless asked; every hosted provider gets the check."""
+def _sapling_mode() -> str:
+    """Enable verification by default; tests can explicitly opt out."""
     raw = os.environ.get("PRECEDENZ_SAPLING_MODE", "").strip().lower()
     if raw in ("enforce", "off"):
         return raw
-    return "off" if model_provider == "scripted" else "enforce"
+    return "enforce"
 
 
 def load_settings() -> Settings:
     db_path = Path(os.environ.get("PRECEDENZ_DB_PATH", "var/precedenz.db"))
     if not db_path.is_absolute():
         db_path = REPO_ROOT / db_path
-    model_provider = os.environ.get("PRECEDENZ_MODEL_PROVIDER", "scripted").strip().lower()
+    model_provider = os.environ.get("PRECEDENZ_MODEL_PROVIDER", "mubit").strip().lower()
     return Settings(
         model_provider=model_provider,
         bedrock_model_id=os.environ.get(
@@ -171,8 +165,7 @@ def load_settings() -> Settings:
             # Opus 5 has no in-Region support on bedrock-runtime, the endpoint
             # Strands' Converse calls use, so it must be addressed through a
             # cross-Region inference profile: "us." keeps traffic in US and
-            # Canada Regions, "global." routes anywhere. Verified live with
-            # `make smoke` (see docs/provenance.md).
+            # Canada Regions, "global." routes anywhere.
             "us.anthropic.claude-opus-5",
         ),
         anthropic_model_id=os.environ.get(
@@ -197,7 +190,7 @@ def load_settings() -> Settings:
         model_timeout_seconds=_env_int("PRECEDENZ_MODEL_TIMEOUT_SECONDS", 60),
         approval_token=os.environ.get("PRECEDENZ_APPROVAL_TOKEN", DEFAULT_APPROVAL_TOKEN),
         otel_enabled=os.environ.get("PRECEDENZ_OTEL_ENABLED", "false").lower() == "true",
-        sapling_mode=_sapling_mode(model_provider),
+        sapling_mode=_sapling_mode(),
         sapling_url=os.environ.get("PRECEDENZ_SAPLING_URL", SAPLING_DEFAULT_URL),
         sapling_min_support=_env_float("PRECEDENZ_SAPLING_MIN_SUPPORT", 0.5),
         sapling_timeout_seconds=_env_int("PRECEDENZ_SAPLING_TIMEOUT_SECONDS", 30),
@@ -219,7 +212,7 @@ def get_settings() -> Settings:
 
 
 def reload_settings() -> Settings:
-    """Re-read the environment. Used by tests and by the AgentCore entrypoint."""
+    """Re-read the environment, including during isolated regression tests."""
     global settings
     settings = load_settings()
     return settings

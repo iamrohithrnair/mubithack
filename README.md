@@ -2,7 +2,10 @@
 
 **Teach the agent once; it safely handles the next hundred decisions.**
 
-Strands Agents on gpt-6-luna through the **Mubit** gateway · every automatic action verified by **Banyan Sapling**
+Hosted returns workflow: Strands Agents on gpt-6-luna through the **Mubit** gateway,
+with **Banyan Sapling** verifying the evidence before automatic action.
+
+Last updated: 2026-10-24.
 
 ![Precedenz architecture](docs/architecture.png)
 
@@ -56,13 +59,35 @@ before anyone trusts it.
 
 ---
 
-## Quick start (no AWS account, no credentials, no network)
+## Run with Mubit
+
+Install the dependencies with `make setup`. If you do not already have a `.env`,
+copy `.env.example` to `.env`, then set:
+
+```dotenv
+PRECEDENZ_MODEL_PROVIDER=mubit
+MUBIT_API_KEY=your-mubit-key
+PRECEDENZ_MUBIT_MODEL_ID=gpt-6-luna
+PRECEDENZ_SAPLING_MODE=enforce
+```
+
+Start the synthetic demo:
 
 ```bash
-make setup     # venv + pinned dependencies
-make seed      # build the demo database from the synthetic fixtures
+make seed
 make run       # http://127.0.0.1:8000
 ```
+
+Every Strands model call in this configuration goes through
+`https://api.mubit.ai/openai/v1`. Banyan Sapling uses its separately configured
+verification endpoint. Hosted runs need network access and may incur usage charges.
+Provider keys, when required, belong in the Mubit console, not in requests from
+Precedenz. Never commit `.env`.
+
+**What teaching changes today:** Approve and Teach creates a replay-tested policy
+version. It does not fine-tune model weights or activate a Mubit adapter.
+
+## Demo walkthrough
 
 Then, in the app: check in **CASE-2001** → *Approve and teach* → activate the policy →
 check in **CASE-2002** (resolves itself) → check in **CASE-2003** (escalates).
@@ -83,8 +108,8 @@ It is a placeholder, not a secret, and the activation screen prints it for you.
 Set `PRECEDENZ_APPROVAL_TOKEN` to replace it, and the on-screen notice disappears
 when you do.
 
-No account, no sign-up, no cloud, no credentials, no spend: the whole product
-runs on one machine from a fresh clone.
+The app and synthetic business systems run locally. Model calls use Mubit and
+require a Mubit key.
 
 ### On PostgreSQL, the deployment target
 
@@ -113,9 +138,9 @@ Or watch the whole thing in the terminal:
 
 ```bash
 make demo      # the golden path, start to finish
-make test      # the hermetic suite across both domains, a few seconds
-make eval      # evaluation harness -> docs/evaluation-results.md
-make smoke     # minimal Strands agent + real tool calls + typed output
+make test      # offline regression suite with test-only model fakes
+make eval      # hosted evaluation -> docs/evaluation-results.md; uses API credits
+make smoke     # configured hosted model + real tool calls + typed output
 ```
 
 `make seed` is also the **Reset Demo** button in the UI.
@@ -136,35 +161,22 @@ structured output  : InvestigationReport
 ```
 
 One `strands.Agent`, real `@tool` functions, real tool calls, typed Pydantic structured
-output. The **model provider** behind it is swappable:
+output. The default model path is:
 
 | `PRECEDENZ_MODEL_PROVIDER` | What it is | Needs |
 | --- | --- | --- |
-| `scripted` (default) | A deterministic implementation of the Strands `Model` interface, in `app/agent/providers/scripted.py` | nothing |
-| `bedrock` | Strands `BedrockModel` | AWS credentials + Bedrock model access |
-| `anthropic` | Strands `AnthropicModel` | `ANTHROPIC_API_KEY` |
-| `mubit` | Strands `OpenAIResponsesModel` via the Mubit gateway (default `gpt-6-luna`) | `MUBIT_API_KEY` |
+| `mubit` (default) | Strands `OpenAIResponsesModel` via the Mubit gateway (default `gpt-6-luna`) | `MUBIT_API_KEY` |
 
-The `scripted` provider exists so that tests, CI, and anyone with no model credentials
-exercise the **real** Strands agent loop with **zero** credentials and zero spend. It is
-not a bypass: it produces proposals like any other model, and every proposal goes
-through the same schema validation, guardrails, replay, and human activation gate.
+Regression tests inject a deterministic model fake from `tests/fake_model.py`.
+It is not shipped as a runtime provider. Tests still exercise the real Strands
+agent loop, schema validation, guardrails, replay, and human activation gate.
 
-**Hosted-model status:** both hosted providers pass `make smoke` against the live service
-with Claude Opus 5: the Anthropic API (`claude-opus-5`) and Amazon Bedrock
-(`us.anthropic.claude-opus-5`, the cross-Region inference profile). The first Bedrock run
-exposed a concurrency bug: the model requested several tools in one turn, Strands ran them
-concurrently, and they collided on the shared database connection. The agent escalated
-rather than act on the bad data, and tools now run one at a time, with a regression test.
-The opt-in integration tests (real tool calls, a report that reconciles with the source
-systems, and a schema-valid policy proposal) pass against Bedrock, 3 of 3. They have not
-been run against the Anthropic API.
+`make smoke` uses the configured provider. In Mubit mode it makes hosted model
+calls; the default test suite uses test-only fakes. Additional provider
+adapters remain available in `app/agent/providers/` and `.env.example`.
 
-**AgentCore Runtime status:** deployed to AgentCore Runtime in `us-west-2` with the
-AgentCore CLI, and invoked live: the deployed agent investigates CASE-2001 on Bedrock
-with four real tool calls and returns a decision card. Each runtime session seeds its own
-SQLite database, so taught policies do not carry across sessions; the full teach-once loop
-runs in the local app. See [docs/deployment-agentcore.md](docs/deployment-agentcore.md).
+Tools run sequentially because they share a database connection. Source-system
+reconciliation, not model confidence alone, determines whether a report is usable.
 
 ---
 
@@ -239,17 +251,18 @@ Sapling's calibrated `status` returns `unsure` on almost every case in this doma
 the gate uses the raw label and its probability. The calibrated status is still
 recorded in the audit log.
 
-Sapling is on by default with any hosted model provider. It is off with the offline
-`scripted` provider, which promises no network access. Set
-`PRECEDENZ_SAPLING_MODE=enforce` to turn it on there, for example
-`PRECEDENZ_SAPLING_MODE=enforce make demo`.
+Sapling is enforced by default. Regression tests explicitly disable or stub the
+endpoint so they do not send case data to a hosted service.
 
 ---
 
-## Measured results
+## Regression results
 
-From `make eval`, counted from the database after a real run, not estimated. Full
-report: [docs/evaluation-results.md](docs/evaluation-results.md).
+The offline regression harness exercises the real orchestration with a test-only
+model fake. These results describe application behavior on synthetic fixtures,
+not Mubit model accuracy. Full report: [docs/evaluation-results.md](docs/evaluation-results.md).
+`make eval` runs the configured hosted model and replaces that report with its
+measured results; it uses API credits.
 
 | Metric | Result | Target |
 | --- | --- | --- |
@@ -260,7 +273,6 @@ report: [docs/evaluation-results.md](docs/evaluation-results.md).
 | **False automatic actions** | **0** | **0** |
 | **Prohibited actions** | **0** | **0** |
 | **Duplicate actions** | **0** | **0** |
-| Average end-to-end workflow | 3.9 ms (scripted model, no network) | n/a |
 
 The number that matters is **false automatic actions**: cases the system acted on by
 itself that a person should have seen. Zero is a design constraint, not an average.
@@ -343,12 +355,12 @@ integrations anywhere in this repository.** The UI says so on every page.
 
 ---
 
-## Layout
+## Core layout
 
 ```
 app/
   agent/           the one Strands agent: tools, prompts, model providers
-    providers/     bedrock | anthropic | mubit | scripted (deterministic Model impl)
+    providers/     Mubit gateway and optional hosted backends
     tools.py       READ-ONLY tools. Nothing here writes.
   adapters/        SYNTHETIC business systems (returns, parts, warehouse, AP ledger)
   domains/         domain packs: facts, guardrails, actions, corpus
@@ -362,6 +374,7 @@ app/
     replay.py      the replay gate
     store.py       persistence + THE ACTIVATION GATE
   orchestrator.py  the golden path; the only code that acts
+  sapling.py       Banyan Sapling semantic verification client
   facts.py         deterministic facts + reconciliation
   audit.py         append-only, hash-chained
   progress.py      in-memory progress for the waiting panel; never read by anything
@@ -370,16 +383,13 @@ app/
   main.py          FastAPI: inbox / decision+replay / policies+audit / dashboard
   dashboard.py     history and usage, counted from case records and the audit log
   static/          app.css and waiting.js (the panel shown during a model call)
-  agentcore.py     AgentCore Runtime handler, deployed through agentcore_main.py
   db/
     postgres_backend.py  deployment target: pooling, advisory lock, NUMERIC
     sqlite_backend.py    zero-setup demo backend
     migrations/          versioned SQL, one file per dialect
-fixtures/          synthetic catalog + 24 historical + 6 demo cases
-tests/             hermetic; every test runs on both backends
-docs/              scope, architecture, database, evaluation, deployment, provenance
-agentcore/         AgentCore CLI project: runtime config and CDK app
-agentcore_main.py  AgentCore Runtime entrypoint (imports app.agentcore)
+fixtures/          synthetic catalog + 24 historical + 9 demo return cases + AP corpus
+tests/             offline regression suite; supports both database backends
+docs/              scope, architecture, database, evaluation, provenance
 tools/diagram/     renders docs/architecture.{svg,html} from architecture.json
 ```
 
@@ -387,8 +397,9 @@ tools/diagram/     renders docs/architecture.{svg,html} from architecture.json
 
 **PostgreSQL is the deployment target. SQLite is a labeled zero-setup demo
 backend**, kept so the product runs from a fresh clone with no server. One
-environment variable switches between them, and **the entire suite runs against
-both**, so they cannot drift.
+environment variable switches between them. **The same suite supports both
+backends**; `make test-pg` exercises PostgreSQL when the configured test server is
+reachable.
 
 Porting off SQLite surfaced three defects that were only invisible because
 SQLite has a single writer:
@@ -409,8 +420,9 @@ Full write-up, including what still stands between this and production:
 
 ## Configuration
 
-Copy `.env.example` to `.env` and edit it. The app reads it on startup. Everything has
-a safe local default; nothing is required to run the demo.
+Copy `.env.example` to `.env` if you do not already have one, and set
+`MUBIT_API_KEY`. The app reads it on startup. Model access uses Mubit by default;
+regression tests do not need a key.
 
 A real environment variable always beats the file, so a deployment cannot be overridden
 by a stray `.env` on disk. `.env` is gitignored and a test asserts it stays that way.
