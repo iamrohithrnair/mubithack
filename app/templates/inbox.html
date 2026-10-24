@@ -1,70 +1,150 @@
 {% extends "base.html" %}
 {% block title %}Exception Inbox · Precedenz{% endblock %}
+{% block head %}<link rel="stylesheet" href="/static/pages/inbox.css?v={{ asset_version }}">{% endblock %}
 {% block content %}
+{%- set waiting = buckets['waiting_decision']|length + buckets['escalated']|length %}
+{%- set auto_resolved = buckets['resolved']|selectattr('applied_policy_id')|list|length %}
 
-<h1>Exception inbox</h1>
-<p class="lede">
-  Missing-accessory exceptions from the returns dock. Cases with an approved policy
-  resolve themselves and never appear as work; everything else waits for you.
+<header class="page-head ib-head">
+  <div class="ib-head-copy">
+    <span class="eyebrow" data-animate="fade">Returns dock &middot; {{ facility }}</span>
+    <h1 class="display ib-title" data-animate="blur">Exception inbox</h1>
+    <p class="lede" data-animate="fade-up">
+      Missing-accessory exceptions from the returns dock. Cases with an approved policy
+      resolve themselves and never appear as work; everything else waits for you.
+    </p>
+  </div>
+  <dl class="ib-stats" data-stagger="fade-up" data-stagger-step="0.07">
+    <div class="ib-stat">
+      <dt>At the dock</dt>
+      <dd class="tnum" data-countup="0.9">{{ pending|length }}</dd>
+    </div>
+    <div class="ib-stat{% if waiting %} is-hot{% endif %}">
+      <dt>Need a person</dt>
+      <dd class="tnum" data-countup="0.9">{{ waiting }}</dd>
+    </div>
+    <div class="ib-stat is-good">
+      <dt>Resolved by policy</dt>
+      <dd class="tnum" data-countup="0.9">{{ auto_resolved }}</dd>
+    </div>
+  </dl>
+</header>
+
+{% if active_policies %}
+<p class="ib-policy" data-animate="fade-up">
+  <span class="ib-policy-label">Active policy</span>
+  <span class="ib-policy-list">
+  {%- for p in active_policies %}
+    <span class="ib-policy-item"><code class="chip">{{ p.family }}@v{{ p.version }}</code> — {{ p.definition.name }}</span>
+  {%- endfor %}
+  </span>
+  <a class="ib-policy-link" href="/policies">Policies &amp; audit <span aria-hidden="true">&rarr;</span></a>
 </p>
+{% else %}
+<p class="ib-policy is-empty" data-animate="fade-up">
+  <span class="ib-policy-label">No policy</span>
+  <span class="ib-policy-list">No approved policy exists yet. Every case needs a person.</span>
+</p>
+{% endif %}
 
 {% if pending %}
-<section class="card dock">
-  <h2>Returns dock — cases not yet checked in</h2>
-  <p class="muted">Each button simulates a check-in event arriving from the warehouse.</p>
-  <ul class="dock-list">
+<section class="ib-section ib-dock" aria-labelledby="dock-title">
+  <header class="ib-section-head" data-animate="fade-up">
+    <div>
+      <span class="eyebrow">01 &middot; Incoming</span>
+      <h2 id="dock-title">Returns dock — cases not yet checked in</h2>
+      <p class="muted">Each button simulates a check-in event arriving from the warehouse.</p>
+    </div>
+    <span class="ib-tally"><span class="tnum">{{ pending|length }}</span> waiting</span>
+  </header>
+  <ol class="ib-dock-list" data-stagger="fade-up" data-stagger-step="0.045">
     {% for case in pending %}
-    <li>
-      <div>
-        <code>{{ case.case_id }}</code>
-        <span class="kit">{{ case.kit_name }}</span>
-        <span class="muted note">{{ case.scenario_note }}</span>
+    <li class="ib-dock-row" data-case="{{ case.case_id }}">
+      <span class="ib-dock-index tnum" aria-hidden="true">{{ '%02d'|format(loop.index) }}</span>
+      <div class="ib-dock-body">
+        <div class="ib-dock-line">
+          <code class="chip">{{ case.case_id }}</code>
+          <span class="kit">{{ case.kit_name }}</span>
+        </div>
+        <span class="note">{{ case.scenario_note }}</span>
       </div>
       <form method="post" action="/events/{{ case.case_id }}" class="inline"
             data-wait="{{ case.case_id }}"
             data-wait-title="Investigating the check-in"
             data-wait-note="The agent reads and reports. Nothing is executed while this runs.">
-        <button type="submit" class="btn">Check in</button>
+        <button type="submit" class="btn ib-checkin">
+          <span>Check in</span>
+          <svg class="ib-arrow" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8h9.5M8.5 4l4 4-4 4"/></svg>
+        </button>
       </form>
     </li>
     {% endfor %}
-  </ul>
+  </ol>
 </section>
-{% endif %}
-
-{% if active_policies %}
-<p class="policy-strip">
-  Active policy:
-  {% for p in active_policies %}
-    <code>{{ p.family }}@v{{ p.version }}</code> — {{ p.definition.name }}
-  {% endfor %}
-</p>
 {% else %}
-<p class="policy-strip empty">No approved policy exists yet. Every case needs a person.</p>
+<p class="ib-dock-clear" data-animate="fade-up">
+  <span class="ib-check" aria-hidden="true"></span>
+  The returns dock is clear. Every case has been checked in.
+</p>
 {% endif %}
 
-<div class="columns">
-  {% for status in status_order %}
-  <section class="column status-{{ status }}{% if not buckets[status] %} is-empty{% endif %}">
-    <h2>{{ status_labels[status] }} <span class="count">{{ buckets[status]|length }}</span></h2>
-    {% for e in buckets[status] %}
-    <a class="case" href="/exceptions/{{ e.exception_id }}">
-      <div class="case-head">
-        <code>{{ e.case_id }}</code>
-        {% if e.applied_policy_id %}<span class="pill auto">auto</span>{% endif %}
+<section class="ib-section ib-board-wrap" aria-labelledby="board-title">
+  <header class="ib-section-head" data-animate="fade-up">
+    <div>
+      <span class="eyebrow">{{ '02' if pending else '01' }} &middot; Status board</span>
+      <h2 id="board-title">Every exception, by where it stands</h2>
+    </div>
+    <span class="ib-tally"><span class="tnum">{{ exceptions|length }}</span> total</span>
+  </header>
+
+  {% if not exceptions %}
+  <div class="ib-empty" data-animate="scale">
+    <svg class="ib-empty-art" viewBox="0 0 120 64" aria-hidden="true">
+      <rect x="4" y="10" width="20" height="44" rx="2"/>
+      <rect x="28" y="10" width="20" height="44" rx="2"/>
+      <rect x="52" y="10" width="20" height="44" rx="2"/>
+      <rect x="76" y="10" width="20" height="44" rx="2"/>
+      <rect x="100" y="10" width="16" height="44" rx="2"/>
+      <rect class="ib-empty-card" x="7" y="14" width="14" height="9" rx="1"/>
+    </svg>
+    <p class="ib-empty-title">The board is clear</p>
+    <p class="muted">Check in a case from the returns dock and it lands here, in the column that says what happens next.</p>
+  </div>
+  {% endif %}
+
+  <div class="ib-board{% if not exceptions %} is-blank{% endif %}" data-reveal="fade-up" data-stagger data-stagger-step="0.06">
+    {% for status in status_order %}
+    <section class="ib-lane status-{{ status }}{% if not buckets[status] %} is-empty{% endif %}" aria-label="{{ status_labels[status] }}">
+      <h3 class="ib-lane-head">
+        <span class="ib-dot" aria-hidden="true"></span>
+        <span class="ib-lane-label">{{ status_labels[status] }}</span>
+        <span class="count tnum"{% if buckets[status] %} data-countup="0.8"{% endif %}>{{ buckets[status]|length }}</span>
+      </h3>
+      <div class="ib-lane-body">
+        {% for e in buckets[status] %}
+        <a class="ib-card" id="case-{{ e.case_id }}" href="/exceptions/{{ e.exception_id }}"
+           data-case="{{ e.case_id }}" data-status="{{ status }}"{% if e.applied_policy_id %} data-auto{% endif %} data-lift>
+          <div class="ib-card-head">
+            <code>{{ e.case_id }}</code>
+            {% if e.applied_policy_id %}<span class="pill auto">auto</span>{% endif %}
+          </div>
+          <div class="kit">{{ e.kit_name }}</div>
+          <div class="summary">{{ e.summary or e.scenario_note }}</div>
+          {%- set reasons = e.escalation_reasons|reject('equalto', e.summary)|list %}
+          {% if reasons %}
+          <ul class="reasons">
+            {% for r in reasons[:2] %}<li>{{ r }}</li>{% endfor %}
+          </ul>
+          {% endif %}
+          <span class="ib-card-open" aria-hidden="true">Open <svg viewBox="0 0 16 16"><path d="M3 8h9.5M8.5 4l4 4-4 4"/></svg></span>
+        </a>
+        {% else %}
+        <p class="empty">Nothing here.</p>
+        {% endfor %}
       </div>
-      <div class="kit">{{ e.kit_name }}</div>
-      <div class="summary">{{ e.summary or e.scenario_note }}</div>
-      {% if e.escalation_reasons %}
-      <ul class="reasons">
-        {% for r in e.escalation_reasons[:2] %}<li>{{ r }}</li>{% endfor %}
-      </ul>
-      {% endif %}
-    </a>
-    {% else %}
-    <p class="empty">Nothing here.</p>
+    </section>
     {% endfor %}
-  </section>
-  {% endfor %}
-</div>
+  </div>
+</section>
 {% endblock %}
+{% block scripts %}<script src="/static/pages/inbox.js?v={{ asset_version }}"></script>{% endblock %}

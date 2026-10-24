@@ -2,7 +2,7 @@
 <defs><marker id="arrow-4ade80" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#4ade80"/></marker><marker id="arrow-4b5468" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#4b5468"/></marker><marker id="arrow-5eead4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#5eead4"/></marker><marker id="arrow-6b7488" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#6b7488"/></marker><marker id="arrow-7dd3fc" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#7dd3fc"/></marker><marker id="arrow-9aa4b6" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#9aa4b6"/></marker><marker id="arrow-f87171" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#f87171"/></marker><marker id="arrow-fbbf24" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#fbbf24"/></marker></defs>
 <rect width="1440" height="1242" fill="#10131a"/>
 <style>.t{fill:#e6e9ef} .dim{fill:#9aa4b6} .faint{fill:#6b7488} .mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}.edge-label{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;fill:#9aa4b6}</style>
-<text x="40" y="56" class="t" font-size="30" font-weight="700">Precedenz architecture</text><text x="40" y="84" class="dim" font-size="15">One agent may propose. Deterministic code decides, acts, and records. A person teaches the rule.</text><text x="40" y="106" class="faint" font-size="12.5">Every tier below is in this repository. Two domains ship on it: returns, and accounts-payable invoice variance. Business systems are simulated adapters, not production integrations.</text>
+<text x="40" y="56" class="t" font-size="30" font-weight="700">Precedenz architecture</text><text x="40" y="84" class="dim" font-size="15">One agent may propose. Deterministic code decides, and Banyan Sapling verifies before anything acts. A person teaches the rule.</text><text x="40" y="106" class="faint" font-size="12.5">Every tier below is in this repository. Two domains ship on it: returns, and accounts-payable invoice variance. Business systems are simulated adapters, not production integrations.</text>
 <rect x="40" y="132" width="3" height="110" fill="#5eead4" opacity="0.55" rx="1.5"/><text x="54" y="150" class="t" font-size="12.5" font-weight="700" letter-spacing="1.1">SURFACES</text>
 <text x="54" y="172" class="faint" font-size="12">How work arrives, and</text>
 <text x="54" y="187" class="faint" font-size="12">where a person acts on it</text>
@@ -41,10 +41,10 @@
 <text x="250" y="386" class="dim" font-size="12">Three invocations, one agent</text>
 <text x="250" y="403" class="dim" font-size="12">Typed output, re-derived downstream</text>
 <rect x="630" y="316" width="376" height="127" rx="10" fill="#171b24" stroke="#2a3140"/>
-<text x="644" y="342" class="t" font-size="14.5" font-weight="650">Model provider</text>
-<text x="644" y="360" class="faint mono" font-size="11">mubit | bedrock | anthropic | scripted</text>
-<text x="644" y="386" class="dim" font-size="12">gpt-6-luna via the Mubit gateway</text>
-<text x="644" y="403" class="dim" font-size="12">Offline scripted model for tests and CI</text>
+<text x="644" y="342" class="t" font-size="14.5" font-weight="650">Mubit gateway</text>
+<text x="644" y="360" class="faint mono" font-size="11">gpt-6-luna · Responses API</text>
+<text x="644" y="386" class="dim" font-size="12">One key routes every model call</text>
+<text x="644" y="403" class="dim" font-size="12">Bedrock, Anthropic, offline swap in</text>
 <rect x="1024" y="316" width="376" height="127" rx="10" fill="#171b24" stroke="#2a3140"/>
 <text x="1038" y="342" class="t" font-size="14.5" font-weight="650">Read-only tools</text>
 <text x="1038" y="360" class="faint mono" font-size="11">five, all side-effect free</text>
@@ -86,12 +86,13 @@
 <text x="757" y="621" class="dim" font-size="12">No dynamic</text>
 <text x="757" y="638" class="dim" font-size="12">execution, ever</text>
 <rect x="911" y="517" width="151" height="175" rx="10" fill="#171b24" stroke="#2a3140"/>
-<text x="925" y="543" class="t" font-size="14.5" font-weight="650">Semantic check</text>
-<text x="925" y="561" class="faint mono" font-size="11">Banyan Sapling</text>
-<text x="925" y="587" class="dim" font-size="12">Reads raw evidence</text>
-<text x="925" y="604" class="dim" font-size="12">and free-text notes</text>
-<text x="925" y="621" class="dim" font-size="12">Only supported lets</text>
-<text x="925" y="638" class="dim" font-size="12">a policy act</text>
+<text x="925" y="543" class="t" font-size="14.5" font-weight="650">Banyan Sapling</text>
+<text x="925" y="561" class="faint mono" font-size="11">semantic check ·</text>
+<text x="925" y="575" class="faint mono" font-size="11">MubitLabs</text>
+<text x="925" y="601" class="dim" font-size="12">Reads raw evidence</text>
+<text x="925" y="618" class="dim" font-size="12">and free-text notes</text>
+<text x="925" y="635" class="dim" font-size="12">Only supported lets</text>
+<text x="925" y="652" class="dim" font-size="12">a policy act</text>
 <rect x="1080" y="517" width="151" height="175" rx="10" fill="#171b24" stroke="#2a3140"/>
 <text x="1094" y="543" class="t" font-size="14.5" font-weight="650">Execute and verify</text>
 <text x="1094" y="561" class="faint mono" font-size="11">idempotency key</text>

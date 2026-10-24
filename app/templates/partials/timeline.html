@@ -1,11 +1,12 @@
-<ol class="timeline">
+<ol class="timeline" data-count="{{ timeline|length }}">
   {% for e in timeline %}
-  <li class="ev ev-{{ e.event_type.split('.')[0] }}">
+  <li class="ev ev-{{ e.event_type.split('.')[0] }} ev-{{ e.event_type|replace('.', '-')|replace('_', '-') }}">
     <span class="ts">{{ e.created_at[11:23] }}</span>
     <span class="type">{{ e.event_type }}</span>
     <span class="actor">{{ e.actor }}</span>
     <span class="detail">
       {%- if e.event_type == 'agent.run' %}{{ e.payload.step|replace('_', ' ') }} · {{ e.payload.tool_calls }} tool calls · {% if e.payload.total_tokens %}{{ e.payload.total_tokens }} tokens{% else %}tokens not reported{% endif %} · {% if e.payload.duration_ms < 1000 %}{{ e.payload.duration_ms }} ms{% else %}{{ '%.1f'|format(e.payload.duration_ms / 1000) }} s{% endif %}
+      {%- elif e.event_type.startswith('semantic.') %}<span class="sem-verdict">{{ (e.payload.raw_label or 'unavailable')|replace('_', ' ') }}</span>{% if e.payload.probabilities %} · p(supported) {{ '%.2f'|format(e.payload.probabilities.get('supported', 0)) }} vs {{ '%.2f'|format(e.payload.min_support or 0) }} needed{% endif %} · {% if (e.payload.latency_ms or 0) < 1000 %}{{ e.payload.latency_ms or 0 }} ms{% else %}{{ '%.1f'|format(e.payload.latency_ms / 1000) }} s{% endif %}{% if e.payload.error %} · {{ e.payload.error }}{% endif %}
       {%- elif e.payload.tool %}<code>{{ e.payload.tool }}</code> — {{ e.payload.summary }}
       {%- elif e.payload.action %}{{ e.payload.action }} — {{ e.payload.detail }}
       {%- elif e.payload.reasons %}{{ e.payload.reasons|join('; ') }}

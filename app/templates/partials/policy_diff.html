@@ -1,5 +1,6 @@
 {# Expects: diff (PolicyDiff) #}
-<h3>
+<div class="policy-diff{% if diff.widens %} widens{% endif %}">
+<h3 class="policy-diff-head">
   What changes &mdash; {{ diff.candidate_label }} vs {{ diff.baseline_label }}
   {% if diff.widens %}
     <span class="pill bad">widens the boundary</span>
@@ -37,3 +38,4 @@
 {% else %}
 <p class="muted small">No difference from {{ diff.baseline_label }}.</p>
 {% endif %}
+</div>

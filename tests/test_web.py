@@ -122,17 +122,15 @@ def test_reset_restores_the_fixtures(client):
 def test_the_demo_token_is_discoverable_while_the_placeholder_is_in_use(
     client, monkeypatch
 ):
-    """A judge must be able to finish the flow without reading the source.
-
-    The hackathon requires the project to be usable "free of charge and without
-    any restriction" for evaluation. An undocumented password field at the
-    activation step is exactly such a restriction.
+    """Someone on a fresh clone must be able to finish the flow without reading
+    the source. An undocumented password field at the activation step would stop
+    them.
     """
     from app import config
     import app.main as main
 
     # The suite normally overrides the token; this test is about the shipped
-    # default a judge would actually meet on a fresh clone.
+    # default someone would actually meet on a fresh clone.
     monkeypatch.setenv("PRECEDENZ_APPROVAL_TOKEN", config.DEFAULT_APPROVAL_TOKEN)
     monkeypatch.setattr(main, "settings", config.reload_settings())
 
@@ -165,7 +163,7 @@ def test_the_demo_token_hint_disappears_once_a_real_token_is_set(client, monkeyp
 
 
 def test_dotenv_is_loaded_so_the_readme_instruction_works(tmp_path, monkeypatch):
-    """The README tells a judge to copy .env.example to .env, so it must be read."""
+    """The README says to copy .env.example to .env, so it must be read."""
     from app.config import load_dotenv
 
     env_file = tmp_path / ".env"

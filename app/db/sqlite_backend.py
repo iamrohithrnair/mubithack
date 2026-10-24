@@ -1,6 +1,6 @@
 """SQLite backend — the zero-setup demo database.
 
-Kept so a judge, a CI runner, or anyone cloning the repository can run the whole
+Kept so a CI runner or anyone cloning the repository can run the whole
 product with no server, no credentials, and no container. It is explicitly a
 *demo* backend: single-writer, file-local, and not what a deployment uses.
 """

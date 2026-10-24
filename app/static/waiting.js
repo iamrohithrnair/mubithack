@@ -44,11 +44,14 @@
   }
 
   function render(list, steps, elapsed, settled) {
+    var added = 0;
     while (list.childElementCount > steps.length) list.removeChild(list.lastChild);
     steps.forEach(function (step, i) {
       var item = list.children[i];
       if (!item) {
         item = el("li");
+        // Steps that arrive together in one poll enter one after another.
+        item.style.setProperty("--i", added++);
         item.appendChild(el("span", "waiting-step-text"));
         item.appendChild(el("span", "waiting-step-at"));
         list.appendChild(item);

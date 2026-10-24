@@ -1,115 +1,351 @@
 {% extends "base.html" %}
 {% block title %}Policies &amp; Audit · Precedenz{% endblock %}
+{% block head %}
+<link rel="stylesheet" href="/static/pages/policies.css?v={{ asset_version }}">
+{% endblock %}
+
+{#- an ISO timestamp -> "YYYY-MM-DD · HH:MM UTC" -#}
+{% macro when(ts) -%}
+<time datetime="{{ ts }}">{{ ts[:10] }} <span class="sep">·</span> {{ ts[11:16] }} UTC</time>
+{%- endmacro %}
+
+{#- One line of detail per audit entry; mirrors partials/timeline.html. -#}
+{% macro detail(e) -%}
+{%- if e.event_type == 'agent.run' %}{{ e.payload.step|replace('_', ' ') }} · {{ e.payload.tool_calls }} tool calls · {% if e.payload.total_tokens %}{{ e.payload.total_tokens }} tokens{% else %}tokens not reported{% endif %} · {% if e.payload.duration_ms < 1000 %}{{ e.payload.duration_ms }} ms{% else %}{{ '%.1f'|format(e.payload.duration_ms / 1000) }} s{% endif %}
+{%- elif e.payload.tool %}<code>{{ e.payload.tool }}</code> — {{ e.payload.summary }}
+{%- elif e.payload.action %}{{ e.payload.action }} — {{ e.payload.detail }}
+{%- elif e.payload.reasons %}{{ e.payload.reasons|join('; ') }}
+{%- elif e.payload.headline %}{{ e.payload.headline }}
+{%- elif e.payload.rationale %}{{ e.payload.rationale }}
+{%- elif e.payload.checks %}{{ e.payload.checks|join('; ') }}
+{%- elif e.payload.name %}{{ e.payload.name }}
+{%- elif e.payload.detail %}{{ e.payload.detail }}
+{%- elif e.payload.reason %}{{ e.payload.reason }}
+{%- endif -%}
+{%- endmacro %}
+
 {% block content %}
+{%- set labels = {} %}
+{%- set ns = namespace(handled=0, active=0, candidates=0) %}
+{%- for p in policies %}
+  {%- set _ = labels.update({p.policy_id: 'v' ~ p.version}) %}
+  {%- set ns.handled = ns.handled + handled[p.policy_id]|length %}
+  {%- if p.status == 'active' %}{% set ns.active = ns.active + 1 %}{% endif %}
+  {%- if p.status == 'candidate' %}{% set ns.candidates = ns.candidates + 1 %}{% endif %}
+{%- endfor %}
+{%- set fams = {} %}
+{%- set trace_cases = {} %}
+{%- for e in timeline %}{% set f = e.event_type.split('.')[0] %}{% set _ = fams.update({f: fams.get(f, 0) + 1}) %}{% if e.case_id and e.trace_id not in trace_cases %}{% set _ = trace_cases.update({e.trace_id: e.case_id}) %}{% endif %}{% endfor %}
 
-<h1>Policies &amp; audit</h1>
-<p class="lede">
-  Every version of every policy, who activated it, what it is allowed to do, and every
-  case it has handled since.
-</p>
+<div class="pz-policies">
 
-<section class="card">
-  <h2>Policy versions</h2>
-  {% for p in policies %}
-  <article class="policy-version status-{{ p.status }}">
-    <header>
-      <code>{{ p.family }}@v{{ p.version }}</code>
-      <span class="pill status-{{ p.status }}">{{ p.status }}</span>
-      <strong>{{ p.definition.name }}</strong>
-    </header>
-    <p>{{ p.definition.description }}</p>
-    <div class="split">
-      <div>
-        <h4>Conditions</h4>
-        <ul class="conditions">
-          {% for c in p.definition.condition_summary() %}<li><code>{{ c }}</code></li>{% endfor %}
-        </ul>
+<header class="page-head pp-head">
+  <div class="pp-head-copy">
+    <span class="eyebrow" data-animate="fade">Governance</span>
+    <h1 class="display" data-animate="blur">Policies &amp; audit</h1>
+    <p class="lede" data-animate>
+      Every version of every policy, who activated it, what it is allowed to do, and every
+      case it has handled since.
+    </p>
+  </div>
+  <dl class="pp-stats" data-stagger="fade-up" data-delay="0.15">
+    <div class="pp-stat is-good"><dt>Active</dt><dd class="tnum" data-countup="0.9">{{ ns.active }}</dd></div>
+    <div class="pp-stat"><dt>Candidates</dt><dd class="tnum" data-countup="0.9">{{ ns.candidates }}</dd></div>
+    <div class="pp-stat"><dt>Cases handled</dt><dd class="tnum" data-countup>{{ ns.handled }}</dd></div>
+    <a class="pp-stat is-link" href="#audit"><dt>Audit entries</dt><dd class="tnum" data-countup>{{ chain.entries_checked }}</dd></a>
+  </dl>
+</header>
+
+<!-- ============================================================ versions -->
+<section class="pp-section" aria-labelledby="versions-title">
+  <div class="pp-section-head" data-reveal="fade-up">
+    <span class="eyebrow"><span class="pp-index">01</span> Versions</span>
+    <h2 id="versions-title">Policy versions</h2>
+  </div>
+
+  {% for family, group in policies|groupby('family') %}
+  <div class="pp-family">
+    <nav class="version-rail" aria-label="Versions of {{ family }}" data-draw data-reveal="fade-up">
+      <span class="rail-family"><code>{{ family }}</code></span>
+      <ol class="rail-track">
+        {% for p in group|sort(attribute='version') %}
+        <li class="rail-node status-{{ p.status }}">
+          <a href="#{{ p.policy_id }}">
+            <span class="rail-dot" aria-hidden="true"></span>
+            <span class="rail-v">v{{ p.version }}</span>
+            <span class="rail-status">{{ p.status }}</span>
+          </a>
+        </li>
+        {% endfor %}
+      </ol>
+    </nav>
+
+    {% for p in group|sort(attribute='version', reverse=True) %}
+    {% set report = p.replay_report %}
+    <article class="pv status-{{ p.status }}" id="{{ p.policy_id }}" data-reveal="fade-up">
+      <header class="pv-head">
+        <div class="pv-badge" aria-hidden="true"><span>v{{ p.version }}</span></div>
+        <div class="pv-title">
+          <div class="pv-meta">
+            <code>{{ p.family }}@v{{ p.version }}</code>
+            <span class="pill status-{{ p.status }}">{{ p.status }}</span>
+          </div>
+          <h3 class="pv-name">{{ p.definition.name }}</h3>
+        </div>
+        <code class="pv-id" title="Policy ID">{{ p.policy_id }}</code>
+      </header>
+      <p class="pv-desc">{{ p.definition.description }}</p>
+
+      <div class="pv-grid">
+        <div class="pv-block">
+          <h4>Conditions <span class="pv-count">{{ p.definition.condition_summary()|length }}</span></h4>
+          <ul class="conditions">
+            {% for c in p.definition.condition_summary() %}<li><code>{{ c }}</code></li>{% endfor %}
+          </ul>
+        </div>
+        <div class="pv-block">
+          <h4>Actions <span class="pv-count">{{ p.definition.action_summary()|length }}</span></h4>
+          <ol class="actions-list">
+            {% for a in p.definition.action_summary() %}
+            {% set parts = a.split(' (', 1) %}
+            <li><span class="act-n tnum">{{ loop.index }}</span><span class="act-body"><code class="act-name">{{ parts[0] }}</code>{% if parts|length > 1 %}<span class="act-args">{{ parts[1][:-1] if parts[1].endswith(')') else parts[1] }}</span>{% endif %}</span></li>
+            {% endfor %}
+          </ol>
+        </div>
+        <aside class="pv-block pv-lineage">
+          <h4>Lineage</h4>
+          <ol class="lineage-steps">
+            {% if p.revised_from_policy_id %}
+            <li class="ln-revised">
+              <span class="ln-what">Revised from <a href="#{{ p.revised_from_policy_id }}" class="chip">{{ labels.get(p.revised_from_policy_id, p.revised_from_policy_id) }}</a></span>
+              {% if p.revision_note %}<span class="ln-note">&ldquo;{{ p.revision_note }}&rdquo;</span>{% endif %}
+              <span class="ln-when">{{ when(p.created_at) }}</span>
+            </li>
+            {% else %}
+            <li class="ln-proposed">
+              <span class="ln-what">Proposed by the agent{% if p.origin_case_id %} from <span class="chip">{{ p.origin_case_id }}</span>{% endif %}</span>
+              <span class="ln-when">{{ when(p.created_at) }}</span>
+            </li>
+            {% endif %}
+            {% if report %}
+            <li class="{{ 'ln-ok' if report.passed else 'ln-bad' }}">
+              <span class="ln-what">Replay {{ 'passed' if report.passed else 'failed' }} on {{ report.cases_replayed }} cases</span>
+            </li>
+            {% endif %}
+            {% if p.activated_at %}
+            <li class="ln-activated">
+              <span class="ln-what">Activated by <strong>{{ p.activated_by }}</strong></span>
+              <span class="ln-when">at {{ when(p.activated_at) }}</span>
+            </li>
+            {% elif p.status == 'candidate' %}
+            <li class="ln-pending"><span class="ln-what">Awaiting activation</span></li>
+            {% else %}
+            <li class="ln-muted"><span class="ln-what">Never activated.</span></li>
+            {% endif %}
+            {% if p.retired_at %}
+            <li class="ln-retired">
+              <span class="ln-what">{{ 'Superseded' if p.status == 'superseded' else 'Retired' }}</span>
+              <span class="ln-when">{{ when(p.retired_at) }}</span>
+            </li>
+            {% endif %}
+          </ol>
+        </aside>
       </div>
-      <div>
-        <h4>Actions</h4>
-        <ul class="actions-list">
-          {% for a in p.definition.action_summary() %}<li>{{ a }}</li>{% endfor %}
-        </ul>
-        <h4>Activation</h4>
-        {% if p.activated_at %}
-          <p class="muted">Activated by {{ p.activated_by }}<br>{{ p.activated_at }}</p>
-        {% else %}
-          <p class="muted">Never activated.</p>
-        {% endif %}
-        {% if p.retired_at %}<p class="muted">Retired {{ p.retired_at }}</p>{% endif %}
+
+      {% if diffs[p.policy_id] %}
+      <div class="pv-diff">
+        {% with diff = diffs[p.policy_id] %}{% include "partials/policy_diff.html" %}{% endwith %}
       </div>
-    </div>
-
-    {% if p.revised_from_policy_id %}
-    <p class="lineage">
-      Revised from <code>{{ p.revised_from_policy_id }}</code>
-      {% if p.revision_note %}&middot; &ldquo;{{ p.revision_note }}&rdquo;{% endif %}
-    </p>
-    {% endif %}
-
-    {% if diffs[p.policy_id] %}
-    {% with diff = diffs[p.policy_id] %}{% include "partials/policy_diff.html" %}{% endwith %}
-    {% endif %}
-
-    {% if p.replay_report %}
-    <p class="muted small">
-      Replay: {{ p.replay_report.correct_auto_resolutions }} automated,
-      {{ p.replay_report.correct_escalations }} escalated,
-      <strong>{{ p.replay_report.false_automatic_actions }}</strong> wrongly actioned across
-      {{ p.replay_report.cases_replayed }} historical cases &middot;
-      passed: {{ p.replay_report.passed }}
-    </p>
-    {% endif %}
-
-    <h4>Cases handled by this version ({{ handled[p.policy_id]|length }})</h4>
-    {% if handled[p.policy_id] %}
-    <p class="case-chips">
-      {% for c in handled[p.policy_id] %}<code>{{ c }}</code>{% endfor %}
-    </p>
-    {% else %}
-    <p class="muted small">None yet.</p>
-    {% endif %}
-
-    {% if p.status == 'candidate' %}
-    {% with candidate = p, redirect_to = '/policies' %}
-      {% include "partials/revise_form.html" %}
-    {% endwith %}
-    {% endif %}
-
-    {% if p.status == 'candidate' and p.replay_report and p.replay_report.passed %}
-    <div class="activation">
-      <form method="post" action="/policies/{{ p.policy_id }}/activate" class="inline">
-        <input type="password" name="approval_token" placeholder="Approval token" required>
-        <button type="submit" class="btn primary">Activate</button>
-      </form>
-      {% if demo_approval_token %}
-      <p class="token-hint">
-        <strong>Demo token:</strong> <code>{{ demo_approval_token }}</code>
-        &mdash; this placeholder ships with the repository so the flow can be
-        completed on a fresh clone. Set <code>PRECEDENZ_APPROVAL_TOKEN</code> to
-        replace it; this notice disappears when you do.
-      </p>
       {% endif %}
-    </div>
-    {% endif %}
-  </article>
+
+      <div class="pv-foot">
+        {% if report %}
+        {% set total = report.cases_replayed or 1 %}
+        <div class="pv-replay" data-draw>
+          <h4>Replay <span class="pill {{ 'ok' if report.passed else 'bad' }}">{{ 'passed' if report.passed else 'failed' }}</span></h4>
+          <div class="replay-bar" role="img"
+               aria-label="Replay: {{ report.correct_auto_resolutions }} automated, {{ report.correct_escalations }} escalated, {{ report.false_automatic_actions }} wrongly actioned across {{ report.cases_replayed }} historical cases">
+            {% if report.correct_auto_resolutions %}<span class="seg seg-auto" style="--w: {{ (100 * report.correct_auto_resolutions / total)|round(2) }}%"></span>{% endif %}
+            {% if report.correct_escalations %}<span class="seg seg-esc" style="--w: {{ (100 * report.correct_escalations / total)|round(2) }}%"></span>{% endif %}
+            {% if report.false_automatic_actions %}<span class="seg seg-bad" style="--w: {{ (100 * report.false_automatic_actions / total)|round(2) }}%"></span>{% endif %}
+          </div>
+          <dl class="replay-legend">
+            <div class="lg-auto"><dt>Automated</dt><dd class="tnum">{{ report.correct_auto_resolutions }}</dd></div>
+            <div class="lg-esc"><dt>Escalated</dt><dd class="tnum">{{ report.correct_escalations }}</dd></div>
+            <div class="lg-bad"><dt>Wrongly actioned</dt><dd class="tnum">{{ report.false_automatic_actions }}</dd></div>
+            <div class="lg-total"><dt>Historical cases</dt><dd class="tnum">{{ report.cases_replayed }}</dd></div>
+          </dl>
+        </div>
+        {% endif %}
+        <div class="pv-handled">
+          <h4>Cases handled by this version <span class="pv-count">{{ handled[p.policy_id]|length }}</span></h4>
+          {% if handled[p.policy_id] %}
+          <p class="case-chips">
+            {% for c in handled[p.policy_id] %}<code>{{ c }}</code>{% endfor %}
+          </p>
+          {% else %}
+          <p class="muted small">None yet.</p>
+          {% endif %}
+        </div>
+      </div>
+
+      {% if p.status == 'candidate' %}
+      {% with candidate = p, redirect_to = '/policies' %}
+        {% include "partials/revise_form.html" %}
+      {% endwith %}
+      {% endif %}
+
+      {% if p.status == 'candidate' and report and report.passed %}
+      <div class="activation">
+        <div class="activation-copy">
+          <strong>Ready to activate</strong>
+          <span class="muted small">Replay passed. Activation needs the approval token and is recorded in the audit log.</span>
+        </div>
+        <form method="post" action="/policies/{{ p.policy_id }}/activate" class="inline activation-form">
+          <input type="password" name="approval_token" placeholder="Approval token" required autocomplete="off">
+          <button type="submit" class="btn primary">Activate</button>
+        </form>
+        {% if demo_approval_token %}
+        <p class="token-hint">
+          <strong>Demo token:</strong> <code>{{ demo_approval_token }}</code>
+          &mdash; this placeholder ships with the repository so the flow can be
+          completed on a fresh clone. Set <code>PRECEDENZ_APPROVAL_TOKEN</code> to
+          replace it; this notice disappears when you do.
+        </p>
+        {% endif %}
+      </div>
+      {% endif %}
+    </article>
+    {% endfor %}
+  </div>
   {% else %}
-  <p class="empty">No policies yet. Teach one from a decision card.</p>
+  <div class="pp-empty" data-reveal="fade-up">
+    <span class="pp-empty-glyph" aria-hidden="true"></span>
+    <p class="empty">No policies yet. Teach one from a decision card.</p>
+  </div>
   {% endfor %}
 </section>
 
-<section class="card">
-  <h2>
-    Audit log
-    <span class="pill {{ 'ok' if chain.ok else 'bad' }}">
-      hash chain {{ 'intact' if chain.ok else 'BROKEN at #' ~ chain.broken_at }}
-      ({{ chain.entries_checked }} entries)
-    </span>
-  </h2>
-  <p class="muted small">
-    Append-only. <code>UPDATE</code> and <code>DELETE</code> are rejected by database
-    triggers, and each entry carries the hash of the one before it.
-  </p>
-  {% include "partials/timeline.html" %}
+<!-- =============================================================== audit -->
+<section class="pp-section audit" id="audit" aria-labelledby="audit-title">
+  <div class="audit-head">
+    <div class="pp-section-head" data-reveal="fade-up">
+      <span class="eyebrow"><span class="pp-index">02</span> Audit</span>
+      <h2 id="audit-title">Audit log</h2>
+      <p class="muted small">
+        Append-only. <code>UPDATE</code> and <code>DELETE</code> are rejected by database
+        triggers, and each entry carries the hash of the one before it.
+      </p>
+    </div>
+
+    <div class="integrity {{ 'is-ok' if chain.ok else 'is-bad' }}" role="status" data-integrity data-reveal="scale">
+      <span class="integrity-icon" aria-hidden="true">
+        <svg viewBox="0 0 40 40">
+          <circle class="ring-track" cx="20" cy="20" r="18"/>
+          <circle class="ring-fill" cx="20" cy="20" r="18" pathLength="1"/>
+          <path class="shield" d="M20 9.5l8 3v6.2c0 5-3.4 9.3-8 10.8-4.6-1.5-8-5.8-8-10.8v-6.2z"/>
+          {% if chain.ok %}
+          <path class="mark" d="M16.4 19.6l2.6 2.6 4.8-5" pathLength="1"/>
+          {% else %}
+          <path class="mark" d="M17 16.5l6 6m0-6l-6 6" pathLength="1"/>
+          {% endif %}
+        </svg>
+      </span>
+      <span class="integrity-copy">
+        <span class="integrity-label">hash chain {{ 'intact' if chain.ok else 'BROKEN at #' ~ chain.broken_at }}</span>
+        <span class="integrity-sub">
+          <span class="tnum" data-chain-count>{{ chain.entries_checked }}</span> entries
+          <span class="sep">·</span> SHA-256
+          <span class="sep">·</span> <span data-integrity-state>recomputed on load</span>
+        </span>
+      </span>
+    </div>
+  </div>
+
+  {% if timeline %}
+  <div class="audit-ends" data-reveal="fade">
+    <span class="end"><span class="end-label">Head</span> <code title="{{ timeline[0].entry_hash }}">{{ timeline[0].entry_hash[:16] }}</code></span>
+    <span class="end-line" aria-hidden="true"></span>
+    <span class="end"><span class="end-label">Genesis</span> <code>{{ '0' * 16 }}</code></span>
+    {% if chain.entries_checked > timeline|length %}
+    <span class="muted small">Showing the newest {{ timeline|length }}.</span>
+    {% endif %}
+  </div>
+
+  <div class="audit-filters" role="toolbar" aria-label="Filter the audit log by event type" data-reveal="fade">
+    <button type="button" class="af is-active" data-filter="all" aria-pressed="true">All <span class="af-n tnum">{{ timeline|length }}</span></button>
+    {% for f in ['policy', 'semantic', 'action', 'decision', 'verification', 'guardrail', 'exception', 'investigation', 'agent', 'tool', 'event', 'demo'] if fams.get(f) %}
+    <button type="button" class="af ev-color ev-{{ f }}" data-filter="{{ f }}" aria-pressed="false"><span class="af-dot" aria-hidden="true"></span>{{ f }} <span class="af-n tnum">{{ fams[f] }}</span></button>
+    {% endfor %}
+    {% for f, n in fams|dictsort if f not in ['policy', 'semantic', 'action', 'decision', 'verification', 'guardrail', 'exception', 'investigation', 'agent', 'tool', 'event', 'demo'] %}
+    <button type="button" class="af ev-color ev-{{ f }}" data-filter="{{ f }}" aria-pressed="false"><span class="af-dot" aria-hidden="true"></span>{{ f }} <span class="af-n tnum">{{ n }}</span></button>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <ol class="chain" data-chain>
+    {% for e in timeline %}
+    {% set fam = e.event_type.split('.')[0] %}
+    {% if loop.first or e.trace_id != loop.previtem.trace_id %}
+    <li class="trace">
+      <div class="trace-head">
+        <span class="trace-case">{% if trace_cases.get(e.trace_id) %}<span class="chip">{{ trace_cases[e.trace_id] }}</span>{% else %}<span class="chip is-system">system</span>{% endif %}</span>
+        <code class="trace-id" title="Trace ID">{{ e.trace_id }}</code>
+        <span class="trace-time tnum">{{ e.created_at[:10] }}</span>
+      </div>
+      <ol class="entries">
+    {% endif %}
+        <li class="entry ev-color ev-{{ fam }}{% if loop.first %} is-head{% endif %}{% if not chain.ok and e.seq == chain.broken_at %} is-broken{% endif %}"
+            data-family="{{ fam }}" data-hash="{{ e.entry_hash }}" data-prev="{{ e.prev_hash }}" id="seq-{{ e.seq }}">
+          <span class="node" aria-hidden="true"></span>
+          <span class="seq tnum">#{{ e.seq }}</span>
+          <span class="ts tnum">{{ e.created_at[11:23] }}</span>
+          <span class="type">{{ e.event_type }}</span>
+          <span class="actor">{{ e.actor }}</span>
+          <span class="detail">{{ detail(e) }}
+            {%- if fam == 'semantic' and e.payload.probabilities %}
+            {% set pr = e.payload.probabilities %}
+            <span class="sapling {{ 'is-blocked' if e.event_type == 'semantic.blocked' else 'is-supported' }}">
+              <span class="sapling-top">
+                <span class="sapling-mark" aria-hidden="true"></span>
+                <span class="sapling-name">{{ e.payload.model or 'Banyan Sapling' }}</span>
+                <span class="pill {{ 'bad' if e.event_type == 'semantic.blocked' else 'semantic' }}">{{ 'blocked' if e.event_type == 'semantic.blocked' else 'supported' }}</span>
+                {% if e.payload.latency_ms %}<span class="sapling-lat tnum">{{ '%.1f'|format(e.payload.latency_ms / 1000) }} s</span>{% endif %}
+              </span>
+              <span class="sapling-bar" role="img" aria-label="Supported {{ (100 * (pr.supported or 0))|round|int }}%, insufficient information {{ (100 * (pr.insufficient_information or 0))|round|int }}%, violation {{ (100 * (pr.violation or 0))|round|int }}%, inconsistent context {{ (100 * (pr.inconsistent_context or 0))|round|int }}%">
+                <span class="sb sb-sup" style="--w: {{ (100 * (pr.supported or 0))|round(2) }}%"></span>
+                <span class="sb sb-ins" style="--w: {{ (100 * (pr.insufficient_information or 0))|round(2) }}%"></span>
+                <span class="sb sb-vio" style="--w: {{ (100 * (pr.violation or 0))|round(2) }}%"></span>
+                <span class="sb sb-inc" style="--w: {{ (100 * (pr.inconsistent_context or 0))|round(2) }}%"></span>
+                {% if e.payload.min_support %}<span class="sb-min" style="--at: {{ (100 * e.payload.min_support)|round(2) }}%" title="Minimum support {{ e.payload.min_support }}"></span>{% endif %}
+              </span>
+              <span class="sapling-legend tnum">
+                <span class="lg sb-sup">supported {{ (100 * (pr.supported or 0))|round|int }}%</span>
+                <span class="lg sb-ins">insufficient {{ (100 * (pr.insufficient_information or 0))|round|int }}%</span>
+                <span class="lg sb-vio">violation {{ (100 * (pr.violation or 0))|round|int }}%</span>
+                <span class="lg sb-inc">inconsistent {{ (100 * (pr.inconsistent_context or 0))|round|int }}%</span>
+              </span>
+            </span>
+            {%- endif -%}
+          </span>
+          <span class="hash" title="This entry's hash, and the hash of the entry before it">
+            <code class="h-self">{{ e.entry_hash[:8] }}</code><span class="h-link" aria-hidden="true"></span><code class="h-prev">{{ e.prev_hash[:8] }}</code>
+          </span>
+          {% if e.policy_id %}<span class="pol"><code title="{{ e.policy_id }}">{{ labels.get(e.policy_id, e.policy_id) }}</code></span>{% endif %}
+        </li>
+    {% if loop.last or e.trace_id != loop.nextitem.trace_id %}
+      </ol>
+    </li>
+    {% endif %}
+    {% else %}
+    <li class="empty">No entries yet.</li>
+    {% endfor %}
+  </ol>
 </section>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/pages/policies.js?v={{ asset_version }}"></script>
 {% endblock %}

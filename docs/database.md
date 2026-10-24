@@ -3,7 +3,7 @@
 **Status: implemented and tested, not deployed.**
 
 PostgreSQL is the deployment target. SQLite remains as an explicitly-labeled
-zero-setup demo backend so a hackathon judge can run the product from a fresh
+zero-setup demo backend so anyone can run the product from a fresh
 clone with no server and no credentials. Both are real, both run the same
 migrations, and **the entire test suite runs against both** in CI, so they cannot
 drift without CI going red.

@@ -49,7 +49,7 @@ from app.policy.schema import PolicyValidationError
 from app.policy.store import ActivationDenied
 
 BASE_DIR = Path(__file__).resolve().parent
-OPERATOR = "dana.r@northgate-optics.example"
+OPERATOR = "dana.r@wharf-canary-optics.example"
 
 # The waiting panel sets this on the POST it makes on the form's behalf.
 WAIT_HEADER = "x-precedenz-wait"
@@ -92,7 +92,8 @@ def _asset_version() -> str:
     """Changes whenever a static asset does, so browsers fetch the new copy
     instead of reusing a cached one after an update."""
     static = BASE_DIR / "static"
-    newest = max(int((static / name).stat().st_mtime) for name in ("app.css", "waiting.js"))
+    assets = [*static.rglob("*.css"), *static.rglob("*.js")]
+    newest = max(int(path.stat().st_mtime) for path in assets)
     return str(newest)
 
 
@@ -300,6 +301,7 @@ def policies(request: Request) -> HTMLResponse:
         "diffs": diffs,
         "timeline": entries,
         "chain": chain,
+        "kit_categories": sorted(spec_for(POLICY_FAMILY).enum_fields["kit_category"]),
     }
     return templates.TemplateResponse(request, "policies.html", context)
 

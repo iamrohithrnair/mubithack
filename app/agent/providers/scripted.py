@@ -7,7 +7,7 @@ only the token source is deterministic.
 
 Why it exists:
   * unit tests and CI must be hermetic (no network, no credentials, no spend),
-  * the demo must run for a judge with no AWS account,
+  * the demo must run for anyone with no model credentials,
   * the AWS credentials available while this project was built are not valid
     for Bedrock (see docs/provenance.md).
 

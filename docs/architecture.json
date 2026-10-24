@@ -1,6 +1,6 @@
 {
   "title": "Precedenz architecture",
-  "subtitle": "One agent may propose. Deterministic code decides, acts, and records. A person teaches the rule.",
+  "subtitle": "One agent may propose. Deterministic code decides, and Banyan Sapling verifies before anything acts. A person teaches the rule.",
   "note": "Every tier below is in this repository. Two domains ship on it: returns, and accounts-payable invoice variance. Business systems are simulated adapters, not production integrations.",
   "tiers": [
     {
@@ -53,11 +53,11 @@
         },
         {
           "id": "provider",
-          "name": "Model provider",
-          "meta": "mubit | bedrock | anthropic | scripted",
+          "name": "Mubit gateway",
+          "meta": "gpt-6-luna · Responses API",
           "functions": [
-            "gpt-6-luna via the Mubit gateway",
-            "Offline scripted model for tests and CI"
+            "One key routes every model call",
+            "Bedrock, Anthropic, offline swap in"
           ]
         },
         {
@@ -115,8 +115,8 @@
         },
         {
           "id": "semantic",
-          "name": "Semantic check",
-          "meta": "Banyan Sapling",
+          "name": "Banyan Sapling",
+          "meta": "semantic check · MubitLabs",
           "functions": [
             "Reads raw evidence and free-text notes",
             "Only supported lets a policy act"
@@ -325,7 +325,7 @@
       "from": "agent",
       "to": "provider",
       "kind": "control",
-      "label": "model call"
+      "label": "model call through Mubit"
     },
     {
       "from": "agent",

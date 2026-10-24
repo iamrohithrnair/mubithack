@@ -13,8 +13,8 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
 # Company + facility identifiers are fictional. See docs/scope.md.
-COMPANY_NAME = "Northgate Optics"
-FACILITY_ID = "NGO-WH-1"
+COMPANY_NAME = "Wharf Canary Optics"
+FACILITY_ID = "WCO-WH-1"
 
 # Hard ceiling the policy schema will never allow a proposal to exceed, no
 # matter what a human approves or a model proposes. The demo policy lands at

@@ -10,7 +10,7 @@ from app.facts import derive_facts, reconcile
 from app.orchestrator import activate_policy, approve_and_teach, handle_event
 from tests.conftest import demo_policy_payload
 
-OPERATOR = "dana.r@northgate-optics.example"
+OPERATOR = "dana.r@wharf-canary-optics.example"
 
 
 @pytest.fixture()

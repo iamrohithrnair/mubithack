@@ -27,7 +27,7 @@ from app.policy.proposal import revised_payload
 from app.policy.schema import PolicyValidationError, validate_policy_payload
 from tests.conftest import demo_policy_payload
 
-OPERATOR = "dana.r@northgate-optics.example"
+OPERATOR = "dana.r@wharf-canary-optics.example"
 
 
 @pytest.fixture()

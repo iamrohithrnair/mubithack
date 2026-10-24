@@ -4,44 +4,98 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}Precedenz{% endblock %}</title>
-  <meta name="theme-color" content="#10131a">
+  <meta name="theme-color" content="#f7f7f4">
+  <script>
+    /* Theme before first paint, so neither a load nor a cross-document view
+       transition flashes the wrong ground. Light unless the person chose dark
+       with the toggle (theme.js); the OS preference is deliberately ignored. */
+    (function (root) {
+      var t = null;
+      try { t = localStorage.getItem("pz-theme"); } catch (e) { /* storage blocked */ }
+      if (t === "dark") {
+        root.setAttribute("data-theme", "dark");
+        var m = document.querySelector('meta[name="theme-color"]');
+        if (m) m.setAttribute("content", "#0a0a0a");
+      }
+    })(document.documentElement);
+  </script>
+  <script>
+    /* Entrances may hide content only when JS runs and motion is welcome; if
+       motion.js does not start, the class comes off and everything shows. */
+    (function (root) {
+      if (!window.matchMedia || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+      root.classList.add("has-motion");
+      document.addEventListener("DOMContentLoaded", function () {
+        if (!window.PZMotion) root.classList.remove("has-motion");
+      });
+    })(document.documentElement);
+  </script>
   <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
   <link rel="icon" href="/static/favicon-32.png" sizes="32x32" type="image/png">
   <link rel="apple-touch-icon" href="/static/apple-touch-icon.png">
+  <link rel="preload" href="/static/fonts/geist-sans-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/static/fonts/geist-sans-latin-600-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/static/fonts/geist-mono-latin-500-normal.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/static/app.css?v={{ asset_version }}">
-  <script src="/static/waiting.js?v={{ asset_version }}" defer></script>
+  {% block head %}{% endblock %}
 </head>
 <body>
+{%- set path = request.url.path %}
+{%- set section = 'policies' if path.startswith('/policies') else 'dashboard' if path.startswith('/dashboard') else 'inbox' %}
 <header class="topbar">
   <div class="brand">
-    <a href="/"><span class="mark">One</span>Decision</a>
+    <a href="/" class="wordmark" aria-label="Precedenz home">
+      <svg class="glyph" viewBox="0 0 20 20" aria-hidden="true">
+        <rect class="back-sq" x="1.8" y="6.8" width="11.4" height="11.4" rx="1"/>
+        <rect class="front-sq" x="8" y="1" width="11" height="11" rx="1"/>
+      </svg>
+      <span>Precedenz</span>
+    </a>
     <span class="tagline">Teach the agent once; it safely handles the next hundred decisions.</span>
   </div>
-  <nav>
-    <a href="/">Inbox</a>
-    <a href="/policies">Policies &amp; Audit</a>
-    <a href="/dashboard">Dashboard</a>
+  <nav class="nav" aria-label="Primary">
+    {%- for key, href, label in [('inbox', '/', 'Inbox'), ('policies', '/policies', 'Policies & Audit'), ('dashboard', '/dashboard', 'Dashboard')] %}
+    <a href="{{ href }}" class="nav-link{% if section == key %} is-active{% endif %}"{% if section == key %} aria-current="page"{% endif %}>
+      {%- if section == key %}<span class="nav-indicator" aria-hidden="true"></span>{% endif -%}
+      <span class="nav-label">{{ label }}</span></a>
+    {%- endfor %}
+  </nav>
+  <div class="topbar-actions">
     <form method="post" action="/demo/reset" class="inline"
           onsubmit="return confirm('Reset the demo and restore the synthetic fixtures?')">
-      <button type="submit" class="btn ghost">Reset demo</button>
+      <button type="submit" class="btn ghost sm">Reset demo</button>
     </form>
-  </nav>
+    <button type="button" class="theme-toggle" data-theme-toggle aria-pressed="false" aria-label="Dark theme" title="Switch to dark theme">
+      <svg class="theme-icon" viewBox="0 0 24 24" aria-hidden="true">
+        <mask id="theme-icon-mask"><rect x="-4" y="-4" width="32" height="32" fill="#fff"/><circle class="theme-bite" cx="17" cy="7" r="6.6"/></mask>
+        <circle class="theme-core" cx="12" cy="12" r="5" mask="url(#theme-icon-mask)"/>
+        <path class="theme-rays" d="M20.20 12.00L22.60 12.00M17.80 17.80L19.50 19.50M12.00 20.20L12.00 22.60M6.20 17.80L4.50 19.50M3.80 12.00L1.40 12.00M6.20 6.20L4.50 4.50M12.00 3.80L12.00 1.40M17.80 6.20L19.50 4.50"/>
+      </svg>
+    </button>
+  </div>
 </header>
 
 <div class="synthetic-banner">
-  Synthetic demo environment &middot; {{ company }} ({{ facility }}) is a fictional company.
+  <span class="banner-tag">Synthetic demo environment</span>
+  <span>{{ company }} ({{ facility }}) is a fictional company.
   All orders, customers, serials, and warehouse systems below are simulated adapters, not
   production integrations. Model provider: <strong>{{ provider }}</strong>.
-  Semantic check: <strong>{{ 'Banyan Sapling, enforced' if sapling_enforced else 'off' }}</strong>.
+  Semantic check: <strong>{{ 'Banyan Sapling, enforced' if sapling_enforced else 'off' }}</strong>.</span>
 </div>
 
-<main>
+<main id="main">
   {% block content %}{% endblock %}
 </main>
 
 <footer>
-  <span>Precedenz &middot; Agents for Humans &middot; Professional Agents track</span>
+  <span>Precedenz</span>
   <span>Signed in as {{ operator }}</span>
 </footer>
+
+<script src="/static/theme.js?v={{ asset_version }}"></script>
+<script src="/static/vendor/motion-11.18.2.min.js"></script>
+<script src="/static/motion.js?v={{ asset_version }}"></script>
+<script src="/static/waiting.js?v={{ asset_version }}"></script>
+{% block scripts %}{% endblock %}
 </body>
 </html>

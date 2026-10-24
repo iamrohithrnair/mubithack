@@ -1,7 +1,7 @@
 # Deploying to Amazon Bedrock AgentCore Runtime
 
 **Status: deployed.** The agent runs on AgentCore Runtime in `us-west-2`. It was deployed
-with the AgentCore CLI (`@aws/agentcore` 0.28.1) on 2026-09-11 and invoked live. Every
+with the AgentCore CLI (`@aws/agentcore` 0.28.1) and invoked live. Every
 command below was run in this environment unless it is marked **not yet run**.
 
 ## What is deployed

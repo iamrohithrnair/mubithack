@@ -1,8 +1,6 @@
 # Precedenz — Scope Lock
 
 **Tagline:** Teach the agent once; it safely handles the next hundred decisions.
-**Track:** Professional Agents · **Hackathon:** Agents for Humans
-**Scope frozen:** 2026-09-04
 
 ---
 
@@ -34,8 +32,8 @@ All data in this repository is invented for the demo.
 
 | Thing | Value |
 | --- | --- |
-| Company | **Northgate Optics** (fictional camera and optics rental / resale) |
-| Facility | `NGO-WH-1`, Returns & Inspection dock |
+| Company | **Wharf Canary Optics** (fictional camera and optics rental / resale) |
+| Facility | `WCO-WH-1`, Returns & Inspection dock |
 | Persona | Dana R., Returns Supervisor — the human who decides |
 | Products | Synthetic SKUs (`NGO-KIT-*`), synthetic serials, synthetic orders |
 | Customers | Synthetic names and IDs; **no real people, no PII** |
@@ -121,7 +119,7 @@ generated executable code · computer vision or OCR · billing.
 
 | # | Decision | Rationale | Reversible? |
 | --- | --- | --- | --- |
-| 1 | Python 3.11 + FastAPI + Jinja2, PostgreSQL in deployment and SQLite for the offline demo | Zero-build and server-rendered; a judge needs no database server, a deployment gets a real one. Both run the same suite. See docs/database.md | Yes |
+| 1 | Python 3.11 + FastAPI + Jinja2, PostgreSQL in deployment and SQLite for the offline demo | Zero-build and server-rendered; the demo needs no database server, a deployment gets a real one. Both run the same suite. See docs/database.md | Yes |
 | 2 | Exactly one Strands agent | The product is governance, not agent count | Yes |
 | 3 | Model provider behind an adapter (`app/agent/providers/`) | AWS credentials are unavailable in the build environment; the runtime must not care which model backs it | Yes |
 | 4 | A deterministic `scripted` Strands `Model` implementation | Gives hermetic tests, CI, and an offline demo while still exercising the **real** Strands agent loop and real tool calls | Yes |
@@ -133,11 +131,11 @@ generated executable code · computer vision or OCR · billing.
 
 ## 8. Assumptions
 
-- **A1.** Judges may run the project locally, so `make setup && make seed && make run`
+- **A1.** Anyone may run the project locally, so `make setup && make seed && make run`
   must work with no cloud account and no credentials.
 - **A2.** For most of the build, the AWS credentials in the environment were invalid
   (`sts:GetCallerIdentity` returned `InvalidClientTokenId`). Valid credentials were
-  added on 2026-09-10: the Bedrock path passes the smoke and integration tests live,
+  added later: the Bedrock path passes the smoke and integration tests live,
   and the agent is deployed to AgentCore Runtime. See `docs/provenance.md`.
 - **A3.** "One approved non-serialized accessory" means exactly one missing
   line item, quantity one.

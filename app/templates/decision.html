@@ -1,53 +1,246 @@
 {% extends "base.html" %}
 {% block title %}{{ exception.case_id }} · Precedenz{% endblock %}
+{% block head %}<link rel="stylesheet" href="/static/pages/decision.css?v={{ asset_version }}">{% endblock %}
 {% block content %}
+{#- Everything below is derived from the context the route already passes:
+    the case, its decision card, the latest policy taught from it, and the
+    case's audit timeline (which carries the Banyan Sapling verdicts). -#}
+{%- set types = timeline | map(attribute='event_type') | list %}
+{%- set semantic_events = timeline | selectattr('event_type', 'in', ['semantic.supported', 'semantic.blocked']) | list %}
+{%- set sem = semantic_events[-1] if semantic_events else none %}
+{%- set actions_done = timeline | selectattr('event_type', 'equalto', 'action.executed') | list %}
+{%- set verifications = timeline | selectattr('event_type', 'in', ['verification.passed', 'verification.failed']) | list %}
+{%- set verification = verifications[-1] if verifications else none %}
+{%- set matched = (timeline | selectattr('event_type', 'equalto', 'policy.matched') | list) %}
+{%- set matched = matched[-1] if matched else none %}
+{%- set status = exception.status %}
 
-<a class="back" href="/">&larr; Inbox</a>
+<div class="dz" data-status="{{ status }}">
 
-<h1>{{ exception.case_id }} <span class="pill status-{{ exception.status }}">{{ status_labels[exception.status] }}</span></h1>
-<p class="lede">{{ exception.kit_name }} ({{ exception.sku }}) &middot; trace <code>{{ exception.trace_id }}</code></p>
+{# ================================================================ hero #}
+<header class="dz-hero" data-status="{{ status }}">
+  <div class="dz-hero-glow" aria-hidden="true"></div>
+  <a class="back" href="/">&larr; Inbox</a>
+  <div class="dz-hero-main">
+    <div class="dz-hero-title">
+      <span class="eyebrow" data-animate="fade">Return exception</span>
+      <h1 class="dz-case" aria-label="{{ exception.case_id }}">{{ exception.case_id }}</h1>
+      <div class="dz-hero-pill" data-animate="fade-up">
+        <span class="pill status-{{ status }}">{{ status_labels[status] }}</span>
+      </div>
+    </div>
+    <dl class="dz-facts" data-stagger="fade-up" data-stagger-step="0.06">
+      <div><dt>Kit</dt><dd>{{ exception.kit_name }}</dd></div>
+      <div><dt>SKU</dt><dd><code>{{ exception.sku }}</code></dd></div>
+      <div><dt>Trace</dt><dd><code>{{ exception.trace_id }}</code></dd></div>
+      <div><dt>Events</dt><dd class="tnum">{{ timeline|length }}</dd></div>
+    </dl>
+  </div>
 
+  {#- The path this case took, read off its audit trail. #}
+  <ol class="dz-journey" aria-label="What has happened to this case" data-stagger="fade-left" data-stagger-step="0.07">
+    <li class="is-done"><span class="dz-node"></span><span class="dz-step">Checked in</span></li>
+    {% if 'investigation.completed' in types %}
+    <li class="is-done"><span class="dz-node"></span><span class="dz-step">Investigated</span></li>
+    {% elif status == 'escalated' %}
+    <li class="is-bad"><span class="dz-node"></span><span class="dz-step">Investigation</span></li>
+    {% else %}
+    <li class="is-current"><span class="dz-node"></span><span class="dz-step">Investigating</span></li>
+    {% endif %}
+    {% if decision and decision.outcome %}
+    <li class="is-done"><span class="dz-node"></span><span class="dz-step">Person decided</span></li>
+    {% elif card %}
+    <li class="{{ 'is-current' if status == 'waiting_decision' else 'is-bad' }}"><span class="dz-node"></span><span class="dz-step">{{ 'Needs a person' if status == 'waiting_decision' else 'Sent to a person' }}</span></li>
+    {% elif matched %}
+    <li class="is-done"><span class="dz-node"></span><span class="dz-step">Policy matched</span></li>
+    {% elif status == 'escalated' %}
+    <li class="is-bad"><span class="dz-node"></span><span class="dz-step">No policy fit</span></li>
+    {% endif %}
+    {% if candidate %}
+    <li class="{{ 'is-done' if candidate.status == 'active' else 'is-current' if candidate.status == 'candidate' else 'is-muted' }}"><span class="dz-node"></span><span class="dz-step">{{ 'Policy active' if candidate.status == 'active' else 'Policy proposed' if candidate.status == 'candidate' else 'Policy ' ~ candidate.status }}</span></li>
+    {% endif %}
+    {% if sem %}
+    <li class="is-semantic {{ 'is-done' if sem.event_type == 'semantic.supported' else 'is-bad' }}"><span class="dz-node"></span><span class="dz-step">Semantic check</span></li>
+    {% endif %}
+    {% if status == 'resolved' %}
+    <li class="is-done is-end"><span class="dz-node"></span><span class="dz-step">Resolved</span></li>
+    {% elif status == 'escalated' %}
+    <li class="is-bad is-end"><span class="dz-node"></span><span class="dz-step">Escalated</span></li>
+    {% else %}
+    <li class="is-pending is-end"><span class="dz-node"></span><span class="dz-step">Outcome</span></li>
+    {% endif %}
+  </ol>
+</header>
+
+{# ============================================================ outcomes #}
 {% if exception.escalation_reasons %}
-<section class="card danger">
-  <h2>Escalated — no automatic action was taken</h2>
-  <ul>
-    {% for r in exception.escalation_reasons %}<li>{{ r }}</li>{% endfor %}
-  </ul>
+<section class="card danger dz-escalated" data-animate="fade-up">
+  <div class="dz-outcome-icon" aria-hidden="true">
+    <svg viewBox="0 0 24 24"><path d="M12 7.5v5.5"/><circle cx="12" cy="16.6" r=".6"/><path d="M10.3 3.9 2.6 17.4A2 2 0 0 0 4.3 20.4h15.4a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg>
+  </div>
+  <div class="dz-outcome-body">
+    <span class="eyebrow">Outcome</span>
+    <h2>Escalated — no automatic action was taken</h2>
+    <ol class="dz-reasons" data-stagger="fade-up" data-delay="0.15">
+      {% for r in exception.escalation_reasons %}<li>{{ r }}</li>{% endfor %}
+    </ol>
+  </div>
 </section>
 {% endif %}
 
+{% if status == 'resolved' and actions_done %}
+<section class="card dz-resolved" data-animate="fade-up">
+  <div class="dz-outcome-icon good" aria-hidden="true">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path class="dz-draw" d="m8 12.3 2.7 2.7L16.2 9.4"/></svg>
+  </div>
+  <div class="dz-outcome-body">
+    <span class="eyebrow">Outcome</span>
+    <h2>Resolved{% if matched %} under <code>{{ matched.payload.policy }}</code>{% endif %}</h2>
+    <div class="split dz-resolved-split">
+      <div>
+        <h3>Actions taken</h3>
+        <ol class="dz-actions-taken" data-reveal="fade-up" data-stagger="fade-up" data-stagger-step="0.09">
+          {% for a in actions_done %}
+          <li>
+            <span class="dz-idx tnum">{{ loop.index }}</span>
+            <span><code>{{ a.payload.action }}</code><span class="muted small">{{ a.payload.detail }}</span></span>
+          </li>
+          {% endfor %}
+        </ol>
+      </div>
+      {% if verification %}
+      <div>
+        <h3>Verification{% if verification.event_type == 'verification.passed' %} &middot; <span class="dz-ok">passed</span>{% else %} &middot; <span class="dz-bad">failed</span>{% endif %}</h3>
+        <ul class="dz-checks" data-reveal="fade-left" data-stagger="fade-left" data-stagger-step="0.12">
+          {% for c in verification.payload.checks %}
+          <li><svg class="dz-tick" viewBox="0 0 16 16" aria-hidden="true"><path d="m3.5 8.4 2.9 2.9 6-6.3"/></svg>{{ c }}</li>
+          {% endfor %}
+          {% for f in verification.payload.failures or [] %}
+          <li class="is-failed"><svg class="dz-tick" viewBox="0 0 16 16" aria-hidden="true"><path d="M4.5 4.5l7 7m0-7-7 7"/></svg>{{ f }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
+{# ============================================== Banyan Sapling verdict #}
+{% if sem %}
+{%- set p = sem.payload %}
+{%- set probs = p.probabilities or {} %}
+{%- set supported = sem.event_type == 'semantic.supported' %}
+{%- set min_support = p.min_support if p.min_support is not none else 0.5 %}
+<section class="card dz-sapling {{ 'is-supported' if supported else 'is-blocked' }}" id="semantic" data-reveal="fade-up">
+  <header class="dz-sapling-head">
+    <div>
+      <span class="eyebrow dz-sapling-eyebrow"><span class="dz-sapling-mark" aria-hidden="true"></span>Semantic check &middot; Banyan Sapling</span>
+      <h2>
+        {% if supported %}The evidence supports acting automatically{% else %}Stopped before anything moved{% endif %}
+      </h2>
+      <p class="muted small dz-sapling-sub">
+        The policy engine reads structured fields only. Sapling reads the raw record,
+        free text included, and can only stop an action the engine allowed, never start one.
+      </p>
+    </div>
+    <div class="dz-verdict" data-verdict>
+      <span class="dz-verdict-k">Verdict</span>
+      <span class="dz-verdict-v">{{ (p.raw_label or 'unavailable')|replace('_', ' ') }}</span>
+      <span class="pill {{ 'ok' if supported else 'bad' }}">{{ 'action allowed' if supported else 'escalated' }}</span>
+    </div>
+  </header>
+
+  <div class="dz-sapling-grid">
+    <figure class="dz-read">
+      <figcaption>
+        <h3>Inspector note as received (untrusted free text)</h3>
+        {% if not supported %}<span class="pill semantic">what Sapling caught</span>{% endif %}
+      </figcaption>
+      <blockquote class="dz-note-quote{{ ' is-empty' if not exception.inspector_notes }}">{{ exception.inspector_notes or '(none)' }}</blockquote>
+      <p class="dz-claim"><span class="dz-claim-k">Claim tested</span>&ldquo;This case meets every condition of the policy and may be resolved automatically.&rdquo;</p>
+      <p class="muted small">
+        Notes are shown to you and reported as evidence. They are never treated as
+        instructions to the agent, and nothing in them can reach the policy language.
+      </p>
+    </figure>
+
+    <div class="dz-probs">
+      {% if p.error %}
+      <div class="notice bad"><strong>Semantic check unavailable.</strong> {{ p.error }} &mdash; failing closed.</div>
+      {% else %}
+      <h3>How Sapling read it</h3>
+      <ul class="dz-bars" style="--min: {{ min_support }}">
+        {% for key, label in [('supported', 'Supported'), ('violation', 'Violation'), ('insufficient_information', 'Insufficient information'), ('inconsistent_context', 'Inconsistent context')] %}
+        {%- set v = probs.get(key, 0) %}
+        <li class="dz-bar k-{{ key }}{{ ' is-top' if p.raw_label == key }}" style="--p: {{ v }}">
+          <span class="dz-bar-label">{{ label }}</span>
+          <span class="dz-bar-val tnum" data-countup="1.1">{{ '%.2f'|format(v) }}</span>
+          <span class="dz-bar-track">
+            <span class="dz-bar-fill"></span>
+            {% if key == 'supported' %}<span class="dz-threshold" title="Needs at least {{ '%.2f'|format(min_support) }}"><span>min {{ '%.2f'|format(min_support) }}</span></span>{% endif %}
+          </span>
+        </li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+      <dl class="dz-sapling-meta">
+        <div><dt>Latency</dt><dd class="tnum">{%- set ms = p.latency_ms or 0 %}{% if ms < 1000 %}{{ ms }} ms{% else %}{{ '%.1f'|format(ms / 1000) }} s{% endif %}</dd></div>
+        <div><dt>Threshold</dt><dd class="tnum">p(supported) &ge; {{ '%.2f'|format(min_support) }}</dd></div>
+        {% if p.calibrated_status %}<div><dt>Calibrated</dt><dd>{{ p.calibrated_status }}</dd></div>{% endif %}
+        <div><dt>Checked</dt><dd class="tnum">{{ sem.created_at[11:19] }}</dd></div>
+      </dl>
+    </div>
+  </div>
+</section>
+{% endif %}
+
+{# ======================================================= decision card #}
 {% if card %}
-<section class="card decision">
-  <h2>Decision card</h2>
-  <p class="headline">{{ card.headline }}</p>
+<section class="card decision dz-card" data-animate="fade-up">
+  <h2 class="dz-card-title">Decision card</h2>
+  <p class="headline dz-headline">{{ card.headline }}</p>
+  {%- set decided = decision and decision.outcome %}
+  {% if decided %}
+  <p class="decided"><svg class="dz-tick" viewBox="0 0 16 16" aria-hidden="true"><path d="m3.5 8.4 2.9 2.9 6-6.3"/></svg>Decided <strong>{{ decision.outcome }}</strong> by {{ decision.decided_by }} at {{ decision.decided_at }}.</p>
+  <details class="dz-more">
+    <summary>Evidence, uncertainty and proposed boundaries</summary>
+  {% endif %}
 
   <h3>Evidence the agent gathered</h3>
-  <table class="evidence">
-    <tbody>
+  <table class="evidence dz-evidence">
+    <tbody data-reveal="fade-up" data-stagger="fade-up" data-stagger-step="0.045">
     {% for item in card.evidence %}
       <tr>
         <th>{{ item.label }}</th>
         <td>{{ item.value }}</td>
-        <td class="tool"><code>{{ item.source_tool }}</code></td>
+        <td class="tool"><code class="dz-tool">{{ item.source_tool }}</code></td>
       </tr>
     {% endfor %}
     </tbody>
   </table>
 
-  <h3>Recommended action</h3>
-  <p class="recommend">{{ card.recommended_action }}</p>
-  {% if card.estimated_cost_usd is not none %}
-  <p class="muted">Estimated cost: ${{ '%.2f'|format(card.estimated_cost_usd) }}</p>
-  {% endif %}
+  <div class="dz-recommend-row">
+    <div>
+      <h3>Recommended action</h3>
+      <p class="recommend">{{ card.recommended_action }}</p>
+    </div>
+    {% if card.estimated_cost_usd is not none %}
+    <div class="dz-cost">
+      <span class="dz-cost-k">Estimated cost</span>
+      <span class="dz-cost-v tnum" data-countup="0.9">${{ '%.2f'|format(card.estimated_cost_usd) }}</span>
+    </div>
+    {% endif %}
+  </div>
 
-  <div class="split">
+  <div class="split dz-card-split">
     <div>
       <h3>Uncertainty</h3>
-      <ul>{% for u in card.uncertainty %}<li>{{ u }}</li>{% endfor %}</ul>
+      <ul class="dz-uncertainty">{% for u in card.uncertainty %}<li>{{ u }}</li>{% endfor %}</ul>
     </div>
     <div>
       <h3>Proposed boundaries</h3>
-      <ul class="boundaries">
+      <ul class="boundaries" data-reveal="fade-up" data-stagger="fade-up">
         {% for b in card.proposed_boundaries %}
         <li><strong>{{ b.description }}</strong><span class="muted">{{ b.reason }}</span></li>
         {% endfor %}
@@ -55,41 +248,49 @@
     </div>
   </div>
 
-  <h3>Why a person has to decide this</h3>
-  <p>{{ card.why_human_must_decide }}</p>
-
-  {% if decision and decision.outcome %}
-    <p class="decided">Decided <strong>{{ decision.outcome }}</strong> by {{ decision.decided_by }} at {{ decision.decided_at }}.</p>
-  {% else %}
-  <div class="actions">
-    <form method="post" action="/exceptions/{{ exception.exception_id }}/approve" class="inline"
-          data-wait="{{ exception.exception_id }}"
-          data-wait-anchor="candidate"
-          data-wait-title="Turning your decision into a policy"
-          data-wait-note="Nothing is being executed. What comes back is a candidate policy, inert until you activate it.">
-      <button type="submit" class="btn primary">Approve and teach</button>
-    </form>
-    <form method="post" action="/exceptions/{{ exception.exception_id }}/reject" class="inline">
-      <input type="hidden" name="reason" value="rejected by the supervisor; handled by hand">
-      <button type="submit" class="btn ghost">Reject and handle by hand</button>
-    </form>
+  <div class="dz-why">
+    <h3>Why a person has to decide this</h3>
+    <p>{{ card.why_human_must_decide }}</p>
   </div>
-  <p class="muted small">
-    Approving records your decision and asks the agent to propose a policy. It does not
-    activate anything.
-  </p>
+
+  {% if decided %}
+  </details>
+  {% else %}
+  <div class="dz-decide">
+    <p class="muted small">
+      Approving records your decision and asks the agent to propose a policy. It does not
+      activate anything.
+    </p>
+    <div class="actions">
+      <form method="post" action="/exceptions/{{ exception.exception_id }}/reject" class="inline">
+        <input type="hidden" name="reason" value="rejected by the supervisor; handled by hand">
+        <button type="submit" class="btn ghost">Reject and handle by hand</button>
+      </form>
+      <form method="post" action="/exceptions/{{ exception.exception_id }}/approve" class="inline"
+            data-wait="{{ exception.exception_id }}"
+            data-wait-anchor="candidate"
+            data-wait-title="Turning your decision into a policy"
+            data-wait-note="Nothing is being executed. What comes back is a candidate policy, inert until you activate it.">
+        <button type="submit" class="btn primary">Approve and teach</button>
+      </form>
+    </div>
+  </div>
   {% endif %}
 </section>
 {% endif %}
 
+{# ==================================================== candidate policy #}
 {% if candidate %}
-<section class="card policy" id="candidate">
-  <h2>
-    Proposed policy
-    <span class="pill status-{{ candidate.status }}">{{ candidate.status }}</span>
-    <code>{{ candidate.family }}@v{{ candidate.version }}</code>
-  </h2>
-  <p>{{ candidate.definition.description }}</p>
+<section class="card policy dz-policy" id="candidate" data-animate="fade-up">
+  <header class="dz-policy-head">
+    <span class="eyebrow">Taught from this case</span>
+    <h2>
+      Proposed policy
+      <span class="pill status-{{ candidate.status }}">{{ candidate.status }}</span>
+      <code class="chip">{{ candidate.family }}@v{{ candidate.version }}</code>
+    </h2>
+    <p class="dz-policy-desc">{{ candidate.definition.description }}</p>
+  </header>
 
   {% if lineage|length > 1 %}
   <p class="lineage">
@@ -104,18 +305,19 @@
   <p class="muted small">Revision note: &ldquo;{{ candidate.revision_note }}&rdquo;</p>
   {% endif %}
 
-  <div class="split">
-    <div>
+  <div class="dz-rule">
+    <div class="dz-rule-col">
       <h3>It may act only when all of these hold</h3>
-      <ul class="conditions">
+      <ul class="conditions" data-reveal="fade-up" data-stagger="fade-up" data-stagger-step="0.04">
         {% for c in candidate.definition.condition_summary() %}<li><code>{{ c }}</code></li>{% endfor %}
       </ul>
     </div>
-    <div>
+    <div class="dz-rule-link" aria-hidden="true"><span>then</span></div>
+    <div class="dz-rule-col">
       <h3>And it may only do this</h3>
-      <ul class="actions-list">
+      <ol class="actions-list" data-reveal="fade-up" data-stagger="fade-up" data-stagger-step="0.08">
         {% for a in candidate.definition.action_summary() %}<li>{{ a }}</li>{% endfor %}
-      </ul>
+      </ol>
       <p class="muted small">
         The action set is fixed by the system. The agent proposes conditions and a spend
         cap; it cannot propose an action that is not already allowlisted.
@@ -135,72 +337,96 @@
 
   {% if candidate.replay_report %}
   {% set r = candidate.replay_report %}
-  <h3>Replay against {{ r.cases_replayed }} historical cases</h3>
-  <div class="replay-grid">
-    <div class="stat good"><span class="n">{{ r.correct_auto_resolutions }}</span>correctly automated</div>
-    <div class="stat good"><span class="n">{{ r.correct_escalations }}</span>correctly escalated</div>
-    <div class="stat {{ 'bad' if r.false_automatic_actions else 'good' }}">
-      <span class="n">{{ r.false_automatic_actions }}</span>wrongly actioned
+  <div class="dz-replay{{ ' is-passed' if r.passed else ' is-failed' }}">
+    <h3>Replay against {{ r.cases_replayed }} historical cases</h3>
+    <div class="replay-grid" data-reveal="fade-up" data-stagger="fade-up" data-stagger-step="0.07">
+      <div class="stat good"><span class="n" data-countup>{{ r.correct_auto_resolutions }}</span>correctly automated</div>
+      <div class="stat good esc"><span class="n" data-countup>{{ r.correct_escalations }}</span>correctly escalated</div>
+      <div class="stat {{ 'bad' if r.false_automatic_actions else 'good zero' }}">
+        <span class="n">{{ r.false_automatic_actions }}</span>wrongly actioned
+      </div>
+      <div class="stat cov" style="--cov: {{ r.automation_coverage }}"><span class="n" data-countup>{{ (r.automation_coverage * 100)|round|int }}%</span>coverage<span class="dz-cov" aria-hidden="true"><span></span></span></div>
     </div>
-    <div class="stat"><span class="n">{{ (r.automation_coverage * 100)|round|int }}%</span>coverage</div>
+
+    {% if r.results %}
+    <div class="dz-waffle-wrap">
+      <ol class="dz-waffle" aria-label="Each historical case, as this version would have handled it" data-reveal="scale" data-stagger="scale" data-stagger-step="0.022">
+        {% for res in r.results %}
+        {%- if res.expected == 'auto_resolve' and res.predicted == 'auto_resolve' %}{% set k = 'auto' %}
+        {%- elif res.predicted == 'auto_resolve' %}{% set k = 'wrong' %}
+        {%- elif res.expected == 'auto_resolve' %}{% set k = 'missed' %}
+        {%- else %}{% set k = 'esc' %}{% endif %}
+        <li class="w-{{ k }}" title="{{ res.case_id }}: expected {{ res.expected }}, would {{ res.predicted }}"><span class="sr-only">{{ res.case_id }} {{ k }}</span></li>
+        {% endfor %}
+      </ol>
+      <ul class="dz-legend">
+        <li class="w-auto">automated</li><li class="w-esc">escalated</li>
+        <li class="w-missed">sent to a person</li><li class="w-wrong">wrongly actioned</li>
+      </ul>
+    </div>
+    {% endif %}
+
+    {% set wrong = r.failures | selectattr('predicted', 'equalto', 'auto_resolve') | list %}
+    {% set missed = r.failures | rejectattr('predicted', 'equalto', 'auto_resolve') | list %}
+
+    {% if wrong %}
+    <h4 class="danger-heading">Cases this version would have actioned wrongly</h4>
+    <p class="muted small">These block activation outright.</p>
+    <table class="replay stack">
+      <thead><tr><th>Case</th><th>Should have</th><th>Would have</th><th>Why it matters</th></tr></thead>
+      <tbody>
+        {% for f in wrong %}
+        <tr><td class="row-title"><code>{{ f.case_id }}</code></td><td data-label="Should have">{{ f.expected }}</td><td data-label="Would have">{{ f.predicted }}</td>
+            <td data-label="Why it matters">{{ f.scenario_note }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% endif %}
+
+    {% if missed %}
+    <h4>Cases this version sends to a person instead of automating</h4>
+    <p class="muted small">
+      Not errors. Each one costs a supervisor a couple of minutes; a wrong automatic
+      action costs a camera. Tightening the boundary deliberately trades the first
+      for the second.
+    </p>
+    <table class="replay stack">
+      <thead><tr><th>Case</th><th>Could have been</th><th>Will be</th><th>Scenario</th></tr></thead>
+      <tbody>
+        {% for f in missed %}
+        <tr><td class="row-title"><code>{{ f.case_id }}</code></td><td data-label="Could have been">{{ f.expected }}</td><td data-label="Will be">{{ f.predicted }}</td>
+            <td data-label="Scenario">{{ f.scenario_note }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% endif %}
+
+    {% if not r.coverage_floor_enforced %}
+    <p class="muted small">
+      The automation-coverage floor does not apply here: this version is no wider
+      than the one it revises, and a person choosing to automate less is always
+      allowed. Zero wrong automatic actions is still required, and still met.
+    </p>
+    {% endif %}
   </div>
-
-  {% set wrong = r.failures | selectattr('predicted', 'equalto', 'auto_resolve') | list %}
-  {% set missed = r.failures | rejectattr('predicted', 'equalto', 'auto_resolve') | list %}
-
-  {% if wrong %}
-  <h4 class="danger-heading">Cases this version would have actioned wrongly</h4>
-  <p class="muted small">These block activation outright.</p>
-  <table class="replay stack">
-    <thead><tr><th>Case</th><th>Should have</th><th>Would have</th><th>Why it matters</th></tr></thead>
-    <tbody>
-      {% for f in wrong %}
-      <tr><td class="row-title"><code>{{ f.case_id }}</code></td><td data-label="Should have">{{ f.expected }}</td><td data-label="Would have">{{ f.predicted }}</td>
-          <td data-label="Why it matters">{{ f.scenario_note }}</td></tr>
-      {% endfor %}
-    </tbody>
-  </table>
-  {% endif %}
-
-  {% if missed %}
-  <h4>Cases this version sends to a person instead of automating</h4>
-  <p class="muted small">
-    Not errors. Each one costs a supervisor a couple of minutes; a wrong automatic
-    action costs a camera. Tightening the boundary deliberately trades the first
-    for the second.
-  </p>
-  <table class="replay stack">
-    <thead><tr><th>Case</th><th>Could have been</th><th>Will be</th><th>Scenario</th></tr></thead>
-    <tbody>
-      {% for f in missed %}
-      <tr><td class="row-title"><code>{{ f.case_id }}</code></td><td data-label="Could have been">{{ f.expected }}</td><td data-label="Will be">{{ f.predicted }}</td>
-          <td data-label="Scenario">{{ f.scenario_note }}</td></tr>
-      {% endfor %}
-    </tbody>
-  </table>
-  {% endif %}
-
-  {% if not r.coverage_floor_enforced %}
-  <p class="muted small">
-    The automation-coverage floor does not apply here: this version is no wider
-    than the one it revises, and a person choosing to automate less is always
-    allowed. Zero wrong automatic actions is still required, and still met.
-  </p>
-  {% endif %}
 
   {% if candidate.status == 'candidate' %}
     {% if r.passed %}
-    <div class="activation">
-      <p><strong>Replay passed.</strong> This policy version can now be activated. Until you
-      activate it, it does nothing.</p>
-      <form method="post" action="/policies/{{ candidate.policy_id }}/activate" class="inline">
-        <input type="password" name="approval_token" placeholder="Approval token" required>
-        <button type="submit" class="btn primary">Activate this policy version</button>
-      </form>
-      <form method="post" action="/policies/{{ candidate.policy_id }}/reject" class="inline">
-        <input type="hidden" name="reason" value="candidate rejected at review">
-        <button type="submit" class="btn ghost">Reject</button>
-      </form>
+    <div class="activation dz-activate" data-reveal="fade-up">
+      <div class="dz-activate-copy">
+        <p><strong>Replay passed.</strong> This policy version can now be activated. Until you
+        activate it, it does nothing.</p>
+      </div>
+      <div class="dz-activate-forms">
+        <form method="post" action="/policies/{{ candidate.policy_id }}/activate" class="inline dz-activate-form">
+          <input type="password" name="approval_token" placeholder="Approval token" required autocomplete="off">
+          <button type="submit" class="btn primary">Activate this policy version</button>
+        </form>
+        <form method="post" action="/policies/{{ candidate.policy_id }}/reject" class="inline">
+          <input type="hidden" name="reason" value="candidate rejected at review">
+          <button type="submit" class="btn ghost">Reject</button>
+        </form>
+      </div>
       {% if demo_approval_token %}
       <p class="token-hint">
         <strong>Demo token:</strong> <code>{{ demo_approval_token }}</code>
@@ -217,18 +443,23 @@
     </div>
     {% endif %}
   {% elif candidate.status == 'active' %}
-    <p class="decided">Activated by {{ candidate.activated_by }} at {{ candidate.activated_at }}.</p>
+    <p class="decided"><svg class="dz-tick" viewBox="0 0 16 16" aria-hidden="true"><path d="m3.5 8.4 2.9 2.9 6-6.3"/></svg>Activated by {{ candidate.activated_by }} at {{ candidate.activated_at }}.</p>
   {% endif %}
   {% endif %}
 </section>
 {% endif %}
 
-<section class="card">
-  <h2>Timeline</h2>
+{# ============================================================ timeline #}
+<section class="card dz-timeline-card">
+  <header class="dz-section-head">
+    <h2>Timeline</h2>
+    <span class="muted small tnum">{{ timeline|length }} audit events &middot; append-only, hash-chained</span>
+  </header>
   {% include "partials/timeline.html" %}
 </section>
 
-<section class="card muted-card">
+{% if not sem %}
+<section class="card muted-card dz-note-card">
   <h3>Inspector note as received (untrusted free text)</h3>
   <pre class="note">{{ exception.inspector_notes or '(none)' }}</pre>
   <p class="muted small">
@@ -236,4 +467,8 @@
     instructions to the agent, and nothing in them can reach the policy language.
   </p>
 </section>
+{% endif %}
+
+</div>
 {% endblock %}
+{% block scripts %}<script src="/static/pages/decision.js?v={{ asset_version }}"></script>{% endblock %}

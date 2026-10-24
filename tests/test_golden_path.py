@@ -9,7 +9,7 @@ from app.domain import ExceptionStatus, Outcome
 from app.orchestrator import activate_policy, approve_and_teach, handle_event
 from app.policy import store
 
-OPERATOR = "dana.r@northgate-optics.example"
+OPERATOR = "dana.r@wharf-canary-optics.example"
 
 
 @pytest.fixture()

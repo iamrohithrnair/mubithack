@@ -95,7 +95,7 @@ def activated_policy(conn) -> str:
         conn,
         record.policy_id,
         approval_token=token(),
-        activated_by="ap.clerk@northgate-optics.example",
+        activated_by="ap.clerk@wharf-canary-optics.example",
         trace_id="trc_ap_test",
     )
     return record.policy_id
@@ -207,7 +207,7 @@ def test_a_policy_that_would_pay_a_duplicate_cannot_be_activated(conn):
             conn,
             record.policy_id,
             approval_token=token(),
-            activated_by="ap.clerk@northgate-optics.example",
+            activated_by="ap.clerk@wharf-canary-optics.example",
             trace_id="trc_ap_loose",
         )
 
@@ -226,7 +226,7 @@ def test_activation_still_needs_a_human_token(conn):
             conn,
             record.policy_id,
             approval_token="",
-            activated_by="ap.clerk@northgate-optics.example",
+            activated_by="ap.clerk@wharf-canary-optics.example",
             trace_id="trc_ap_token",
         )
 

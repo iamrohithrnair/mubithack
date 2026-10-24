@@ -18,7 +18,7 @@ from app.domain import Outcome
 from app.domains import returns
 from app.orchestrator import activate_policy, approve_and_teach, handle_event
 
-OPERATOR = "dana.r@northgate-optics.example"
+OPERATOR = "dana.r@wharf-canary-optics.example"
 
 
 @pytest.fixture()

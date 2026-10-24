@@ -2,9 +2,7 @@
 
 **Teach the agent once; it safely handles the next hundred decisions.**
 
-Built for **Agents for Humans** · Professional Agents track · Strands Agents on Claude Opus 5, deployed to Amazon Bedrock AgentCore Runtime
-
-**[Watch the 3½-minute demo](https://youtu.be/25Cw8DO1J-0)**
+Strands Agents on gpt-6-luna through the **Mubit** gateway · every automatic action verified by **Banyan Sapling**
 
 ![Precedenz architecture](docs/architecture.png)
 
@@ -147,7 +145,7 @@ output. The **model provider** behind it is swappable:
 | `anthropic` | Strands `AnthropicModel` | `ANTHROPIC_API_KEY` |
 | `mubit` | Strands `OpenAIResponsesModel` via the Mubit gateway (default `gpt-6-luna`) | `MUBIT_API_KEY` |
 
-The `scripted` provider exists so that tests, CI, and a judge with no AWS account all
+The `scripted` provider exists so that tests, CI, and anyone with no model credentials
 exercise the **real** Strands agent loop with **zero** credentials and zero spend. It is
 not a bypass: it produces proposals like any other model, and every proposal goes
 through the same schema validation, guardrails, replay, and human activation gate.
@@ -335,7 +333,7 @@ not automate it. That is a constraint by construction, not an omission.
 
 ## The synthetic world
 
-Everything is invented. The company is **Northgate Optics**, a fictional camera and
+Everything is invented. The company is **Wharf Canary Optics**, a fictional camera and
 optics rental/resale business. All SKUs, serials, orders, customer references, inspection
 notes, and warehouse records are fabricated for this demo, and every "business system"
 is a labeled synthetic adapter in `app/adapters/` backed by local SQLite.
@@ -436,20 +434,6 @@ explicit activation after successful replay, later matching case completing
 automatically, and a risky near-match escalating, plus, on PostgreSQL,
 concurrent audit appends, concurrent duplicate events, and concurrent
 idempotency-key collisions.
-
-## Write-ups
-
-Three posts on building this, published on AWS Builder Center as the "Building
-Precedenz" series:
-
-1. [Cutting Bedrock agent tokens by 83%](https://builder.aws.com/content/3JFMPcu0rekYa1Y6LC5qt6vCctv/agents-for-humans-cutting-bedrock-agent-tokens-by-83percent):
-   115,000 tokens went to one step, and the cause was a tool schema that disagreed with
-   the prompt.
-2. [EventBridge Scheduler to AgentCore](https://builder.aws.com/content/3JFSvpuFac2q3oGJzdybB46V9CS/agents-for-humans-eventbridge-scheduler-to-agentcore):
-   invoking the deployed runtime on a schedule with no Lambda in between, and why the
-   payload is raw JSON even though the CLI demands base64.
-3. [Guardrails and human approval gates](https://builder.aws.com/content/3JFVF2VqkKqTA9DZkzC9OzvbVQT/agents-for-humans-guardrails-and-human-approval-gates):
-   where the boundary is enforced, and why that is the hard part.
 
 ## License
 

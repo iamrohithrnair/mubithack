@@ -22,7 +22,7 @@ from app.domain import Outcome  # noqa: E402
 from app.orchestrator import activate_policy, approve_and_teach, handle_event  # noqa: E402
 
 RULE = "=" * 78
-OPERATOR = "dana.r@northgate-optics.example"
+OPERATOR = "dana.r@wharf-canary-optics.example"
 
 
 def head(n: int, title: str) -> None:

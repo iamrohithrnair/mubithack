@@ -26,7 +26,7 @@ from app.domain import Outcome
 from app.orchestrator import activate_policy, approve_and_teach, handle_event
 
 TEACHING_CASE = "CASE-2001"
-OPERATOR = "dana.r@northgate-optics.example"
+OPERATOR = "dana.r@wharf-canary-optics.example"
 
 LABEL_AUTO = "auto_resolve"
 LABEL_ESCALATE = "escalate"

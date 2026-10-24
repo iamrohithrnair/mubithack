@@ -2,9 +2,9 @@
 
 ## Origin
 
-Precedenz was created from scratch during the Agents for Humans submission period,
-starting 2026-09-04. The repository began empty apart from an `Apache-2.0` LICENSE and a
-one-line `README.md`; every other file in it was written for this hackathon.
+Precedenz was created from scratch. The repository began empty apart
+from an `Apache-2.0` LICENSE and a one-line `README.md`; every other file in it was
+written for this project.
 
 ## Pre-existing work incorporated
 
@@ -27,7 +27,7 @@ Standard, publicly available third-party dependencies are used and pinned in
 | `psycopg[binary,pool]` | 3.3.5 | PostgreSQL backend (`postgres` extra) |
 | `pytest`, `pytest-asyncio`, `httpx` | dev | tests |
 
-AI coding assistance was used during development, which the hackathon rules permit. All
+AI coding assistance was used during development. All
 architectural decisions, the safety model, the policy language, the evaluation design,
 and the synthetic dataset were specified and reviewed by the author.
 
@@ -35,7 +35,7 @@ and the synthetic dataset were specified and reviewed by the author.
 
 **All data in this repository is synthetic and fabricated for the demo.**
 
-- The company (Northgate Optics), facility, personas, SKUs, serial numbers, order
+- The company (Wharf Canary Optics), facility, personas, SKUs, serial numbers, order
   identifiers, customer references, inspection notes, and parts prices are invented.
 - No real customer records, PII, private SOPs, credentials, confidential business data,
   or proprietary information appears anywhere in the repository or in the demo.
@@ -53,10 +53,10 @@ Claims in this repository were checked, not assumed:
 | `ScriptedModel` is a valid Strands `Model` implementation | it implements the four abstract methods of `strands.models.model.Model` and drives the unmodified Strands event loop |
 | AgentCore entrypoint matches the real SDK | `bedrock-agentcore==1.22.0` installed in a scratch environment; `BedrockAgentCoreApp`, `@app.entrypoint`, and `app.run(port=…)` confirmed by introspection, and `build_app()` was constructed successfully, exposing `/invocations` and `/ping` |
 | The evaluation numbers | produced by `python -m app.evaluation`, counted from the database after a real run |
-| The Anthropic API provider works end to end | `make smoke` run against the live Anthropic API with `claude-opus-5` on 2026-09-10: four real tool calls and a parsed `InvestigationReport` |
-| The Bedrock provider works end to end | `make smoke` run against Amazon Bedrock with `us.anthropic.claude-opus-5` in `us-west-2` on 2026-09-10: four real tool calls and a parsed `InvestigationReport`, after the concurrency fix described below |
-| The opt-in integration tests pass against a hosted model | `pytest -m integration` against Bedrock (`us.anthropic.claude-opus-5`) on 2026-09-10: 3 passed. They cover real tool calls, a report that reconciles with the source systems, and a schema-valid policy proposal |
-| The AgentCore Runtime deployment works | `agentcore deploy` to `us-west-2` on 2026-09-11, then `agentcore invoke "Investigate CASE-2001"`: runtime `READY`, four tool calls on Bedrock, a decision card returned |
+| The Anthropic API provider works end to end | `make smoke` run against the live Anthropic API with `claude-opus-5`: four real tool calls and a parsed `InvestigationReport` |
+| The Bedrock provider works end to end | `make smoke` run against Amazon Bedrock with `us.anthropic.claude-opus-5` in `us-west-2`: four real tool calls and a parsed `InvestigationReport`, after the concurrency fix described below |
+| The opt-in integration tests pass against a hosted model | `pytest -m integration` against Bedrock (`us.anthropic.claude-opus-5`): 3 passed. They cover real tool calls, a report that reconciles with the source systems, and a schema-valid policy proposal |
+| The AgentCore Runtime deployment works | `agentcore deploy` to `us-west-2`, then `agentcore invoke "Investigate CASE-2001"`: runtime `READY`, four tool calls on Bedrock, a decision card returned |
 
 ## AWS access
 
@@ -69,7 +69,7 @@ ClientError: An error occurred (InvalidClientTokenId) when calling the
 GetCallerIdentity operation: The security token included in the request is invalid.
 ```
 
-On 2026-09-10 the project was connected to an AWS account through IAM Identity Center.
+The project was later connected to an AWS account through IAM Identity Center.
 Current state:
 
 - The **Bedrock** model provider (`app/agent/providers/__init__.py`) has been exercised
