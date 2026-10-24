@@ -53,6 +53,9 @@ class AuditEventType:
     EXCEPTION_RESOLVED = "exception.resolved"
     EXCEPTION_ESCALATED = "exception.escalated"
     DEMO_RESET = "demo.reset"
+    # The decision harness (app/harness): a receipt was written, a caller reported back.
+    HARNESS_DECIDED = "harness.decided"
+    HARNESS_OUTCOME_REPORTED = "harness.outcome_reported"
 
 
 @dataclass(frozen=True)
