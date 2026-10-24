@@ -131,7 +131,7 @@ class AnswerBody(BaseModel):
     # workstream service to apply to the workstream's one amount field.
     up_to: dict[str, Any] | float | None = None
     ignore: list[str] | None = None
-    note: str = Field(default="", max_length=600)
+    note: str | None = Field(default="", max_length=600)
     approval_token: str | None = None
 
 
@@ -196,7 +196,7 @@ def map_answer(
             remember=body.remember,
             up_to=body.up_to,
             ignore=body.ignore,
-            note=body.note,
+            note=body.note or "",
             actor=OPERATOR,
             approval_token=token,
         )

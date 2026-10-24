@@ -100,7 +100,8 @@
 
   /* ============================================================ helpers */
   function readConfig() {
-    try { return JSON.parse(($("#map-config") || {}).textContent || "{}") || {}; } catch (e) { return {}; }
+    /* Runs before `$` is defined, so it queries the document directly. */
+    try { return JSON.parse((document.querySelector("#map-config") || {}).textContent || "{}") || {}; } catch (e) { return {}; }
   }
   function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
   function lerp(a, b, t) { return a + (b - a) * t; }
@@ -1861,7 +1862,7 @@
     form.addEventListener("submit", function (e) {
       e.preventDefault();
       if (btn.disabled) return;
-      var body = { answer: sel.value, remember: rem.checked, up_to: {}, ignore: [], note: form.querySelector('[name="note"]').value.trim() || null,
+      var body = { answer: sel.value, remember: rem.checked, up_to: {}, ignore: [], note: form.querySelector('[name="note"]').value.trim(),
         approval_token: form.querySelector('[name="approval_token"]').value.trim() };
       Array.prototype.forEach.call(form.querySelectorAll('input[name="ignore"]:checked'), function (i) { body.ignore.push(i.value); });
       Array.prototype.forEach.call(form.querySelectorAll('.upto input'), function (i) {
