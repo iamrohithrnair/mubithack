@@ -1,0 +1,731 @@
+{
+  "_notice": "Synthetic demo data for /map?fixture=1. Every company, person, case and request ID is fictional.",
+  "generated_at": "2026-10-25T01:12:30Z",
+  "last_seq": 412,
+  "people": [
+    {
+      "id": "dana.r@wharf-canary-optics.example",
+      "label": "Dana R."
+    }
+  ],
+  "workstreams": [
+    {
+      "id": "returns.missing_accessory",
+      "label": "Returns · missing accessory",
+      "kind": "built-in",
+      "audience": "team",
+      "reader": true,
+      "task_key": "7f3a9c2e41b8d06a5c19e7f2b3a4d580c6e19f27a8b3d4e5f60718293a4b5c6d",
+      "task_key_changed": false,
+      "mubit": {
+        "stage": "Collecting examples",
+        "detail": "18 of 25 examples",
+        "source": "Mubit console",
+        "as_of": "2026-10-25T01:05:00Z"
+      },
+      "repeatable_answer": "replace the missing part",
+      "other_answers": [
+        "refund in full",
+        "reject the return"
+      ],
+      "fields": [],
+      "precedents": [
+        {
+          "id": "pol_9c1e2a40",
+          "version": 1,
+          "status": "active",
+          "text": "Replace the missing accessory when the serial matches the order, nothing else is missing, there is no new damage, and the part costs at most $40.",
+          "decided_by": "dana.r@wharf-canary-optics.example",
+          "decided_at": "2026-10-25T00:58:12Z",
+          "origin_case": "CASE-2001",
+          "cases": [
+            {
+              "case_ref": "CASE-2002",
+              "decision_id": "dec_01JB000107",
+              "verdict": "follow",
+              "at": "2026-10-25T00:59:40Z",
+              "via": "inbox"
+            },
+            {
+              "case_ref": "CASE-2010",
+              "decision_id": "dec_01JB000114",
+              "verdict": "follow",
+              "at": "2026-10-25T01:00:27Z",
+              "via": "agent"
+            },
+            {
+              "case_ref": "CASE-2011",
+              "decision_id": "dec_01JB000121",
+              "verdict": "follow",
+              "at": "2026-10-25T01:01:14Z",
+              "via": "cli"
+            },
+            {
+              "case_ref": "CASE-2012",
+              "decision_id": "dec_01JB000128",
+              "verdict": "follow",
+              "at": "2026-10-25T01:02:01Z",
+              "via": "api"
+            },
+            {
+              "case_ref": "CASE-2013",
+              "decision_id": "dec_01JB000135",
+              "verdict": "follow",
+              "at": "2026-10-25T01:02:48Z",
+              "via": "inbox"
+            },
+            {
+              "case_ref": "CASE-2014",
+              "decision_id": "dec_01JB000142",
+              "verdict": "follow",
+              "at": "2026-10-25T01:03:35Z",
+              "via": "agent"
+            },
+            {
+              "case_ref": "CASE-2015",
+              "decision_id": "dec_01JB000149",
+              "verdict": "follow",
+              "at": "2026-10-25T01:04:22Z",
+              "via": "api"
+            },
+            {
+              "case_ref": "CASE-2016",
+              "decision_id": "dec_01JB000156",
+              "verdict": "follow",
+              "at": "2026-10-25T01:05:09Z",
+              "via": "cli"
+            },
+            {
+              "case_ref": "CASE-2017",
+              "decision_id": "dec_01JB000163",
+              "verdict": "follow",
+              "at": "2026-10-25T01:05:56Z",
+              "via": "api"
+            },
+            {
+              "case_ref": "CASE-2018",
+              "decision_id": "dec_01JB000170",
+              "verdict": "follow",
+              "at": "2026-10-25T01:06:43Z",
+              "via": "agent"
+            }
+          ]
+        }
+      ],
+      "waiting": [
+        {
+          "case_ref": "CASE-2003",
+          "decision_id": "dec_01JB009003",
+          "reasons": [
+            "received serial 4100-SN-10003 does not match the order's 4100-SN-02203"
+          ],
+          "at": "2026-10-25T01:07:44Z",
+          "facts": {
+            "serial_matches": false,
+            "missing_part": "CMP-CHG-USB",
+            "part_cost_usd": 18.0,
+            "new_damage": false
+          },
+          "text": "Kit NGO-KIT-4100 returned without its USB charger; the serial on the body reads 4100-SN-10003."
+        },
+        {
+          "case_ref": "CASE-2004",
+          "decision_id": "dec_01JB009004",
+          "reasons": [
+            "the missing lens hood costs $68.00, above the precedent's $40.00"
+          ],
+          "at": "2026-10-25T01:09:02Z",
+          "facts": {
+            "serial_matches": true,
+            "missing_part": "CMP-HOOD-7200",
+            "part_cost_usd": 68.0,
+            "new_damage": false
+          },
+          "text": "Lens kit NGO-KIT-7200 returned without the lens hood."
+        },
+        {
+          "case_ref": "CASE-2006",
+          "decision_id": "dec_01JB009006",
+          "reasons": [
+            "Banyan Sapling could not confirm the evidence (insufficient information)"
+          ],
+          "at": "2026-10-25T01:10:51Z",
+          "facts": {
+            "serial_matches": true,
+            "missing_part": "CMP-BAT-STD",
+            "part_cost_usd": 32.0,
+            "new_damage": false
+          },
+          "text": "Kit NGO-KIT-9000 returned without the battery; the inspection notes are empty."
+        }
+      ],
+      "counts": {
+        "follow": 10,
+        "ask": 4,
+        "answered": 1,
+        "model_calls": 41
+      }
+    },
+    {
+      "id": "ap.invoice_variance",
+      "label": "AP · invoice variance",
+      "kind": "built-in",
+      "audience": "team",
+      "reader": false,
+      "task_key": null,
+      "task_key_changed": false,
+      "mubit": null,
+      "repeatable_answer": "approve the variance",
+      "other_answers": [
+        "hold for review",
+        "reject the invoice"
+      ],
+      "fields": [
+        {
+          "name": "variance_pct",
+          "kind": "amount",
+          "label": "Variance over the PO (%)",
+          "ceiling": 5.0
+        },
+        {
+          "name": "vendor_risk",
+          "kind": "category",
+          "label": "Vendor risk tier",
+          "ceiling": null
+        },
+        {
+          "name": "goods_received",
+          "kind": "flag",
+          "label": "Goods received in full",
+          "ceiling": null
+        }
+      ],
+      "precedents": [],
+      "waiting": [
+        {
+          "case_ref": "AP-2001",
+          "decision_id": "dec_01JB009101",
+          "reasons": [
+            "no precedent yet: a person decides once"
+          ],
+          "at": "2026-10-25T00:52:18Z",
+          "facts": {
+            "variance_pct": 1.74,
+            "vendor_risk": "low",
+            "goods_received": true
+          },
+          "text": "Northgate Optics invoice 101-INV-D0001: $2,421.50 against PO $2,380.00."
+        },
+        {
+          "case_ref": "AP-2002",
+          "decision_id": "dec_01JB009102",
+          "reasons": [
+            "no precedent yet: a person decides once"
+          ],
+          "at": "2026-10-25T00:55:40Z",
+          "facts": {
+            "variance_pct": 1.0,
+            "vendor_risk": "low",
+            "goods_received": true
+          },
+          "text": "Cascade Packaging Co invoice 102-INV-D0002: $1,818.00 against PO $1,800.00."
+        },
+        {
+          "case_ref": "AP-2003",
+          "decision_id": "dec_01JB009103",
+          "reasons": [
+            "possible duplicate of invoice 101-INV-0001: always ask"
+          ],
+          "at": "2026-10-25T01:01:09Z",
+          "facts": {
+            "variance_pct": 1.5,
+            "vendor_risk": "low",
+            "goods_received": true
+          },
+          "text": "Northgate Optics invoice 101-INV-DUP1: $1,218.00 against PO $1,200.00."
+        },
+        {
+          "case_ref": "AP-2004",
+          "decision_id": "dec_01JB009104",
+          "reasons": [
+            "variance 12.9% is above the 5.0% ceiling"
+          ],
+          "at": "2026-10-25T01:03:27Z",
+          "facts": {
+            "variance_pct": 12.92,
+            "vendor_risk": "high",
+            "goods_received": true
+          },
+          "text": "Solent Instruments invoice 104-INV-D0004: $2,710.00 against PO $2,400.00."
+        },
+        {
+          "case_ref": "AP-2005",
+          "decision_id": "dec_01JB009105",
+          "reasons": [
+            "no precedent yet: a person decides once"
+          ],
+          "at": "2026-10-25T01:06:15Z",
+          "facts": {
+            "variance_pct": 0.8,
+            "vendor_risk": "medium",
+            "goods_received": true
+          },
+          "text": "Ridgeway Components invoice 103-INV-D0005: $3,024.00 against PO $3,000.00."
+        },
+        {
+          "case_ref": "AP-2006",
+          "decision_id": "dec_01JB009106",
+          "reasons": [
+            "no precedent yet: a person decides once"
+          ],
+          "at": "2026-10-25T01:08:33Z",
+          "facts": {
+            "variance_pct": 1.9,
+            "vendor_risk": "low",
+            "goods_received": true
+          },
+          "text": "Cascade Packaging Co invoice 102-INV-D0006: $1,528.50 against PO $1,500.00."
+        }
+      ],
+      "counts": {
+        "follow": 0,
+        "ask": 6,
+        "answered": 0,
+        "model_calls": 0
+      }
+    },
+    {
+      "id": "expenses.meal_claim",
+      "label": "Expenses · meal claims",
+      "kind": "planted",
+      "audience": "team",
+      "reader": true,
+      "task_key": "c41d08e7a2f95b3c6d10e48f7a29b5c3d6e81f04a7b2c95d3e6f18a20b4c7d93",
+      "task_key_changed": false,
+      "mubit": {
+        "stage": "Training",
+        "detail": "run 1 on 54 examples",
+        "source": "Mubit console",
+        "as_of": "2026-10-25T01:02:00Z"
+      },
+      "repeatable_answer": "approve",
+      "other_answers": [
+        "reject",
+        "ask for a receipt"
+      ],
+      "fields": [
+        {
+          "name": "amount_usd",
+          "kind": "amount",
+          "label": "Amount (USD)",
+          "ceiling": 200.0
+        },
+        {
+          "name": "receipt_attached",
+          "kind": "flag",
+          "label": "Receipt attached",
+          "ceiling": null
+        },
+        {
+          "name": "alcohol_only",
+          "kind": "flag",
+          "label": "Alcohol only",
+          "ceiling": null
+        },
+        {
+          "name": "attendees",
+          "kind": "count",
+          "label": "Attendees",
+          "ceiling": 12
+        }
+      ],
+      "precedents": [
+        {
+          "id": "pol_e71b0c55",
+          "version": 1,
+          "status": "retired",
+          "text": "Approve meal claims up to $120 with a receipt.",
+          "decided_by": "dana.r@wharf-canary-optics.example",
+          "decided_at": "2026-10-24T23:40:03Z",
+          "origin_case": "EXP-1020",
+          "cases": [
+            {
+              "case_ref": "EXP-1021",
+              "decision_id": "dec_01JB000177",
+              "verdict": "follow",
+              "at": "2026-10-24T23:44:10Z",
+              "via": "api"
+            },
+            {
+              "case_ref": "EXP-1022",
+              "decision_id": "dec_01JB000184",
+              "verdict": "follow",
+              "at": "2026-10-24T23:46:50Z",
+              "via": "inbox"
+            },
+            {
+              "case_ref": "EXP-1024",
+              "decision_id": "dec_01JB000191",
+              "verdict": "follow",
+              "at": "2026-10-24T23:49:30Z",
+              "via": "agent"
+            },
+            {
+              "case_ref": "EXP-1026",
+              "decision_id": "dec_01JB000198",
+              "verdict": "follow",
+              "at": "2026-10-24T23:52:10Z",
+              "via": "api"
+            }
+          ],
+          "retired_at": "2026-10-25T00:12:41Z",
+          "retired_by": "dana.r@wharf-canary-optics.example",
+          "retire_reason": "Too generous for team lunches; finance set the limit at $75."
+        },
+        {
+          "id": "pol_e7c2f913",
+          "version": 2,
+          "status": "active",
+          "text": "Approve meal claims up to $75 with a receipt, unless alcohol only.",
+          "decided_by": "dana.r@wharf-canary-optics.example",
+          "decided_at": "2026-10-25T00:21:17Z",
+          "origin_case": "EXP-1031",
+          "cases": [
+            {
+              "case_ref": "EXP-1032",
+              "decision_id": "dec_01JB000205",
+              "verdict": "follow",
+              "at": "2026-10-25T00:24:05Z",
+              "via": "agent"
+            },
+            {
+              "case_ref": "EXP-1033",
+              "decision_id": "dec_01JB000212",
+              "verdict": "follow",
+              "at": "2026-10-25T00:26:06Z",
+              "via": "cli"
+            },
+            {
+              "case_ref": "EXP-1034",
+              "decision_id": "dec_01JB000219",
+              "verdict": "follow",
+              "at": "2026-10-25T00:28:07Z",
+              "via": "api"
+            },
+            {
+              "case_ref": "EXP-1035",
+              "decision_id": "dec_01JB000226",
+              "verdict": "follow",
+              "at": "2026-10-25T00:30:08Z",
+              "via": "inbox"
+            },
+            {
+              "case_ref": "EXP-1037",
+              "decision_id": "dec_01JB000233",
+              "verdict": "follow",
+              "at": "2026-10-25T00:32:09Z",
+              "via": "agent"
+            },
+            {
+              "case_ref": "EXP-1038",
+              "decision_id": "dec_01JB000240",
+              "verdict": "follow",
+              "at": "2026-10-25T00:34:10Z",
+              "via": "api"
+            },
+            {
+              "case_ref": "EXP-1039",
+              "decision_id": "dec_01JB000247",
+              "verdict": "follow",
+              "at": "2026-10-25T00:36:11Z",
+              "via": "cli"
+            },
+            {
+              "case_ref": "EXP-1040",
+              "decision_id": "dec_01JB000254",
+              "verdict": "follow",
+              "at": "2026-10-25T00:38:12Z",
+              "via": "api"
+            },
+            {
+              "case_ref": "EXP-1042",
+              "decision_id": "dec_01JB000261",
+              "verdict": "follow",
+              "at": "2026-10-25T00:40:13Z",
+              "via": "agent"
+            },
+            {
+              "case_ref": "EXP-1043",
+              "decision_id": "dec_01JB000268",
+              "verdict": "follow",
+              "at": "2026-10-25T00:42:14Z",
+              "via": "cli"
+            },
+            {
+              "case_ref": "EXP-1045",
+              "decision_id": "dec_01JB000275",
+              "verdict": "follow",
+              "at": "2026-10-25T00:44:15Z",
+              "via": "api"
+            },
+            {
+              "case_ref": "EXP-1046",
+              "decision_id": "dec_01JB000282",
+              "verdict": "follow",
+              "at": "2026-10-25T00:46:16Z",
+              "via": "inbox"
+            }
+          ]
+        }
+      ],
+      "waiting": [
+        {
+          "case_ref": "EXP-1047",
+          "decision_id": "dec_01JB009201",
+          "reasons": [
+            "amount_usd 142.80 is above the precedent's 75.00"
+          ],
+          "at": "2026-10-25T01:04:51Z",
+          "facts": {
+            "amount_usd": 142.8,
+            "receipt_attached": true,
+            "alcohol_only": false,
+            "attendees": 4
+          },
+          "text": "Team dinner after the Northwind install, 4 people, receipt attached, $142.80."
+        },
+        {
+          "case_ref": "EXP-1049",
+          "decision_id": "dec_01JB009202",
+          "reasons": [
+            "always ask: alcohol only"
+          ],
+          "at": "2026-10-25T01:11:06Z",
+          "facts": {
+            "amount_usd": 38.0,
+            "receipt_attached": true,
+            "alcohol_only": true,
+            "attendees": 2
+          },
+          "text": "Drinks with the Solent buyer, receipt attached, $38.00."
+        }
+      ],
+      "counts": {
+        "follow": 16,
+        "ask": 4,
+        "answered": 2,
+        "model_calls": 23
+      }
+    },
+    {
+      "id": "calendar.meeting_invite",
+      "label": "Calendar · meeting invites",
+      "kind": "planted",
+      "audience": "individual",
+      "reader": true,
+      "task_key": "5be2a97c03d4f18e6a2b9c0d7e3f41a8b65c2d09e4f7a13b8c6d5e20f9a1b3c47",
+      "task_key_changed": false,
+      "mubit": null,
+      "repeatable_answer": "accept",
+      "other_answers": [
+        "decline",
+        "propose a new time"
+      ],
+      "fields": [
+        {
+          "name": "duration_min",
+          "kind": "count",
+          "label": "Duration (minutes)",
+          "ceiling": 120
+        },
+        {
+          "name": "external_attendees",
+          "kind": "flag",
+          "label": "External attendees",
+          "ceiling": null
+        },
+        {
+          "name": "focus_conflict",
+          "kind": "flag",
+          "label": "Conflicts with focus time",
+          "ceiling": null
+        },
+        {
+          "name": "organizer_team",
+          "kind": "category",
+          "label": "Organizer's team",
+          "ceiling": null
+        }
+      ],
+      "precedents": [],
+      "waiting": [
+        {
+          "case_ref": "MTG-0007",
+          "decision_id": "dec_01JB009301",
+          "reasons": [
+            "no precedent yet: a person decides once"
+          ],
+          "at": "2026-10-25T01:09:48Z",
+          "facts": {
+            "duration_min": 30,
+            "external_attendees": false,
+            "focus_conflict": false,
+            "organizer_team": "Optics R&D"
+          },
+          "text": "Weekly optics sync, 30 minutes, Thursday 10:00, organised by Optics R&D."
+        }
+      ],
+      "counts": {
+        "follow": 0,
+        "ask": 1,
+        "answered": 0,
+        "model_calls": 1
+      }
+    }
+  ],
+  "templates": [
+    {
+      "id": "expenses.meal_claim",
+      "label": "Meal expense claims",
+      "audience": "team"
+    },
+    {
+      "id": "calendar.meeting_invite",
+      "label": "Meeting invites",
+      "audience": "individual"
+    },
+    {
+      "id": "it.access_request",
+      "label": "IT access requests",
+      "audience": "team"
+    }
+  ],
+  "totals": {
+    "answered_once": 3,
+    "repeated": 26,
+    "asked": 15,
+    "model_calls": 65
+  },
+  "receipts": {
+    "dec_01JB000107": {
+      "decision_id": "dec_01JB000107",
+      "verdict": "follow",
+      "workstream": "returns.missing_accessory",
+      "case_ref": "CASE-2002",
+      "precedent": {
+        "id": "pol_9c1e2a40",
+        "version": 1,
+        "text": "Replace the missing accessory when the serial matches the order, nothing else is missing, there is no new damage, and the part costs at most $40.",
+        "decided_by": "dana.r@wharf-canary-optics.example",
+        "decided_at": "2026-10-25T00:58:12Z",
+        "origin_case": "CASE-2001"
+      },
+      "actions": [
+        {
+          "type": "replace_part",
+          "part": "CMP-CAP-BODY",
+          "max_cost_usd": 40.0
+        }
+      ],
+      "reasons": [],
+      "checks": [
+        {
+          "name": "required fields present",
+          "ok": true
+        },
+        {
+          "name": "always-ask rules",
+          "ok": true
+        },
+        {
+          "name": "matches precedent v1",
+          "ok": true
+        },
+        {
+          "name": "Banyan Sapling: evidence supports it",
+          "ok": true,
+          "detail": "supported, p=0.74"
+        }
+      ],
+      "model_calls": [
+        {
+          "via": "mubit",
+          "request_id": "mreq_7Hq2Lr9ZxP4c",
+          "requested_model": "gpt-6-luna",
+          "ms": 1840
+        },
+        {
+          "via": "mubit",
+          "request_id": "mreq_7Hq2Lv3KdT8w",
+          "requested_model": "gpt-6-luna",
+          "ms": 960
+        }
+      ],
+      "serving_identity": "not reported by the gateway",
+      "task_key": "7f3a9c2e41b8d06a5c19e7f2b3a4d580c6e19f27a8b3d4e5f60718293a4b5c6d",
+      "input_hash": "sha256:4be81f0c9a27d35e6b1fa04c8d92e7b3a6c50d18f29e4b7a3c61d05e8f2a9b47",
+      "source_revision": "r3",
+      "created_at": "2026-10-25T00:59:40Z",
+      "expires_at": "2026-11-24T00:59:40Z",
+      "answers": [],
+      "outcomes": [
+        {
+          "status": "executed",
+          "at": "2026-10-25T01:00:02Z",
+          "actor": "returns-bot"
+        }
+      ],
+      "resolved_by": null
+    },
+    "dec_01JB009201": {
+      "decision_id": "dec_01JB009201",
+      "verdict": "ask",
+      "workstream": "expenses.meal_claim",
+      "case_ref": "EXP-1047",
+      "precedent": {
+        "id": "pol_e7c2f913",
+        "version": 2,
+        "text": "Approve meal claims up to $75 with a receipt, unless alcohol only.",
+        "decided_by": "dana.r@wharf-canary-optics.example",
+        "decided_at": "2026-10-25T00:21:17Z",
+        "origin_case": "EXP-1031"
+      },
+      "actions": [],
+      "reasons": [
+        "amount_usd 142.80 is above the precedent's 75.00"
+      ],
+      "checks": [
+        {
+          "name": "required fields present",
+          "ok": true
+        },
+        {
+          "name": "always-ask rules",
+          "ok": true
+        },
+        {
+          "name": "matches precedent v2",
+          "ok": false,
+          "detail": "amount_usd 142.80 > 75.00"
+        }
+      ],
+      "model_calls": [
+        {
+          "via": "mubit",
+          "request_id": "mreq_8Nc4Qe1VbM2s",
+          "requested_model": "gpt-6-luna",
+          "ms": 2140
+        }
+      ],
+      "serving_identity": "not reported by the gateway",
+      "task_key": "c41d08e7a2f95b3c6d10e48f7a29b5c3d6e81f04a7b2c95d3e6f18a20b4c7d93",
+      "input_hash": "sha256:9d03e6b1c47a28f5e0b9d14c6a83f27e5b0c91d4a68e3f27b5c0d19e4a7f6b32",
+      "source_revision": "r1",
+      "created_at": "2026-10-25T01:04:51Z",
+      "expires_at": "2026-11-24T01:04:51Z",
+      "answers": [],
+      "outcomes": [],
+      "resolved_by": null
+    }
+  }
+}
