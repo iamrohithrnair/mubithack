@@ -78,7 +78,8 @@ class Paint:
 
 
 def _width() -> int:
-    return max(60, min(shutil.get_terminal_size((100, 24)).columns, 110))
+    """The card's width: the terminal's, kept compact enough to read at a glance."""
+    return max(60, min(shutil.get_terminal_size((88, 24)).columns, 88))
 
 
 LABEL_W = 11
@@ -143,7 +144,7 @@ def verdict_card(receipt: dict[str, Any], paint: Paint | None = None) -> str:
     head = f" {paint.pill(style, word)}  {paint('bold', case)}"
     if not paint.enabled:
         head = f" {word}  {case}"
-    lines = [head, " " + paint(style, "─" * min(_width() - 2, 72))]
+    lines = [head, " " + paint(style, "─" * (_width() - 2))]
 
     precedent = receipt.get("precedent") or None
     if verdict == "ask":
@@ -171,11 +172,16 @@ def verdict_card(receipt: dict[str, Any], paint: Paint | None = None) -> str:
     checks = receipt.get("checks") or []
     if checks:
         rendered = []
+        room = _width() - (2 + LABEL_W)
         for check in checks:
-            ok = bool(check.get("ok"))
-            mark = paint("ok", "✓") if ok else paint("bad", "✗")
-            detail = f"  {paint('dim', check['detail'])}" if check.get("detail") else ""
-            rendered.append(f"{mark} {check.get('name', '')}{detail}")
+            mark = paint("ok", "✓") if check.get("ok") else paint("bad", "✗")
+            name, detail = str(check.get("name", "")), str(check.get("detail") or "")
+            if detail and len(name) + len(detail) + 4 <= room:
+                rendered.append(f"{mark} {name}  {paint('dim', detail)}")
+                continue
+            rendered.append(f"{mark} {name}")
+            # A long detail goes underneath, wrapped, so the card keeps its edge.
+            rendered.extend("  " + paint("dim", w) for w in textwrap.wrap(detail, max(30, room - 2)))
         lines += _row(paint, "checks", rendered)
     calls = receipt.get("model_calls") or []
     if calls:
@@ -214,7 +220,7 @@ def answer_card(result: dict[str, Any], decision_id: str, answer: str, remember:
     head = f" {paint.pill(style, head_word)}  {paint('bold', answer)}  {paint('dim', decision_id)}"
     if not paint.enabled:
         head = f" {head_word}  {answer}  {decision_id}"
-    lines = [head, " " + paint(style, "─" * min(_width() - 2, 72))]
+    lines = [head, " " + paint(style, "─" * (_width() - 2))]
     if precedent:
         text = precedent.get("text") or precedent.get("name") or ""
         body = [paint("quote", w) for w in _wrap(f'v{precedent.get("version", "?")}  "{text}"')]
@@ -259,7 +265,7 @@ def workstream_card(ws: dict[str, Any], paint: Paint | None = None, word: str = 
     head = f" {paint.pill('plant', word)}  {paint('bold', ws.get('id', '?'))}  {ws.get('label', '')}"
     if not paint.enabled:
         head = f" {word}  {ws.get('id', '?')}  {ws.get('label', '')}"
-    lines = [head, " " + paint("plant", "─" * min(_width() - 2, 72))]
+    lines = [head, " " + paint("plant", "─" * (_width() - 2))]
     if ws.get("question"):
         lines += _row(paint, "question", _wrap(ws["question"]))
     meta = [ws.get("audience"), f"owner {ws['owner']}" if ws.get("owner") else None,
@@ -449,9 +455,12 @@ def _print_json(body: Any) -> None:
 
 def _table(paint: Paint, headers: list[str], rows: list[list[str]]) -> str:
     widths = [max(len(h), *(len(r[i]) for r in rows)) if rows else len(h) for i, h in enumerate(headers)]
-    out = ["  " + "  ".join(paint("label", h.upper().ljust(w)) for h, w in zip(headers, widths))]
+    last = len(headers) - 1
+    out = ["  " + "  ".join(paint("label", h.upper() if i == last else h.upper().ljust(w))
+                            for i, (h, w) in enumerate(zip(headers, widths)))]
     for row in rows:
-        out.append("  " + "  ".join(cell.ljust(w) for cell, w in zip(row, widths)))
+        out.append("  " + "  ".join(cell if i == last else cell.ljust(w)
+                                    for i, (cell, w) in enumerate(zip(row, widths))))
     return "\n".join(out)
 
 
@@ -491,7 +500,7 @@ def run(args: argparse.Namespace, client: Precedenz, paint: Paint) -> int:
             head = (f" {paint.pill('overrule', 'OVERRULED')}  {paint('bold', args.precedent_id)}"
                     if paint.enabled else f" OVERRULED  {args.precedent_id}")
             print(head)
-            print(" " + paint("overrule", "─" * min(_width() - 2, 72)))
+            print(" " + paint("overrule", "─" * (_width() - 2)))
             print("\n".join(_row(paint, "reason", _wrap(args.reason))))
             print("\n".join(_row(paint, "now", ["it stops at once: its kind of question asks again"])))
     elif cmd == "plant":

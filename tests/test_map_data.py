@@ -46,6 +46,18 @@ def tables_only(monkeypatch):
 
 
 @pytest.fixture()
+def no_mirror(monkeypatch):
+    """No Mubit mirror: its task keys live in process memory, shared across tests."""
+    from app.harness import map_data
+
+    real = map_data._optional
+    monkeypatch.setattr(
+        map_data, "_optional",
+        lambda module, name: None if module == "app.mubit" else real(module, name),
+    )
+
+
+@pytest.fixture()
 def workstream_service(monkeypatch):
     """Builder C's service with fakes for `answer` and `overrule`, merged or not."""
     calls: dict[str, list] = {"answer": [], "overrule": []}
@@ -193,7 +205,7 @@ def test_snapshot_never_raises_when_a_table_is_gone(temp_db):
     assert snap["workstreams"] and snap["people"]
 
 
-def test_snapshot_groups_follows_under_precedents_and_lists_waiting(seeded, bus):
+def test_snapshot_groups_follows_under_precedents_and_lists_waiting(seeded, bus, no_mirror):
     from app.harness import map_data
 
     bus.publish("decision.started", workstream=RETURNS, case_ref="CASE-2009", caller="test")
@@ -210,7 +222,7 @@ def test_snapshot_groups_follows_under_precedents_and_lists_waiting(seeded, bus)
     assert live["decided_by"] == DANA and live["origin_case"] == "CASE-2001"
     cases = {c["decision_id"]: c for c in live["cases"]}
     assert set(cases) == {"dec_f1", "dec_f2", "exc_inbox1"}
-    assert cases["dec_f1"]["via"] == "agent"
+    assert cases["dec_f1"]["via"] == "api" and cases["dec_f1"]["caller"] == "agent"
     assert cases["dec_f2"]["resolves"] == "dec_a3"
     assert cases["exc_inbox1"]["via"] == "inbox" and cases["exc_inbox1"]["case_ref"] == "CASE-2001"
 

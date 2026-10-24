@@ -175,6 +175,34 @@ def test_the_client_reads_the_real_map_routes(temp_db):
             p._request("GET", "/map/receipt/dec_missing")
 
 
+def test_the_client_drives_the_real_decision_api(temp_db):
+    from fastapi.testclient import TestClient
+
+    from app import config
+    from app.main import app
+
+    token = config.get_settings().api_token
+    with TestClient(app) as http:
+        p = Precedenz("http://testserver", api_token=token, caller="cli", http=http)
+        receipt = p.decide("returns.missing_accessory", "CASE-2003")
+        assert receipt["verdict"] == "ask" and receipt["reasons"]
+        assert p.decide("returns.missing_accessory", "CASE-2003")["decision_id"] == receipt["decision_id"]
+        assert p.receipt(receipt["decision_id"])["case_ref"] == "CASE-2003"
+        open_ids = [q["decision_id"] for q in p.open_questions("returns.missing_accessory")]
+        assert open_ids == [receipt["decision_id"]]
+        with pytest.raises(AuthError):
+            Precedenz("http://testserver", api_token="wrong", http=http).decide(
+                "returns.missing_accessory", "CASE-2003")
+        with pytest.raises(NotFound):
+            p.decide("no.such", "X-1")
+
+        returns = next(ws for ws in p.snapshot()["workstreams"] if ws["id"] == "returns.missing_accessory")
+        assert [w["decision_id"] for w in returns["waiting"]] == [receipt["decision_id"]]
+        assert returns["waiting"][0]["caller"] == "cli" and returns["counts"]["ask"] == 1
+        drawer = p._request("GET", f"/map/receipt/{receipt['decision_id']}")
+        assert drawer["decision_id"] == receipt["decision_id"] and drawer["verdict"] == "ask"
+
+
 @pytest.fixture()
 def live_server(temp_db, monkeypatch):
     """The real app on a real socket, for the event stream end to end."""

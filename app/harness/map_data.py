@@ -273,6 +273,20 @@ def _condition_text(c: dict[str, Any]) -> str:
     return f"{c.get('field')} {ops.get(c.get('operator'), c.get('operator'))} {value}"
 
 
+def _precedent_text(raw: Any, definition: dict[str, Any]) -> str:
+    """What the person wrote, or else its conditions: the same words a receipt shows."""
+    text = (definition.get("description") or "").strip()
+    if text:
+        return text
+    try:
+        from app.policy.schema import PolicyDefinition
+
+        return "; ".join(PolicyDefinition.model_validate_json(raw).condition_summary())
+    except Exception:
+        conditions = [_condition_text(c) for c in definition.get("conditions") or [] if isinstance(c, dict)]
+        return "; ".join(conditions) or definition.get("name", "")
+
+
 def _precedents(conn) -> dict[str, list[dict[str, Any]]]:
     marks = ",".join("?" for _ in _PRECEDENT_STATUSES)
     rows = conn.execute(
@@ -291,7 +305,7 @@ def _precedents(conn) -> dict[str, list[dict[str, Any]]]:
             "version": row["version"],
             "status": row["status"],
             "name": definition.get("name", ""),
-            "text": definition.get("description") or definition.get("name", ""),
+            "text": _precedent_text(row["definition"], definition),
             "conditions": [_condition_text(c) for c in definition.get("conditions") or []
                            if isinstance(c, dict)],
             "actions": [a for a in definition.get("actions") or [] if isinstance(a, dict)],
@@ -379,7 +393,8 @@ def _fill(conn, out: dict[str, Any]) -> None:
             if precedent is not None:
                 precedent["cases"].append({
                     "case_ref": d["case_ref"], "decision_id": d["decision_id"], "verdict": FOLLOW,
-                    "at": d["created_at"], "via": d.get("caller") or "api", "resolves": d.get("resolves"),
+                    "at": d["created_at"], "via": "api", "caller": d.get("caller") or "api",
+                    "resolves": d.get("resolves"),
                 })
             continue
         ws["counts"][ASK] += 1
@@ -393,7 +408,7 @@ def _fill(conn, out: dict[str, Any]) -> None:
             ws["waiting"].append({
                 "case_ref": d["case_ref"], "decision_id": d["decision_id"],
                 "reasons": _loads(d.get("reasons"), []), "at": d["created_at"],
-                "via": d.get("caller") or "api", "nearest_precedent": d.get("precedent_id"),
+                "via": "api", "caller": d.get("caller") or "api", "nearest_precedent": d.get("precedent_id"),
                 "facts": case.get("facts", {}), "text": case.get("text"), "answerable": True,
             })
 
@@ -450,14 +465,14 @@ def _add_inbox(workstreams, by_precedent, inbox, inbox_answers) -> None:
             if precedent is not None:
                 precedent["cases"].append({
                     "case_ref": row["case_id"], "decision_id": row["exception_id"], "verdict": FOLLOW,
-                    "at": row["updated_at"], "via": "inbox", "resolves": None,
+                    "at": row["updated_at"], "via": "inbox", "caller": "inbox", "resolves": None,
                 })
         elif status in ("escalated", "waiting_decision"):
             ws["counts"][ASK] += 1
             ws["waiting"].append({
                 "case_ref": row["case_id"], "decision_id": row["exception_id"],
                 "reasons": _loads(row.get("escalation_reasons"), []) or [row.get("summary") or status],
-                "at": row["updated_at"], "via": "inbox", "nearest_precedent": None,
+                "at": row["updated_at"], "via": "inbox", "caller": "inbox", "nearest_precedent": None,
                 "facts": {}, "text": None, "answerable": False,
             })
     for family, count in inbox_answers.items():
