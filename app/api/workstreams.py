@@ -28,7 +28,8 @@ def actor_header(x_precedenz_actor: str | None = Header(default=None)) -> str | 
 class PlantBody(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    template: str | None = None
+    template_id: str | None = None
+    template: str | None = None  # alias of template_id
     contract: dict[str, Any] | None = None
     actor: str | None = Field(default=None, max_length=120)
 
@@ -38,7 +39,8 @@ class AnswerBody(BaseModel):
 
     answer: str = Field(min_length=1, max_length=40)
     remember: bool = False
-    up_to: dict[str, float] | None = None
+    # {field: value}, or a bare number for the workstream's one amount field.
+    up_to: dict[str, float] | float | None = None
     ignore: list[str] | None = None
     note: str = Field(default="", max_length=500)
     actor: str | None = Field(default=None, max_length=120)
@@ -71,9 +73,11 @@ def get_workstreams() -> dict[str, Any]:
     dependencies=[Depends(require_api_token), Depends(require_approval_token)],
 )
 def post_workstream(body: PlantBody, actor: str | None = Depends(actor_header)) -> dict[str, Any]:
+    if body.template_id and body.template and body.template_id != body.template:
+        raise HTTPException(status_code=422, detail="template_id and template name different templates")
     try:
         return service.plant(
-            template_id=body.template,
+            template_id=body.template_id or body.template,
             contract=body.contract,
             actor=body.actor or actor or DEFAULT_ACTOR,
         )

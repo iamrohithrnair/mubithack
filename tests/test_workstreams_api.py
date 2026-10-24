@@ -69,10 +69,12 @@ def test_planting_needs_a_person_and_a_valid_contract(client):
     assert response.status_code == 422
     assert any("must list its values" in e for e in response.json()["detail"]["errors"])
 
-    response = client.post("/v1/workstreams", json={"template": MEAL}, headers=person())
+    response = client.post("/v1/workstreams", json={"template_id": MEAL}, headers=person())
     assert response.status_code == 201, response.text
     assert response.json()["history_imported"] == 12
     assert response.json()["planted_by"] == "dana.r@wharf-canary-optics.example"
+    again = client.post("/v1/workstreams", json={"template": MEAL}, headers=person())  # the alias
+    assert again.status_code == 201 and again.json()["already_planted"] is True
     listed = {w["id"] for w in client.get("/v1/workstreams", headers=caller()).json()["workstreams"]}
     assert MEAL in listed
 

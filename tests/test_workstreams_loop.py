@@ -407,6 +407,22 @@ def test_overrule_stops_the_precedent_and_the_next_case_asks(conn, fake_service)
         service.overrule(precedent["id"], reason="  ", actor=DANA)
 
 
+def test_a_bare_number_widens_the_one_amount_field(fake_service):
+    plant_meals()
+    ask = send_incoming(fake_service, MEAL, "EXP-1031")
+    out = service.answer(ask["decision_id"], "approve", remember=True, up_to=75,
+                         ignore=["client_meeting", "attendees"], actor=DANA, approval_token=APPROVAL)
+    assert out["precedent"]["text"] == EXPECTED_TEXT
+
+
+def test_refusals_are_the_builtin_exceptions_generic_callers_map():
+    assert issubclass(service.NotFound, LookupError)
+    assert issubclass(service.Forbidden, PermissionError)
+    assert issubclass(service.Invalid, ValueError) and issubclass(service.Conflict, ValueError)
+    assert (service.NotFound.status_code, service.Forbidden.status_code,
+            service.Invalid.status_code, service.Conflict.status_code) == (404, 403, 422, 409)
+
+
 def test_built_in_answers_are_recorded_but_not_remembered(conn):
     conn.execute(
         """INSERT INTO harness_decisions (decision_id, workstream, case_ref, idempotency_key,

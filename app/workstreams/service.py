@@ -19,8 +19,9 @@ import importlib
 import json
 import logging
 import uuid
+from contextlib import contextmanager, nullcontext
 from datetime import datetime, timezone
-from typing import Any
+from typing import Any, Iterator
 
 from app import audit, config, db, domains
 from app.audit import AuditEventType
@@ -52,24 +53,45 @@ class WorkstreamError(Exception):
         return {"error": self.message, "errors": self.errors}
 
 
-class NotFound(WorkstreamError):
+# Each also subclasses the builtin a generic caller would map: the map's write
+# routes turn LookupError into 404, PermissionError into 403, and the rest into 409.
+class NotFound(WorkstreamError, LookupError):
     status_code = 404
 
 
-class Invalid(WorkstreamError):
+class Invalid(WorkstreamError, ValueError):
     status_code = 422
 
 
-class Conflict(WorkstreamError):
+class Conflict(WorkstreamError, ValueError):
     status_code = 409
 
 
-class Forbidden(WorkstreamError):
+class Forbidden(WorkstreamError, PermissionError):
     status_code = 403
 
 
 def _now() -> str:
     return datetime.now(timezone.utc).isoformat(timespec="milliseconds")
+
+
+@contextmanager
+def _write_session() -> Iterator["db.Connection"]:
+    """One write transaction, taken in turn with decisions.
+
+    SQLite allows one writer, and a decision holds it across its model call.
+    Taking the decision service's lock first means waiting for that decision
+    instead of timing out on the database. Never held while deciding again.
+    """
+    try:
+        from app.harness.service import decision_lock
+
+        lock: Any = decision_lock()
+    except ImportError:
+        lock = nullcontext()
+    with lock:
+        with db.session() as conn:
+            yield conn
 
 
 def _trace_id() -> str:
@@ -229,7 +251,7 @@ def plant(
     stored_json = parsed.model_dump_json()
     actor = (actor or "").strip() or "unknown"
     planted_now = False
-    with db.session() as conn:
+    with _write_session() as conn:
         row = conn.execute("SELECT contract FROM workstreams WHERE id = ?", (parsed.id,)).fetchone()
         if row is not None:
             if json.loads(row["contract"]) != json.loads(stored_json):
@@ -310,7 +332,7 @@ def answer(
     answer: str,
     *,
     remember: bool = False,
-    up_to: dict[str, float] | None = None,
+    up_to: dict[str, float] | float | None = None,
     ignore: list[str] | None = None,
     note: str = "",
     actor: str,
@@ -324,6 +346,9 @@ def answer(
     through the gate with the approval token. Then the waiting asks it covers
     are assessed again and resolve as follows. If the precedent cannot be
     activated, nothing is recorded and the reasons come back as a conflict.
+
+    `up_to` is {field: value}; a bare number applies to the workstream's one
+    amount field.
     """
     cfg = config.get_settings()
     if not approval_token or approval_token != cfg.approval_token:
@@ -331,14 +356,14 @@ def answer(
     answer = (answer or "").strip()
     actor = (actor or "").strip() or "unknown"
     note = (note or "").strip()[:500]
-    up_to, ignore = dict(up_to or {}), list(ignore or [])
+    ignore = list(ignore or [])
     if not remember and (up_to or ignore):
         raise Invalid("up_to and ignore shape a precedent; they need remember")
 
     precedent: policy_store.PolicyRecord | None = None
     replay: dict[str, Any] | None = None
     contract: WorkstreamContract | None = None
-    with db.session() as conn:
+    with _write_session() as conn:
         decision = conn.execute(
             "SELECT * FROM harness_decisions WHERE decision_id = ?", (decision_id,)
         ).fetchone()
@@ -362,6 +387,7 @@ def answer(
                     f"only '{contract.repeatable_answer}' can be remembered: a precedent repeats "
                     "that answer and no other"
                 )
+            widen = _up_to(contract, up_to)
         else:
             domains.load()
             if family not in BUILT_IN_IDS or family not in domains.families():
@@ -386,7 +412,7 @@ def answer(
         )
         if remember and contract is not None:
             precedent, replay = _remember(
-                conn, contract, decision, up_to=up_to, ignore=ignore, actor=actor,
+                conn, contract, decision, up_to=widen, ignore=ignore, actor=actor,
                 approval_token=approval_token, trace_id=trace_id,
             )
             conn.execute(
@@ -437,6 +463,26 @@ def answer(
         "replay": replay,
         "resolved": resolved,
     }
+
+
+def _up_to(contract: WorkstreamContract, up_to: Any) -> dict[str, float]:
+    """{field: number}. A bare number widens the workstream's one amount field."""
+    if up_to is None or up_to == {}:
+        return {}
+    if not isinstance(up_to, dict):
+        amounts = [f.name for f in contract.fields if f.kind == "amount"]
+        if len(amounts) != 1:
+            raise Invalid(f"{contract.label} has {len(amounts)} amount fields; name the one up_to widens")
+        up_to = {amounts[0]: up_to}
+    out: dict[str, float] = {}
+    for name, value in up_to.items():
+        try:
+            if isinstance(value, bool):
+                raise ValueError
+            out[str(name)] = float(value)
+        except (TypeError, ValueError):
+            raise Invalid(f"up_to for '{name}' must be a number, got {value!r}") from None
+    return out
 
 
 def _remember(
@@ -592,7 +638,7 @@ def overrule(precedent_id: str, *, reason: str, actor: str) -> dict[str, Any]:
     actor = (actor or "").strip() or "unknown"
     if not reason:
         raise Invalid("say why: an overrule needs a reason")
-    with db.session() as conn:
+    with _write_session() as conn:
         try:
             policy_store.get(conn, precedent_id)
         except KeyError:
