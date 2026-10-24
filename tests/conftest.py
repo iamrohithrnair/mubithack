@@ -108,7 +108,7 @@ def offline_model(request, monkeypatch):
     from app.agent import build
     from tests.fake_model import DeterministicTestModel
 
-    monkeypatch.setattr(build, "resolve_model", lambda: DeterministicTestModel())
+    monkeypatch.setattr(build, "resolve_model", lambda *a, **k: DeterministicTestModel())
 
 
 @pytest.fixture()

@@ -28,7 +28,8 @@ def build_agent(
     tools: list[Any] | None = None,
 ) -> Agent:
     return Agent(
-        model=model or resolve_model(),
+        model=model
+        or (resolve_model(call_log=ctx.call_log) if ctx.call_log is not None else resolve_model()),
         tools=tools if tools is not None else build_tools(ctx),
         system_prompt=system_prompt,
         name=AGENT_NAME,

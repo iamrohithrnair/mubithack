@@ -29,12 +29,16 @@ postgres = [
     "psycopg[binary,pool]==3.3.5",
 ]
 
+[project.scripts]
+precedenz = "precedenz_client.cli:main"
+precedenz-mcp = "precedenz_client.mcp_server:main"
+
 [build-system]
 requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
-include = ["app*"]
+include = ["app*", "precedenz_client*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

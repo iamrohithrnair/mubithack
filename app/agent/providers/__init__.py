@@ -16,6 +16,7 @@ activation gate sit downstream of all of them.
 from __future__ import annotations
 
 import os
+from dataclasses import dataclass
 from typing import Any
 
 from strands.models.model import Model
@@ -30,8 +31,46 @@ class ModelProviderUnavailable(RuntimeError):
 SUPPORTED_PROVIDERS = ("mubit", "bedrock", "anthropic")
 
 
-def resolve_model(settings: Settings | None = None, **overrides: Any) -> Model:
-    """Build the configured Strands model provider."""
+@dataclass
+class ModelCall:
+    """One HTTP call to the model gateway, as observed at the transport."""
+
+    request_id: str | None  # x-middleware-request-id; None when the header is absent
+    requested_model: str
+    status: int
+    ms: int
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "via": "mubit",
+            "request_id": self.request_id,
+            "requested_model": self.requested_model,
+            "status": self.status,
+            "ms": self.ms,
+        }
+
+
+class CallLog(list):
+    """The gateway calls one decision made.
+
+    Bound to a model when the model is built, so correlation never depends on
+    which thread or event loop Strands happens to run the request on.
+    """
+
+    def __init__(self, family: str = "", case_ref: str = "", session_id: str = "") -> None:
+        super().__init__()
+        self.family = family
+        self.case_ref = case_ref
+        self.session_id = session_id or (f"{family}:{case_ref}" if family else case_ref)
+
+
+def resolve_model(
+    settings: Settings | None = None, *, call_log: CallLog | None = None, **overrides: Any
+) -> Model:
+    """Build the configured Strands model provider.
+
+    `call_log`, when given, receives one `ModelCall` per gateway HTTP response.
+    """
     cfg = settings or get_settings()
     provider = cfg.model_provider
 

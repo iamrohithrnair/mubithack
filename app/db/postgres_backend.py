@@ -28,6 +28,11 @@ logger = logging.getLogger(__name__)
 AUDIT_CHAIN_LOCK_KEY = 0x0D1_C1_5104
 
 TABLES_IN_DROP_ORDER = (
+    "harness_outcomes",
+    "harness_answers",
+    "harness_decisions",
+    "harness_cases",
+    "workstreams",
     "audit_log",
     "decision_cards",
     "exceptions",

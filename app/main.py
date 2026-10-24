@@ -20,6 +20,10 @@ from fastapi.templating import Jinja2Templates
 from fastapi import FastAPI
 
 from app import audit, db, progress, seed
+from app.api import decisions as decisions_api
+from app.api import map as map_api
+from app.api import workstreams as workstreams_api
+from app.harness import bootstrap
 from app.agent.providers import provider_label
 from app.dashboard import build_dashboard
 from app.config import (
@@ -63,6 +67,7 @@ async def lifespan(_: FastAPI):
         empty = conn.execute("SELECT COUNT(*) AS c FROM return_cases").fetchone()["c"] == 0
     if empty:
         seed.seed()
+    bootstrap.load()
     yield
     db.reset_backend()
 
@@ -70,6 +75,9 @@ async def lifespan(_: FastAPI):
 app = FastAPI(title="Precedenz", docs_url="/api/docs", redoc_url=None, lifespan=lifespan)
 app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
+app.include_router(decisions_api.router)
+app.include_router(workstreams_api.router)
+app.include_router(map_api.router)
 
 STATUS_ORDER = [
     ExceptionStatus.NEW,
@@ -361,6 +369,12 @@ def reject_candidate(policy_id: str, reason: str = Form("rejected by the supervi
 
 
 # --------------------------------------------------------------- 4. dashboard
+
+
+@app.get("/map", response_class=HTMLResponse)
+def map_page(request: Request) -> HTMLResponse:
+    """The live precedent map: every pulse is a real decision."""
+    return templates.TemplateResponse(request, "map.html", _base_context(request))
 
 
 @app.get("/dashboard", response_class=HTMLResponse)
