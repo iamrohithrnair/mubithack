@@ -27,7 +27,7 @@ MAX_MISSING_COMPONENTS_CEILING = 1
 # The out-of-the-box approval token. It is a placeholder, not a secret: the demo
 # has to be usable by someone who just cloned the repository. While it is still
 # in use the interface says so out loud, so nobody mistakes it for real
-# authorization. Setting ONEDECISION_APPROVAL_TOKEN replaces it and silences the
+# authorization. Setting PRECEDENZ_APPROVAL_TOKEN replaces it and silences the
 # notice.
 DEFAULT_APPROVAL_TOKEN = "replace-me-local-demo-token"
 
@@ -135,11 +135,11 @@ class Settings:
 def resolve_database_url() -> str:
     """The PostgreSQL DSN, or empty to use the local SQLite demo backend.
 
-    `ONEDECISION_DATABASE_URL` wins. `DATABASE_URL` is honored as the platform
+    `PRECEDENZ_DATABASE_URL` wins. `DATABASE_URL` is honored as the platform
     convention so a managed host that injects it needs no extra wiring. A secret
     is read from the environment and never written anywhere.
     """
-    for name in ("ONEDECISION_DATABASE_URL", "DATABASE_URL"):
+    for name in ("PRECEDENZ_DATABASE_URL", "DATABASE_URL"):
         value = os.environ.get(name, "").strip()
         if value:
             return value
@@ -153,21 +153,21 @@ def _sapling_mode(model_provider: str) -> str:
     """`enforce` or `off`. Unset follows the model provider: the offline
     scripted provider promises a demo with no network, so it leaves Sapling off
     unless asked; every hosted provider gets the check."""
-    raw = os.environ.get("ONEDECISION_SAPLING_MODE", "").strip().lower()
+    raw = os.environ.get("PRECEDENZ_SAPLING_MODE", "").strip().lower()
     if raw in ("enforce", "off"):
         return raw
     return "off" if model_provider == "scripted" else "enforce"
 
 
 def load_settings() -> Settings:
-    db_path = Path(os.environ.get("ONEDECISION_DB_PATH", "var/onedecision.db"))
+    db_path = Path(os.environ.get("PRECEDENZ_DB_PATH", "var/precedenz.db"))
     if not db_path.is_absolute():
         db_path = REPO_ROOT / db_path
-    model_provider = os.environ.get("ONEDECISION_MODEL_PROVIDER", "scripted").strip().lower()
+    model_provider = os.environ.get("PRECEDENZ_MODEL_PROVIDER", "scripted").strip().lower()
     return Settings(
         model_provider=model_provider,
         bedrock_model_id=os.environ.get(
-            "ONEDECISION_BEDROCK_MODEL_ID",
+            "PRECEDENZ_BEDROCK_MODEL_ID",
             # Opus 5 has no in-Region support on bedrock-runtime, the endpoint
             # Strands' Converse calls use, so it must be addressed through a
             # cross-Region inference profile: "us." keeps traffic in US and
@@ -177,30 +177,30 @@ def load_settings() -> Settings:
         ),
         anthropic_model_id=os.environ.get(
             # Current model IDs carry no date suffix.
-            "ONEDECISION_ANTHROPIC_MODEL_ID", "claude-opus-5"
+            "PRECEDENZ_ANTHROPIC_MODEL_ID", "claude-opus-5"
         ),
         # Mubit is an LLM gateway with an OpenAI-compatible route. gpt-6-luna is
         # served on the Mubit key alone; other providers' models need their key
         # added under Provider keys in the Mubit console. Only MUBIT_API_KEY is
         # ever sent.
-        mubit_model_id=os.environ.get("ONEDECISION_MUBIT_MODEL_ID", "gpt-6-luna"),
+        mubit_model_id=os.environ.get("PRECEDENZ_MUBIT_MODEL_ID", "gpt-6-luna"),
         mubit_base_url=os.environ.get(
-            "ONEDECISION_MUBIT_BASE_URL", "https://api.mubit.ai/openai/v1"
+            "PRECEDENZ_MUBIT_BASE_URL", "https://api.mubit.ai/openai/v1"
         ),
         aws_region=os.environ.get("AWS_REGION", "us-west-2"),
         database_url=resolve_database_url(),
         db_path=db_path,
-        db_pool_min_size=_env_int("ONEDECISION_DB_POOL_MIN", 1),
-        db_pool_max_size=_env_int("ONEDECISION_DB_POOL_MAX", 10),
-        db_connect_timeout_seconds=_env_int("ONEDECISION_DB_CONNECT_TIMEOUT", 10),
-        confidence_threshold=_env_float("ONEDECISION_CONFIDENCE_THRESHOLD", 0.75),
-        model_timeout_seconds=_env_int("ONEDECISION_MODEL_TIMEOUT_SECONDS", 60),
-        approval_token=os.environ.get("ONEDECISION_APPROVAL_TOKEN", DEFAULT_APPROVAL_TOKEN),
-        otel_enabled=os.environ.get("ONEDECISION_OTEL_ENABLED", "false").lower() == "true",
+        db_pool_min_size=_env_int("PRECEDENZ_DB_POOL_MIN", 1),
+        db_pool_max_size=_env_int("PRECEDENZ_DB_POOL_MAX", 10),
+        db_connect_timeout_seconds=_env_int("PRECEDENZ_DB_CONNECT_TIMEOUT", 10),
+        confidence_threshold=_env_float("PRECEDENZ_CONFIDENCE_THRESHOLD", 0.75),
+        model_timeout_seconds=_env_int("PRECEDENZ_MODEL_TIMEOUT_SECONDS", 60),
+        approval_token=os.environ.get("PRECEDENZ_APPROVAL_TOKEN", DEFAULT_APPROVAL_TOKEN),
+        otel_enabled=os.environ.get("PRECEDENZ_OTEL_ENABLED", "false").lower() == "true",
         sapling_mode=_sapling_mode(model_provider),
-        sapling_url=os.environ.get("ONEDECISION_SAPLING_URL", SAPLING_DEFAULT_URL),
-        sapling_min_support=_env_float("ONEDECISION_SAPLING_MIN_SUPPORT", 0.5),
-        sapling_timeout_seconds=_env_int("ONEDECISION_SAPLING_TIMEOUT_SECONDS", 30),
+        sapling_url=os.environ.get("PRECEDENZ_SAPLING_URL", SAPLING_DEFAULT_URL),
+        sapling_min_support=_env_float("PRECEDENZ_SAPLING_MIN_SUPPORT", 0.5),
+        sapling_timeout_seconds=_env_int("PRECEDENZ_SAPLING_TIMEOUT_SECONDS", 30),
     )
 
 

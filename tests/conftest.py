@@ -3,7 +3,7 @@
 Every test runs against **both** database backends:
 
 * `sqlite` — always, on a throwaway file.
-* `postgres` — whenever `ONEDECISION_TEST_DATABASE_URL` points at a reachable
+* `postgres` — whenever `PRECEDENZ_TEST_DATABASE_URL` points at a reachable
   server, on a schema dropped and rebuilt per test.
 
 Running the identical suite against both is the point: the deployment target and
@@ -22,12 +22,12 @@ from pathlib import Path
 import pytest
 
 # Set before any app module reads settings.
-os.environ.setdefault("ONEDECISION_MODEL_PROVIDER", "scripted")
-os.environ.setdefault("ONEDECISION_APPROVAL_TOKEN", "test-approval-token")
+os.environ.setdefault("PRECEDENZ_MODEL_PROVIDER", "scripted")
+os.environ.setdefault("PRECEDENZ_APPROVAL_TOKEN", "test-approval-token")
 # The Sapling semantic check calls a hosted endpoint; tests that need it stub it.
-os.environ["ONEDECISION_SAPLING_MODE"] = "off"
+os.environ["PRECEDENZ_SAPLING_MODE"] = "off"
 
-TEST_DATABASE_URL = os.environ.get("ONEDECISION_TEST_DATABASE_URL", "").strip()
+TEST_DATABASE_URL = os.environ.get("PRECEDENZ_TEST_DATABASE_URL", "").strip()
 
 
 def _postgres_reachable(dsn: str) -> bool:
@@ -56,19 +56,19 @@ def temp_db(request, tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     """Point the app at a throwaway database and seed it from the fixtures."""
     from app import config, db, seed
 
-    monkeypatch.setenv("ONEDECISION_MODEL_PROVIDER", "scripted")
-    monkeypatch.setenv("ONEDECISION_APPROVAL_TOKEN", "test-approval-token")
-    monkeypatch.setenv("ONEDECISION_SAPLING_MODE", "off")
+    monkeypatch.setenv("PRECEDENZ_MODEL_PROVIDER", "scripted")
+    monkeypatch.setenv("PRECEDENZ_APPROVAL_TOKEN", "test-approval-token")
+    monkeypatch.setenv("PRECEDENZ_SAPLING_MODE", "off")
 
     if request.param == "postgres":
-        monkeypatch.setenv("ONEDECISION_DATABASE_URL", TEST_DATABASE_URL)
-        monkeypatch.setenv("ONEDECISION_DB_POOL_MAX", "4")
+        monkeypatch.setenv("PRECEDENZ_DATABASE_URL", TEST_DATABASE_URL)
+        monkeypatch.setenv("PRECEDENZ_DB_POOL_MAX", "4")
         target = TEST_DATABASE_URL
     else:
-        monkeypatch.delenv("ONEDECISION_DATABASE_URL", raising=False)
+        monkeypatch.delenv("PRECEDENZ_DATABASE_URL", raising=False)
         monkeypatch.delenv("DATABASE_URL", raising=False)
-        target = tmp_path / "onedecision.db"
-        monkeypatch.setenv("ONEDECISION_DB_PATH", str(target))
+        target = tmp_path / "precedenz.db"
+        monkeypatch.setenv("PRECEDENZ_DB_PATH", str(target))
 
     new_settings = config.reload_settings()
 

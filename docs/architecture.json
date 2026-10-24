@@ -1,5 +1,5 @@
 {
-  "title": "OneDecision architecture",
+  "title": "Precedenz architecture",
   "subtitle": "One agent may propose. Deterministic code decides, acts, and records. A person teaches the rule.",
   "note": "Every tier below is in this repository. Two domains ship on it: returns, and accounts-payable invoice variance. Business systems are simulated adapters, not production integrations.",
   "tiers": [
@@ -14,13 +14,13 @@
           "meta": "POST /events/{case_id}",
           "functions": [
             "An event from the dock, not a chat prompt",
-            "Six demo cases, one per boundary"
+            "Nine demo cases, one per boundary"
           ]
         },
         {
           "id": "agentcore",
           "name": "AgentCore Runtime",
-          "meta": "POST /invocations \u00b7 us-west-2",
+          "meta": "POST /invocations · us-west-2",
           "functions": [
             "The same handler, deployed to AWS",
             "Returns the decision card as JSON"
@@ -29,7 +29,7 @@
         {
           "id": "web",
           "name": "Web app",
-          "meta": "Inbox \u00b7 Decision \u00b7 Policies \u00b7 Dashboard",
+          "meta": "Inbox · Decision · Policies · Dashboard",
           "functions": [
             "Where a supervisor reads and decides",
             "Phone, tablet, desktop"
@@ -45,7 +45,7 @@
         {
           "id": "agent",
           "name": "One Strands agent",
-          "meta": "investigate \u00b7 card \u00b7 propose",
+          "meta": "investigate · card · propose",
           "functions": [
             "Three invocations, one agent",
             "Typed output, re-derived downstream"
@@ -54,9 +54,9 @@
         {
           "id": "provider",
           "name": "Model provider",
-          "meta": "bedrock | anthropic | scripted",
+          "meta": "mubit | bedrock | anthropic | scripted",
           "functions": [
-            "Claude Opus 5 on Bedrock, prompt cached",
+            "gpt-6-luna via the Mubit gateway",
             "Offline scripted model for tests and CI"
           ]
         },
@@ -65,9 +65,9 @@
           "name": "Read-only tools",
           "meta": "five, all side-effect free",
           "functions": [
-            "get_return_case \u00b7 find_approved_policy",
+            "get_return_case · find_approved_policy",
             "compare_expected_and_received",
-            "lookup_replacement_cost \u00b7 replay (dry run)"
+            "lookup_replacement_cost · replay (dry run)"
           ]
         }
       ]
@@ -80,7 +80,7 @@
         {
           "id": "orchestrator",
           "name": "Orchestrator",
-          "meta": "handle_event \u00b7 approve_and_teach",
+          "meta": "handle_event · approve_and_teach",
           "functions": [
             "Runs the golden path end to end",
             "The only code that changes anything"
@@ -114,6 +114,15 @@
           ]
         },
         {
+          "id": "semantic",
+          "name": "Semantic check",
+          "meta": "Banyan Sapling",
+          "functions": [
+            "Reads raw evidence and free-text notes",
+            "Only supported lets a policy act"
+          ]
+        },
+        {
           "id": "execute",
           "name": "Execute and verify",
           "meta": "idempotency key per action",
@@ -125,7 +134,7 @@
         {
           "id": "domains",
           "name": "Domain packs",
-          "meta": "returns \u00b7 ap.invoice_variance",
+          "meta": "returns · ap.invoice_variance",
           "functions": [
             "Facts, guardrails, actions, corpus",
             "A second domain changed no machinery"
@@ -150,7 +159,7 @@
         {
           "id": "human",
           "name": "Supervisor",
-          "meta": "approve \u00b7 activate",
+          "meta": "approve · activate",
           "functions": [
             "Approving records a decision only",
             "Activation is a separate, explicit act"
@@ -177,7 +186,7 @@
         {
           "id": "active",
           "name": "Active policy version",
-          "meta": "versioned \u00b7 diffed \u00b7 retirable",
+          "meta": "versioned · diffed · retirable",
           "functions": [
             "Activated by a person with a token",
             "A revision may narrow, never widen"
@@ -193,7 +202,7 @@
         {
           "id": "returns",
           "name": "Returns system",
-          "meta": "synthetic \u00b7 read-only",
+          "meta": "synthetic · read-only",
           "functions": [
             "Cases, bill of materials, evidence"
           ]
@@ -201,7 +210,7 @@
         {
           "id": "parts",
           "name": "Parts catalog",
-          "meta": "synthetic \u00b7 read-only",
+          "meta": "synthetic · read-only",
           "functions": [
             "Replacement cost and stock status"
           ]
@@ -209,7 +218,7 @@
         {
           "id": "wms",
           "name": "Warehouse",
-          "meta": "synthetic \u00b7 writes",
+          "meta": "synthetic · writes",
           "functions": [
             "Work orders and dispositions",
             "Every write takes an idempotency key"
@@ -218,7 +227,7 @@
         {
           "id": "audit",
           "name": "Audit log",
-          "meta": "append-only \u00b7 hash-chained",
+          "meta": "append-only · hash-chained",
           "functions": [
             "Every event, tool call, approval, action",
             "The database refuses UPDATE and DELETE"
@@ -235,7 +244,7 @@
         {
           "id": "apledger",
           "name": "AP ledger",
-          "meta": "synthetic \u00b7 second domain",
+          "meta": "synthetic · second domain",
           "functions": [
             "Invoices, vendors, adjustments"
           ]
@@ -288,7 +297,7 @@
     },
     {
       "from": "engine",
-      "to": "execute",
+      "to": "semantic",
       "kind": "control",
       "label": "a policy matches",
       "step": 7
@@ -310,7 +319,7 @@
       "from": "web",
       "to": "orchestrator",
       "kind": "control",
-      "label": "check in \u00b7 approve \u00b7 activate"
+      "label": "check in · approve · activate"
     },
     {
       "from": "agent",
@@ -364,7 +373,7 @@
       "from": "execute",
       "to": "wms",
       "kind": "write",
-      "label": "work order \u00b7 disposition"
+      "label": "work order · disposition"
     },
     {
       "from": "execute",
@@ -454,7 +463,7 @@
       "from": "audit",
       "to": "web",
       "kind": "read",
-      "label": "timeline \u00b7 dashboard usage"
+      "label": "timeline · dashboard usage"
     },
     {
       "from": "returns",
@@ -526,13 +535,37 @@
       "from": "execute",
       "to": "apledger",
       "kind": "write",
-      "label": "adjustment \u00b7 payment release"
+      "label": "adjustment · payment release"
     },
     {
       "from": "apledger",
       "to": "db",
       "kind": "store",
       "label": "tables"
+    },
+    {
+      "from": "semantic",
+      "to": "execute",
+      "kind": "control",
+      "label": "supported"
+    },
+    {
+      "from": "semantic",
+      "to": "human",
+      "kind": "escalate",
+      "label": "anything else, so a person decides"
+    },
+    {
+      "from": "semantic",
+      "to": "returns",
+      "kind": "read",
+      "label": "raw case record and notes"
+    },
+    {
+      "from": "semantic",
+      "to": "audit",
+      "kind": "audit",
+      "label": "every verdict"
     }
   ],
   "kinds": {

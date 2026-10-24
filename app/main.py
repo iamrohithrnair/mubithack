@@ -52,7 +52,7 @@ BASE_DIR = Path(__file__).resolve().parent
 OPERATOR = "dana.r@northgate-optics.example"
 
 # The waiting panel sets this on the POST it makes on the form's behalf.
-WAIT_HEADER = "x-onedecision-wait"
+WAIT_HEADER = "x-precedenz-wait"
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
@@ -67,7 +67,7 @@ async def lifespan(_: FastAPI):
     db.reset_backend()
 
 
-app = FastAPI(title="OneDecision", docs_url="/api/docs", redoc_url=None, lifespan=lifespan)
+app = FastAPI(title="Precedenz", docs_url="/api/docs", redoc_url=None, lifespan=lifespan)
 app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 

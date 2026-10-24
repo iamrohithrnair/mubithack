@@ -1,4 +1,4 @@
-# OneDecision
+# Precedenz
 
 **Teach the agent once; it safely handles the next hundred decisions.**
 
@@ -6,7 +6,7 @@ Built for **Agents for Humans** · Professional Agents track · Strands Agents o
 
 **[Watch the 3½-minute demo](https://youtu.be/25Cw8DO1J-0)**
 
-![OneDecision architecture](docs/architecture.png)
+![Precedenz architecture](docs/architecture.png)
 
 For the interactive version, open [docs/architecture.html](docs/architecture.html) in a
 browser from a local clone (GitHub shows it as source) and hover any component to see what
@@ -25,7 +25,7 @@ do?* She answers each one in thirty seconds, and never gets the hour it would ta
 turn that judgment into a written policy, let alone into automation. The knowledge stays
 in their head. The interruptions keep coming.
 
-## What OneDecision does
+## What Precedenz does
 
 It closes that loop, once:
 
@@ -82,7 +82,7 @@ replace-me-local-demo-token
 ```
 
 It is a placeholder, not a secret, and the activation screen prints it for you.
-Set `ONEDECISION_APPROVAL_TOKEN` to replace it, and the on-screen notice disappears
+Set `PRECEDENZ_APPROVAL_TOKEN` to replace it, and the on-screen notice disappears
 when you do.
 
 No account, no sign-up, no cloud, no credentials, no spend: the whole product
@@ -100,14 +100,14 @@ If 5432 is already taken on your machine, publish the container somewhere else a
 everything follows, including both connection strings:
 
 ```bash
-ONEDECISION_PG_PORT=55432 make db-up
-ONEDECISION_PG_PORT=55432 make test-pg
+PRECEDENZ_PG_PORT=55432 make db-up
+PRECEDENZ_PG_PORT=55432 make test-pg
 ```
 
 Or point at any PostgreSQL and the app follows:
 
 ```bash
-export ONEDECISION_DATABASE_URL=postgresql://user:pass@host:5432/onedecision
+export PRECEDENZ_DATABASE_URL=postgresql://user:pass@host:5432/precedenz
 make migrate && make seed && make run
 ```
 
@@ -140,7 +140,7 @@ structured output  : InvestigationReport
 One `strands.Agent`, real `@tool` functions, real tool calls, typed Pydantic structured
 output. The **model provider** behind it is swappable:
 
-| `ONEDECISION_MODEL_PROVIDER` | What it is | Needs |
+| `PRECEDENZ_MODEL_PROVIDER` | What it is | Needs |
 | --- | --- | --- |
 | `scripted` (default) | A deterministic implementation of the Strands `Model` interface, in `app/agent/providers/scripted.py` | nothing |
 | `bedrock` | Strands `BedrockModel` | AWS credentials + Bedrock model access |
@@ -243,8 +243,8 @@ recorded in the audit log.
 
 Sapling is on by default with any hosted model provider. It is off with the offline
 `scripted` provider, which promises no network access. Set
-`ONEDECISION_SAPLING_MODE=enforce` to turn it on there, for example
-`ONEDECISION_SAPLING_MODE=enforce make demo`.
+`PRECEDENZ_SAPLING_MODE=enforce` to turn it on there, for example
+`PRECEDENZ_SAPLING_MODE=enforce make demo`.
 
 ---
 
@@ -440,7 +440,7 @@ idempotency-key collisions.
 ## Write-ups
 
 Three posts on building this, published on AWS Builder Center as the "Building
-OneDecision" series:
+Precedenz" series:
 
 1. [Cutting Bedrock agent tokens by 83%](https://builder.aws.com/content/3JFMPcu0rekYa1Y6LC5qt6vCctv/agents-for-humans-cutting-bedrock-agent-tokens-by-83percent):
    115,000 tokens went to one step, and the cause was a tool schema that disagreed with

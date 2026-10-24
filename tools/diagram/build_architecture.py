@@ -493,7 +493,7 @@ def page_body() -> str:
         f'<span><i style="background:{v["color"]}"></i>{esc(v["label"])}</span>' for v in kinds.values()
     )
     script = PAGE_SCRIPT.replace("__DATA__", json.dumps(MODEL))
-    return f"""<title>OneDecision architecture</title>
+    return f"""<title>Precedenz architecture</title>
 <style>{PAGE_STYLE}</style>
 <div class="wrap">
   <header>

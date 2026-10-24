@@ -169,13 +169,13 @@ def test_approving_lands_on_what_it_produced(client):
 
 def test_the_panel_is_told_where_to_go_instead_of_being_sent_there(client):
     """It already has a page open; following a redirect would load twice."""
-    r = client.post("/events/CASE-2001", headers={"X-OneDecision-Wait": "1"},
+    r = client.post("/events/CASE-2001", headers={"X-Precedenz-Wait": "1"},
                     follow_redirects=False)
     assert r.status_code == 200
     exception_id = r.json()["next"].rsplit("/", 1)[-1]
 
     approved = client.post(f"/exceptions/{exception_id}/approve",
-                           headers={"X-OneDecision-Wait": "1"}, follow_redirects=False)
+                           headers={"X-Precedenz-Wait": "1"}, follow_redirects=False)
     assert approved.status_code == 200
     assert approved.json() == {"next": f"/exceptions/{exception_id}#candidate"}
 
@@ -199,7 +199,7 @@ def test_a_case_that_resolves_itself_sends_the_panel_back_to_the_inbox(client):
     client.post(f"/policies/{policy_id}/activate",
                 data={"approval_token": "test-approval-token"}, follow_redirects=False)
 
-    r = client.post("/events/CASE-2002", headers={"X-OneDecision-Wait": "1"},
+    r = client.post("/events/CASE-2002", headers={"X-Precedenz-Wait": "1"},
                     follow_redirects=False)
     assert r.json() == {"next": "/"}
 

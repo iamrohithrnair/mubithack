@@ -17,7 +17,7 @@ cdk/node_modules/
 # Packaged CodeZip artifact and its per-agent staging directory, both produced
 # by `agentcore package` / `agentcore deploy`
 *.zip
-onedecision/
+precedenz/
 
 # Exception: Commit the State
 !.cli/deployed-state.json

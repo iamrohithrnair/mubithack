@@ -141,7 +141,7 @@
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",
         // Asks for the destination instead of the page, so it is loaded once.
-        "X-OneDecision-Wait": "1",
+        "X-Precedenz-Wait": "1",
         Accept: "application/json",
       },
       credentials: "same-origin",

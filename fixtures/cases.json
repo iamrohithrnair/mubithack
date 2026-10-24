@@ -1,5 +1,5 @@
 {
-  "_notice": "SYNTHETIC FIXTURE DATA. Every case, order, customer reference, serial, and inspector note below is invented for the OneDecision demo. No real customers, orders, returns, PII, or business records.",
+  "_notice": "SYNTHETIC FIXTURE DATA. Every case, order, customer reference, serial, and inspector note below is invented for the Precedenz demo. No real customers, orders, returns, PII, or business records.",
   "historical_cases": [
     {
       "case_id": "CASE-1001",

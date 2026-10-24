@@ -26,7 +26,7 @@ command below was run in this environment unless it is marked **not yet run**.
 
   ```json
   {
-    "name": "onedecision",
+    "name": "precedenz",
     "build": "CodeZip",
     "entrypoint": "agentcore_main.py",
     "codeLocation": ".",
@@ -34,15 +34,15 @@ command below was run in this environment unless it is marked **not yet run**.
     "networkMode": "PUBLIC",
     "protocol": "HTTP",
     "envVars": [
-      {"name": "ONEDECISION_MODEL_PROVIDER", "value": "bedrock"},
-      {"name": "ONEDECISION_BEDROCK_MODEL_ID", "value": "us.anthropic.claude-opus-5"},
-      {"name": "ONEDECISION_DB_PATH", "value": "/tmp/onedecision.db"}
+      {"name": "PRECEDENZ_MODEL_PROVIDER", "value": "bedrock"},
+      {"name": "PRECEDENZ_BEDROCK_MODEL_ID", "value": "us.anthropic.claude-opus-5"},
+      {"name": "PRECEDENZ_DB_PATH", "value": "/tmp/precedenz.db"}
     ]
   }
   ```
 
 - **`agentcore/cdk/`** is the CDK app the CLI generated. `agentcore deploy` synthesizes and
-  deploys it as the CloudFormation stack `AgentCore-OneDecision-default`.
+  deploys it as the CloudFormation stack `AgentCore-Precedenz-default`.
 
 Invocation payload, either form:
 
@@ -66,7 +66,7 @@ executed until a person approves. The runtime logs show no errors.
 - **State across sessions.** Each runtime session seeds its own SQLite database under
   `/tmp`, so a policy taught in one session is not there in the next. The full
   teach-once loop runs in the local app. Persistent state would mean pointing
-  `ONEDECISION_DATABASE_URL` at PostgreSQL (for example RDS, with VPC networking); the
+  `PRECEDENZ_DATABASE_URL` at PostgreSQL (for example RDS, with VPC networking); the
   application supports it (see [database.md](database.md)), but it is not provisioned.
 - **A public link.** Invoking the runtime requires AWS credentials with
   `bedrock-agentcore:InvokeAgentRuntime`. The web interface is not deployed.
@@ -117,7 +117,7 @@ What the packager does, from reading the CLI's packaging code and the built zip:
 
 ```bash
 pip install -e .
-ONEDECISION_MODEL_PROVIDER=scripted uvicorn agentcore_main:agentcore_app --port 8091
+PRECEDENZ_MODEL_PROVIDER=scripted uvicorn agentcore_main:agentcore_app --port 8091
 curl -s localhost:8091/ping
 curl -s localhost:8091/invocations -H 'content-type: application/json' \
      -d '{"prompt": "Investigate CASE-2001"}'
@@ -140,7 +140,7 @@ the CloudFormation console after emptying its S3 bucket.
 
 The deployment enables CloudWatch logging and transaction search for the runtime;
 `agentcore logs` and `agentcore traces list` read them. Strands also emits OpenTelemetry
-spans. Set `OTEL_EXPORTER_OTLP_ENDPOINT` and `ONEDECISION_OTEL_ENABLED=true` to export
+spans. Set `OTEL_EXPORTER_OTLP_ENDPOINT` and `PRECEDENZ_OTEL_ENABLED=true` to export
 them elsewhere.
 
 ## Deliberately not used

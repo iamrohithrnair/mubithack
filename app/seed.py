@@ -163,7 +163,7 @@ def seed(reset: bool = False) -> dict[str, int]:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Seed the OneDecision demo database.")
+    parser = argparse.ArgumentParser(description="Seed the Precedenz demo database.")
     parser.add_argument("--reset", action="store_true", help="drop local state before seeding")
     args = parser.parse_args()
     counts = seed(reset=args.reset)

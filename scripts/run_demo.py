@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run the OneDecision golden path end to end in the terminal.
+"""Run the Precedenz golden path end to end in the terminal.
 
     unknown exception -> agent investigates -> decision card -> human approves
     -> constrained policy proposal -> replay -> human activates
@@ -113,7 +113,7 @@ def main() -> int:
     # --------------------------------------------------------------- sapling
     head(7, "Clean fields, telling notes. Banyan Sapling reads what the engine cannot.")
     if not settings.sapling_enforced:
-        print("semantic check is off: set ONEDECISION_SAPLING_MODE=enforce to run this step")
+        print("semantic check is off: set PRECEDENZ_SAPLING_MODE=enforce to run this step")
     else:
         for case_id in ("CASE-2007", "CASE-2008", "CASE-2009"):
             result = handle_event(case_id)

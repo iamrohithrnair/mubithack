@@ -2,7 +2,7 @@
 
 ## Origin
 
-OneDecision was created from scratch during the Agents for Humans submission period,
+Precedenz was created from scratch during the Agents for Humans submission period,
 starting 2026-09-04. The repository began empty apart from an `Apache-2.0` LICENSE and a
 one-line `README.md`; every other file in it was written for this hackathon.
 

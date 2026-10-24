@@ -12,23 +12,23 @@ jobs:
     env:
       # The offline provider. CI makes no network calls to any model, holds no
       # credentials, and cannot incur spend.
-      ONEDECISION_MODEL_PROVIDER: scripted
-      ONEDECISION_APPROVAL_TOKEN: ci-approval-token
+      PRECEDENZ_MODEL_PROVIDER: scripted
+      PRECEDENZ_APPROVAL_TOKEN: ci-approval-token
       # Runs the whole suite against the deployment target as well as the demo
       # backend, so the two cannot drift.
-      ONEDECISION_TEST_DATABASE_URL: postgresql://onedecision:ci-local-password@127.0.0.1:5432/onedecision_test
+      PRECEDENZ_TEST_DATABASE_URL: postgresql://precedenz:ci-local-password@127.0.0.1:5432/precedenz_test
 
     services:
       postgres:
         image: postgres:16-alpine
         env:
-          POSTGRES_USER: onedecision
+          POSTGRES_USER: precedenz
           POSTGRES_PASSWORD: ci-local-password
-          POSTGRES_DB: onedecision_test
+          POSTGRES_DB: precedenz_test
         ports:
           - 5432:5432
         options: >-
-          --health-cmd "pg_isready -U onedecision"
+          --health-cmd "pg_isready -U precedenz"
           --health-interval 5s
           --health-timeout 5s
           --health-retries 10
@@ -57,11 +57,11 @@ jobs:
 
       - name: Migrations apply cleanly to a fresh PostgreSQL
         env:
-          ONEDECISION_DATABASE_URL: postgresql://onedecision:ci-local-password@127.0.0.1:5432/onedecision
+          PRECEDENZ_DATABASE_URL: postgresql://precedenz:ci-local-password@127.0.0.1:5432/precedenz
         run: |
-          # The service creates only onedecision_test. This step needs its own
+          # The service creates only precedenz_test. This step needs its own
           # empty database to prove the migrations apply from scratch.
-          python -c "import os, psycopg; psycopg.connect(os.environ['ONEDECISION_TEST_DATABASE_URL'], autocommit=True).execute('CREATE DATABASE onedecision')"
+          python -c "import os, psycopg; psycopg.connect(os.environ['PRECEDENZ_TEST_DATABASE_URL'], autocommit=True).execute('CREATE DATABASE precedenz')"
           python -m app.seed --reset
           python -m app.evaluation
 

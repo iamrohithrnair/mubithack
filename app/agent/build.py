@@ -1,4 +1,4 @@
-"""Construct the one OneDecision Strands agent.
+"""Construct the one Precedenz Strands agent.
 
 There is exactly one agent. It is invoked three times along the golden path —
 investigate, produce a decision card, propose a policy — with the same tools and
@@ -17,7 +17,7 @@ from app.agent import prompts
 from app.agent.providers import resolve_model
 from app.agent.tools import AgentContext, build_tools
 
-AGENT_NAME = "onedecision-returns-agent"
+AGENT_NAME = "precedenz-returns-agent"
 
 
 def build_agent(

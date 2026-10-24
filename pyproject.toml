@@ -1,5 +1,5 @@
 [project]
-name = "onedecision"
+name = "precedenz"
 version = "0.1.0"
 description = "Teach the agent once; it safely handles the next hundred decisions."
 readme = "README.md"

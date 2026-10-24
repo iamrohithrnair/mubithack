@@ -1,4 +1,4 @@
-"""Amazon Bedrock AgentCore Runtime entrypoint for OneDecision.
+"""Amazon Bedrock AgentCore Runtime entrypoint for Precedenz.
 
 AgentCore runs this file from the root of the deployment package, where the
 `app` package sits beside it. All of the logic lives in `app/agentcore.py`;

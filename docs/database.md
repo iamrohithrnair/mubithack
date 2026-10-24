@@ -11,7 +11,7 @@ drift without CI going red.
 Switching is one environment variable:
 
 ```bash
-ONEDECISION_DATABASE_URL=postgresql://user:password@host:5432/onedecision
+PRECEDENZ_DATABASE_URL=postgresql://user:password@host:5432/precedenz
 ```
 
 Unset it and the app falls back to SQLite. `DATABASE_URL` is also honored, since
@@ -178,18 +178,18 @@ make db-down
 Or point at any PostgreSQL:
 
 ```bash
-export ONEDECISION_DATABASE_URL=postgresql://user:pass@host:5432/onedecision
+export PRECEDENZ_DATABASE_URL=postgresql://user:pass@host:5432/precedenz
 make migrate && make seed && make run
 ```
 
 | Variable | Default | Purpose |
 | --- | --- | --- |
-| `ONEDECISION_DATABASE_URL` | *(unset)* | PostgreSQL DSN. Unset selects SQLite. |
+| `PRECEDENZ_DATABASE_URL` | *(unset)* | PostgreSQL DSN. Unset selects SQLite. |
 | `DATABASE_URL` | *(unset)* | Honored as the platform convention. |
-| `ONEDECISION_DB_POOL_MIN` | `1` | Pool floor. |
-| `ONEDECISION_DB_POOL_MAX` | `10` | Pool ceiling. Keep small behind a proxy. |
-| `ONEDECISION_DB_CONNECT_TIMEOUT` | `10` | Seconds. |
-| `ONEDECISION_TEST_DATABASE_URL` | *(unset)* | Enables the PostgreSQL half of the suite. |
+| `PRECEDENZ_DB_POOL_MIN` | `1` | Pool floor. |
+| `PRECEDENZ_DB_POOL_MAX` | `10` | Pool ceiling. Keep small behind a proxy. |
+| `PRECEDENZ_DB_CONNECT_TIMEOUT` | `10` | Seconds. |
+| `PRECEDENZ_TEST_DATABASE_URL` | *(unset)* | Enables the PostgreSQL half of the suite. |
 
 `db.describe()` redacts the password before it reaches a log or the health
 endpoint; `test_backend_is_reported_and_never_leaks_the_password` asserts it.
@@ -203,7 +203,7 @@ following is what still stands between this and a production deployment, in
 priority order. None of it is faked in the repository.
 
 1. **Run as a non-owner role.** The `REVOKE` only bites when the application is
-   not the table owner. Create `onedecision_app` with `SELECT, INSERT` on
+   not the table owner. Create `precedenz_app` with `SELECT, INSERT` on
    `audit_log` and full DML elsewhere; run migrations as a separate owner role.
    This is the single highest-value remaining change, because it makes the
    audit log tamper-proof against the application itself.
@@ -216,7 +216,7 @@ priority order. None of it is faked in the repository.
 4. **Connection management for a serverless runtime.** AgentCore Runtime scales
    horizontally, and *N* instances × `pool_max` can exhaust a database's
    connection limit. Put RDS Proxy (or PgBouncer in transaction mode) in front
-   and set `ONEDECISION_DB_POOL_MAX` to 2–5. Note that transaction-mode pooling
+   and set `PRECEDENZ_DB_POOL_MAX` to 2–5. Note that transaction-mode pooling
    forbids session-scoped state — this codebase uses only
    `pg_advisory_xact_lock`, which is transaction-scoped and therefore safe. A
    future `pg_advisory_lock` (session-scoped) would silently break under it.

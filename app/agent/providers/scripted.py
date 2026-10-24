@@ -45,7 +45,7 @@ LOW_CONFIDENCE = 0.35
 
 
 class ScriptedModel(Model):
-    """Deterministic planner over the OneDecision tool set."""
+    """Deterministic planner over the Precedenz tool set."""
 
     def __init__(self, **config: Any) -> None:
         self._config: dict[str, Any] = {"model_id": "scripted-deterministic-v1", **config}

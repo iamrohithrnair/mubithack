@@ -1,29 +1,29 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="1225" viewBox="0 0 1440 1225" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="1242" viewBox="0 0 1440 1242" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif">
 <defs><marker id="arrow-4ade80" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#4ade80"/></marker><marker id="arrow-4b5468" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#4b5468"/></marker><marker id="arrow-5eead4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#5eead4"/></marker><marker id="arrow-6b7488" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#6b7488"/></marker><marker id="arrow-7dd3fc" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#7dd3fc"/></marker><marker id="arrow-9aa4b6" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#9aa4b6"/></marker><marker id="arrow-f87171" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#f87171"/></marker><marker id="arrow-fbbf24" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#fbbf24"/></marker></defs>
-<rect width="1440" height="1225" fill="#10131a"/>
+<rect width="1440" height="1242" fill="#10131a"/>
 <style>.t{fill:#e6e9ef} .dim{fill:#9aa4b6} .faint{fill:#6b7488} .mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}.edge-label{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;fill:#9aa4b6}</style>
-<text x="40" y="56" class="t" font-size="30" font-weight="700">OneDecision architecture</text><text x="40" y="84" class="dim" font-size="15">One agent may propose. Deterministic code decides, acts, and records. A person teaches the rule.</text><text x="40" y="106" class="faint" font-size="12.5">Every tier below is in this repository. Two domains ship on it: returns, and accounts-payable invoice variance. Business systems are simulated adapters, not production integrations.</text>
+<text x="40" y="56" class="t" font-size="30" font-weight="700">Precedenz architecture</text><text x="40" y="84" class="dim" font-size="15">One agent may propose. Deterministic code decides, acts, and records. A person teaches the rule.</text><text x="40" y="106" class="faint" font-size="12.5">Every tier below is in this repository. Two domains ship on it: returns, and accounts-payable invoice variance. Business systems are simulated adapters, not production integrations.</text>
 <rect x="40" y="132" width="3" height="110" fill="#5eead4" opacity="0.55" rx="1.5"/><text x="54" y="150" class="t" font-size="12.5" font-weight="700" letter-spacing="1.1">SURFACES</text>
 <text x="54" y="172" class="faint" font-size="12">How work arrives, and</text>
 <text x="54" y="187" class="faint" font-size="12">where a person acts on it</text>
 <rect x="40" y="316" width="3" height="127" fill="#5eead4" opacity="0.55" rx="1.5"/><text x="54" y="334" class="t" font-size="12.5" font-weight="700" letter-spacing="1.1">MODEL REASONING</text>
 <text x="54" y="356" class="faint" font-size="12">May propose. May never</text>
 <text x="54" y="371" class="faint" font-size="12">act.</text>
-<rect x="40" y="517" width="3" height="158" fill="#5eead4" opacity="0.55" rx="1.5"/><text x="54" y="535" class="t" font-size="12.5" font-weight="700" letter-spacing="1.1">CONTROL PLANE</text>
+<rect x="40" y="517" width="3" height="175" fill="#5eead4" opacity="0.55" rx="1.5"/><text x="54" y="535" class="t" font-size="12.5" font-weight="700" letter-spacing="1.1">CONTROL PLANE</text>
 <text x="54" y="557" class="faint" font-size="12">Deterministic. The only</text>
 <text x="54" y="572" class="faint" font-size="12">thing that acts.</text>
-<rect x="40" y="749" width="3" height="158" fill="#5eead4" opacity="0.55" rx="1.5"/><text x="54" y="767" class="t" font-size="12.5" font-weight="700" letter-spacing="1.1">GOVERNANCE</text>
-<text x="54" y="789" class="faint" font-size="12">How one decision becomes a</text>
-<text x="54" y="804" class="faint" font-size="12">rule</text>
-<rect x="40" y="981" width="3" height="158" fill="#5eead4" opacity="0.55" rx="1.5"/><text x="54" y="999" class="t" font-size="12.5" font-weight="700" letter-spacing="1.1">SYSTEMS OF RECORD</text>
-<text x="54" y="1021" class="faint" font-size="12">Synthetic business</text>
-<text x="54" y="1036" class="faint" font-size="12">systems, real evidence</text>
+<rect x="40" y="766" width="3" height="158" fill="#5eead4" opacity="0.55" rx="1.5"/><text x="54" y="784" class="t" font-size="12.5" font-weight="700" letter-spacing="1.1">GOVERNANCE</text>
+<text x="54" y="806" class="faint" font-size="12">How one decision becomes a</text>
+<text x="54" y="821" class="faint" font-size="12">rule</text>
+<rect x="40" y="998" width="3" height="158" fill="#5eead4" opacity="0.55" rx="1.5"/><text x="54" y="1016" class="t" font-size="12.5" font-weight="700" letter-spacing="1.1">SYSTEMS OF RECORD</text>
+<text x="54" y="1038" class="faint" font-size="12">Synthetic business</text>
+<text x="54" y="1053" class="faint" font-size="12">systems, real evidence</text>
 <rect x="236" y="132" width="376" height="110" rx="10" fill="#171b24" stroke="#2a3140"/>
 <rect x="249" y="145" width="17" height="18" rx="9" fill="#5eead4" opacity="0.15"/><text x="257" y="158" text-anchor="middle" font-size="11" font-weight="700" fill="#5eead4" class="mono">1</text>
 <text x="270" y="158" class="t" font-size="14.5" font-weight="650">Returns-dock check-in</text>
 <text x="250" y="176" class="faint mono" font-size="11">POST /events/{case_id}</text>
 <text x="250" y="202" class="dim" font-size="12">An event from the dock, not a chat prompt</text>
-<text x="250" y="219" class="dim" font-size="12">Six demo cases, one per boundary</text>
+<text x="250" y="219" class="dim" font-size="12">Nine demo cases, one per boundary</text>
 <rect x="630" y="132" width="376" height="110" rx="10" fill="#171b24" stroke="#2a3140"/>
 <text x="644" y="158" class="t" font-size="14.5" font-weight="650">AgentCore Runtime</text>
 <text x="644" y="176" class="faint mono" font-size="11">POST /invocations · us-west-2</text>
@@ -42,8 +42,8 @@
 <text x="250" y="403" class="dim" font-size="12">Typed output, re-derived downstream</text>
 <rect x="630" y="316" width="376" height="127" rx="10" fill="#171b24" stroke="#2a3140"/>
 <text x="644" y="342" class="t" font-size="14.5" font-weight="650">Model provider</text>
-<text x="644" y="360" class="faint mono" font-size="11">bedrock | anthropic | scripted</text>
-<text x="644" y="386" class="dim" font-size="12">Claude Opus 5 on Bedrock, prompt cached</text>
+<text x="644" y="360" class="faint mono" font-size="11">mubit | bedrock | anthropic | scripted</text>
+<text x="644" y="386" class="dim" font-size="12">gpt-6-luna via the Mubit gateway</text>
 <text x="644" y="403" class="dim" font-size="12">Offline scripted model for tests and CI</text>
 <rect x="1024" y="316" width="376" height="127" rx="10" fill="#171b24" stroke="#2a3140"/>
 <text x="1038" y="342" class="t" font-size="14.5" font-weight="650">Read-only tools</text>
@@ -51,139 +51,148 @@
 <text x="1038" y="386" class="dim" font-size="12">get_return_case · find_approved_policy</text>
 <text x="1038" y="403" class="dim" font-size="12">compare_expected_and_received</text>
 <text x="1038" y="420" class="dim" font-size="12">lookup_replacement_cost · replay (dry run)</text>
-<rect x="236" y="517" width="179" height="158" rx="10" fill="#171b24" stroke="#2a3140"/>
+<rect x="236" y="517" width="151" height="175" rx="10" fill="#171b24" stroke="#2a3140"/>
 <rect x="249" y="530" width="33" height="18" rx="9" fill="#5eead4" opacity="0.15"/><text x="265" y="543" text-anchor="middle" font-size="11" font-weight="700" fill="#5eead4" class="mono">2,4</text>
 <text x="286" y="543" class="t" font-size="14.5" font-weight="650">Orchestrator</text>
 <text x="250" y="561" class="faint mono" font-size="11">handle_event ·</text>
 <text x="250" y="575" class="faint mono" font-size="11">approve_and_teach</text>
-<text x="250" y="601" class="dim" font-size="12">Runs the golden path end</text>
-<text x="250" y="618" class="dim" font-size="12">to end</text>
+<text x="250" y="601" class="dim" font-size="12">Runs the golden</text>
+<text x="250" y="618" class="dim" font-size="12">path end to end</text>
 <text x="250" y="635" class="dim" font-size="12">The only code that</text>
 <text x="250" y="652" class="dim" font-size="12">changes anything</text>
-<rect x="433" y="517" width="179" height="158" rx="10" fill="#171b24" stroke="#2a3140"/>
-<rect x="446" y="530" width="17" height="18" rx="9" fill="#5eead4" opacity="0.15"/><text x="454" y="543" text-anchor="middle" font-size="11" font-weight="700" fill="#5eead4" class="mono">5</text>
-<text x="467" y="543" class="t" font-size="14.5" font-weight="650">Facts and reconciliation</text>
-<text x="447" y="561" class="faint mono" font-size="11">derive_facts</text>
-<text x="447" y="587" class="dim" font-size="12">Re-derives every fact</text>
-<text x="447" y="604" class="dim" font-size="12">from source</text>
-<text x="447" y="621" class="dim" font-size="12">The agent's report stays</text>
-<text x="447" y="638" class="dim" font-size="12">advisory</text>
-<rect x="630" y="517" width="179" height="158" rx="10" fill="#171b24" stroke="#2a3140"/>
-<rect x="643" y="530" width="17" height="18" rx="9" fill="#5eead4" opacity="0.15"/><text x="651" y="543" text-anchor="middle" font-size="11" font-weight="700" fill="#5eead4" class="mono">6</text>
-<text x="664" y="543" class="t" font-size="14.5" font-weight="650">Hard guardrails</text>
-<text x="644" y="561" class="faint mono" font-size="11">non-overridable</text>
-<text x="644" y="587" class="dim" font-size="12">Run before any policy is</text>
-<text x="644" y="604" class="dim" font-size="12">consulted</text>
-<text x="644" y="621" class="dim" font-size="12">Serial, damage, safety-</text>
-<text x="644" y="638" class="dim" font-size="12">critical, evidence</text>
-<rect x="827" y="517" width="179" height="158" rx="10" fill="#171b24" stroke="#2a3140"/>
-<rect x="840" y="530" width="33" height="18" rx="9" fill="#5eead4" opacity="0.15"/><text x="856" y="543" text-anchor="middle" font-size="11" font-weight="700" fill="#5eead4" class="mono">7,8</text>
-<text x="877" y="543" class="t" font-size="14.5" font-weight="650">Policy engine</text>
-<text x="841" y="561" class="faint mono" font-size="11">data, never code</text>
-<text x="841" y="587" class="dim" font-size="12">Evaluates active policy</text>
-<text x="841" y="604" class="dim" font-size="12">versions</text>
-<text x="841" y="621" class="dim" font-size="12">No dynamic execution,</text>
-<text x="841" y="638" class="dim" font-size="12">ever</text>
-<rect x="1024" y="517" width="179" height="158" rx="10" fill="#171b24" stroke="#2a3140"/>
-<text x="1038" y="543" class="t" font-size="14.5" font-weight="650">Execute and verify</text>
-<text x="1038" y="561" class="faint mono" font-size="11">idempotency key per</text>
-<text x="1038" y="575" class="faint mono" font-size="11">action</text>
-<text x="1038" y="601" class="dim" font-size="12">Work order, disposition,</text>
-<text x="1038" y="618" class="dim" font-size="12">close</text>
-<text x="1038" y="635" class="dim" font-size="12">Reads every write back</text>
-<text x="1038" y="652" class="dim" font-size="12">before closing</text>
-<rect x="1221" y="517" width="179" height="158" rx="10" fill="#171b24" stroke="#2a3140"/>
-<text x="1235" y="543" class="t" font-size="14.5" font-weight="650">Domain packs</text>
-<text x="1235" y="561" class="faint mono" font-size="11">returns ·</text>
-<text x="1235" y="575" class="faint mono" font-size="11">ap.invoice_variance</text>
-<text x="1235" y="601" class="dim" font-size="12">Facts, guardrails,</text>
-<text x="1235" y="618" class="dim" font-size="12">actions, corpus</text>
-<text x="1235" y="635" class="dim" font-size="12">A second domain changed</text>
-<text x="1235" y="652" class="dim" font-size="12">no machinery</text>
-<rect x="236" y="749" width="218" height="158" rx="10" fill="#171b24" stroke="#2a3140"/>
-<text x="250" y="775" class="t" font-size="14.5" font-weight="650">Decision card</text>
-<text x="250" y="793" class="faint mono" font-size="11">one decision, thirty seconds</text>
-<text x="250" y="819" class="dim" font-size="12">Evidence, with the tool that</text>
-<text x="250" y="836" class="dim" font-size="12">produced it</text>
-<text x="250" y="853" class="dim" font-size="12">Proposed boundaries and open</text>
-<text x="250" y="870" class="dim" font-size="12">questions</text>
-<rect x="472" y="749" width="218" height="158" rx="10" fill="#171b24" stroke="#2a3140"/>
-<text x="486" y="775" class="t" font-size="14.5" font-weight="650">Supervisor</text>
-<text x="486" y="793" class="faint mono" font-size="11">approve · activate</text>
-<text x="486" y="819" class="dim" font-size="12">Approving records a decision</text>
-<text x="486" y="836" class="dim" font-size="12">only</text>
-<text x="486" y="853" class="dim" font-size="12">Activation is a separate,</text>
-<text x="486" y="870" class="dim" font-size="12">explicit act</text>
-<rect x="709" y="749" width="218" height="158" rx="10" fill="#171b24" stroke="#2a3140"/>
-<text x="723" y="775" class="t" font-size="14.5" font-weight="650">Candidate policy</text>
-<text x="723" y="793" class="faint mono" font-size="11">schema-validated, inert</text>
-<text x="723" y="819" class="dim" font-size="12">Conditions from a nine-field</text>
-<text x="723" y="836" class="dim" font-size="12">allowlist</text>
-<text x="723" y="853" class="dim" font-size="12">Action set fixed by the system</text>
-<rect x="945" y="749" width="218" height="158" rx="10" fill="#171b24" stroke="#2a3140"/>
-<text x="959" y="775" class="t" font-size="14.5" font-weight="650">Replay gate</text>
-<text x="959" y="793" class="faint mono" font-size="11">24 labeled historical cases</text>
-<text x="959" y="819" class="dim" font-size="12">One wrong action blocks</text>
-<text x="959" y="836" class="dim" font-size="12">activation</text>
-<text x="959" y="853" class="dim" font-size="12">Re-run server-side at</text>
-<text x="959" y="870" class="dim" font-size="12">activation</text>
-<rect x="1182" y="749" width="218" height="158" rx="10" fill="#171b24" stroke="#2a3140"/>
-<text x="1196" y="775" class="t" font-size="14.5" font-weight="650">Active policy version</text>
-<text x="1196" y="793" class="faint mono" font-size="11">versioned · diffed ·</text>
-<text x="1196" y="807" class="faint mono" font-size="11">retirable</text>
-<text x="1196" y="833" class="dim" font-size="12">Activated by a person with a</text>
-<text x="1196" y="850" class="dim" font-size="12">token</text>
-<text x="1196" y="867" class="dim" font-size="12">A revision may narrow, never</text>
-<text x="1196" y="884" class="dim" font-size="12">widen</text>
-<rect x="236" y="981" width="179" height="158" rx="10" fill="#171b24" stroke="#2a3140"/>
-<text x="250" y="1007" class="t" font-size="14.5" font-weight="650">Returns system</text>
-<text x="250" y="1025" class="faint mono" font-size="11">synthetic · read-only</text>
-<text x="250" y="1051" class="dim" font-size="12">Cases, bill of</text>
-<text x="250" y="1068" class="dim" font-size="12">materials, evidence</text>
-<rect x="433" y="981" width="179" height="158" rx="10" fill="#171b24" stroke="#2a3140"/>
-<text x="447" y="1007" class="t" font-size="14.5" font-weight="650">Parts catalog</text>
-<text x="447" y="1025" class="faint mono" font-size="11">synthetic · read-only</text>
-<text x="447" y="1051" class="dim" font-size="12">Replacement cost and</text>
-<text x="447" y="1068" class="dim" font-size="12">stock status</text>
-<rect x="630" y="981" width="179" height="158" rx="10" fill="#171b24" stroke="#2a3140"/>
-<text x="644" y="1007" class="t" font-size="14.5" font-weight="650">Warehouse</text>
-<text x="644" y="1025" class="faint mono" font-size="11">synthetic · writes</text>
-<text x="644" y="1051" class="dim" font-size="12">Work orders and</text>
-<text x="644" y="1068" class="dim" font-size="12">dispositions</text>
-<text x="644" y="1085" class="dim" font-size="12">Every write takes an</text>
-<text x="644" y="1102" class="dim" font-size="12">idempotency key</text>
-<rect x="827" y="981" width="179" height="158" rx="10" fill="#171b24" stroke="#2a3140"/>
-<text x="841" y="1007" class="t" font-size="14.5" font-weight="650">Audit log</text>
-<text x="841" y="1025" class="faint mono" font-size="11">append-only · hash-</text>
-<text x="841" y="1039" class="faint mono" font-size="11">chained</text>
-<text x="841" y="1065" class="dim" font-size="12">Every event, tool call,</text>
-<text x="841" y="1082" class="dim" font-size="12">approval, action</text>
-<text x="841" y="1099" class="dim" font-size="12">The database refuses</text>
-<text x="841" y="1116" class="dim" font-size="12">UPDATE and DELETE</text>
-<rect x="1024" y="981" width="179" height="158" rx="10" fill="#171b24" stroke="#2a3140"/>
-<text x="1038" y="1007" class="t" font-size="14.5" font-weight="650">Database</text>
-<text x="1038" y="1025" class="faint mono" font-size="11">SQLite or PostgreSQL</text>
-<text x="1038" y="1051" class="dim" font-size="12">One schema, versioned</text>
-<text x="1038" y="1068" class="dim" font-size="12">migrations</text>
-<rect x="1221" y="981" width="179" height="158" rx="10" fill="#171b24" stroke="#2a3140"/>
-<text x="1235" y="1007" class="t" font-size="14.5" font-weight="650">AP ledger</text>
-<text x="1235" y="1025" class="faint mono" font-size="11">synthetic · second</text>
-<text x="1235" y="1039" class="faint mono" font-size="11">domain</text>
-<text x="1235" y="1065" class="dim" font-size="12">Invoices, vendors,</text>
-<text x="1235" y="1082" class="dim" font-size="12">adjustments</text>
-<path d="M 236 187 H 220 V 491 H 326 V 510" fill="none" stroke="#5eead4" stroke-width="1.6" marker-end="url(#arrow-5eead4)" opacity="0.9"/><text x="230" y="262" class="edge-label">check-in event</text>
-<path d="M 326 517 V 472 H 424 V 450" fill="none" stroke="#5eead4" stroke-width="1.6" marker-end="url(#arrow-5eead4)" opacity="0.9"/><text x="436" y="466" class="edge-label">investigate</text>
-<path d="M 454 443 V 488 H 356 V 510" fill="none" stroke="#9aa4b6" stroke-width="1.6" marker-end="url(#arrow-9aa4b6)" opacity="0.9"/><text x="368" y="482" class="edge-label">typed report, advisory</text>
-<path d="M 417 596 H 428" fill="none" stroke="#5eead4" stroke-width="1.6" marker-end="url(#arrow-5eead4)" opacity="0.9"/>
-<path d="M 614 596 H 625" fill="none" stroke="#5eead4" stroke-width="1.6" marker-end="url(#arrow-5eead4)" opacity="0.9"/>
-<path d="M 811 596 H 822" fill="none" stroke="#5eead4" stroke-width="1.6" marker-end="url(#arrow-5eead4)" opacity="0.9"/>
-<path d="M 1008 596 H 1019" fill="none" stroke="#5eead4" stroke-width="1.6" marker-end="url(#arrow-5eead4)" opacity="0.9"/>
-<path d="M 916 675 V 696 H 345 V 742" fill="none" stroke="#5eead4" stroke-width="1.6" marker-end="url(#arrow-5eead4)" opacity="0.9"/><text x="357" y="690" class="edge-label">no policy applies</text>
-<text x="40" y="1169" class="faint" font-size="12">Numbers follow one case through the system. Full connections, including audit and persistence, are in docs/architecture.html.</text>
-<line x1="40" y1="1193" x2="62" y2="1193" stroke="#5eead4" stroke-width="2"/><text x="70" y="1197" class="dim" font-size="12">control flow</text>
-<line x1="173.2" y1="1193" x2="195.2" y2="1193" stroke="#9aa4b6" stroke-width="2"/><text x="203.2" y="1197" class="dim" font-size="12">advisory output</text>
-<line x1="329.2" y1="1193" x2="351.2" y2="1193" stroke="#7dd3fc" stroke-width="2"/><text x="359.2" y="1197" class="dim" font-size="12">read</text>
-<line x1="401.6" y1="1193" x2="423.6" y2="1193" stroke="#4ade80" stroke-width="2"/><text x="431.6" y="1197" class="dim" font-size="12">write</text>
-<line x1="481.6" y1="1193" x2="503.6" y2="1193" stroke="#fbbf24" stroke-width="2"/><text x="511.6" y="1197" class="dim" font-size="12">human gate</text>
-<line x1="599.6" y1="1193" x2="621.6" y2="1193" stroke="#f87171" stroke-width="2"/><text x="629.6" y="1197" class="dim" font-size="12">escalation</text>
+<rect x="405" y="517" width="151" height="175" rx="10" fill="#171b24" stroke="#2a3140"/>
+<rect x="418" y="530" width="17" height="18" rx="9" fill="#5eead4" opacity="0.15"/><text x="426" y="543" text-anchor="middle" font-size="11" font-weight="700" fill="#5eead4" class="mono">5</text>
+<text x="439" y="543" class="t" font-size="14.5" font-weight="650">Facts and reconciliation</text>
+<text x="419" y="561" class="faint mono" font-size="11">derive_facts</text>
+<text x="419" y="587" class="dim" font-size="12">Re-derives every</text>
+<text x="419" y="604" class="dim" font-size="12">fact from source</text>
+<text x="419" y="621" class="dim" font-size="12">The agent's report</text>
+<text x="419" y="638" class="dim" font-size="12">stays advisory</text>
+<rect x="574" y="517" width="151" height="175" rx="10" fill="#171b24" stroke="#2a3140"/>
+<rect x="587" y="530" width="17" height="18" rx="9" fill="#5eead4" opacity="0.15"/><text x="595" y="543" text-anchor="middle" font-size="11" font-weight="700" fill="#5eead4" class="mono">6</text>
+<text x="608" y="543" class="t" font-size="14.5" font-weight="650">Hard guardrails</text>
+<text x="588" y="561" class="faint mono" font-size="11">non-overridable</text>
+<text x="588" y="587" class="dim" font-size="12">Run before any</text>
+<text x="588" y="604" class="dim" font-size="12">policy is consulted</text>
+<text x="588" y="621" class="dim" font-size="12">Serial, damage,</text>
+<text x="588" y="638" class="dim" font-size="12">safety-critical,</text>
+<text x="588" y="655" class="dim" font-size="12">evidence</text>
+<rect x="743" y="517" width="151" height="175" rx="10" fill="#171b24" stroke="#2a3140"/>
+<rect x="756" y="530" width="33" height="18" rx="9" fill="#5eead4" opacity="0.15"/><text x="772" y="543" text-anchor="middle" font-size="11" font-weight="700" fill="#5eead4" class="mono">7,8</text>
+<text x="793" y="543" class="t" font-size="14.5" font-weight="650">Policy engine</text>
+<text x="757" y="561" class="faint mono" font-size="11">data, never code</text>
+<text x="757" y="587" class="dim" font-size="12">Evaluates active</text>
+<text x="757" y="604" class="dim" font-size="12">policy versions</text>
+<text x="757" y="621" class="dim" font-size="12">No dynamic</text>
+<text x="757" y="638" class="dim" font-size="12">execution, ever</text>
+<rect x="911" y="517" width="151" height="175" rx="10" fill="#171b24" stroke="#2a3140"/>
+<text x="925" y="543" class="t" font-size="14.5" font-weight="650">Semantic check</text>
+<text x="925" y="561" class="faint mono" font-size="11">Banyan Sapling</text>
+<text x="925" y="587" class="dim" font-size="12">Reads raw evidence</text>
+<text x="925" y="604" class="dim" font-size="12">and free-text notes</text>
+<text x="925" y="621" class="dim" font-size="12">Only supported lets</text>
+<text x="925" y="638" class="dim" font-size="12">a policy act</text>
+<rect x="1080" y="517" width="151" height="175" rx="10" fill="#171b24" stroke="#2a3140"/>
+<text x="1094" y="543" class="t" font-size="14.5" font-weight="650">Execute and verify</text>
+<text x="1094" y="561" class="faint mono" font-size="11">idempotency key</text>
+<text x="1094" y="575" class="faint mono" font-size="11">per action</text>
+<text x="1094" y="601" class="dim" font-size="12">Work order,</text>
+<text x="1094" y="618" class="dim" font-size="12">disposition, close</text>
+<text x="1094" y="635" class="dim" font-size="12">Reads every write</text>
+<text x="1094" y="652" class="dim" font-size="12">back before closing</text>
+<rect x="1249" y="517" width="151" height="175" rx="10" fill="#171b24" stroke="#2a3140"/>
+<text x="1263" y="543" class="t" font-size="14.5" font-weight="650">Domain packs</text>
+<text x="1263" y="561" class="faint mono" font-size="11">returns · ap.invoi</text>
+<text x="1263" y="575" class="faint mono" font-size="11">ce_variance</text>
+<text x="1263" y="601" class="dim" font-size="12">Facts, guardrails,</text>
+<text x="1263" y="618" class="dim" font-size="12">actions, corpus</text>
+<text x="1263" y="635" class="dim" font-size="12">A second domain</text>
+<text x="1263" y="652" class="dim" font-size="12">changed no</text>
+<text x="1263" y="669" class="dim" font-size="12">machinery</text>
+<rect x="236" y="766" width="218" height="158" rx="10" fill="#171b24" stroke="#2a3140"/>
+<text x="250" y="792" class="t" font-size="14.5" font-weight="650">Decision card</text>
+<text x="250" y="810" class="faint mono" font-size="11">one decision, thirty seconds</text>
+<text x="250" y="836" class="dim" font-size="12">Evidence, with the tool that</text>
+<text x="250" y="853" class="dim" font-size="12">produced it</text>
+<text x="250" y="870" class="dim" font-size="12">Proposed boundaries and open</text>
+<text x="250" y="887" class="dim" font-size="12">questions</text>
+<rect x="472" y="766" width="218" height="158" rx="10" fill="#171b24" stroke="#2a3140"/>
+<text x="486" y="792" class="t" font-size="14.5" font-weight="650">Supervisor</text>
+<text x="486" y="810" class="faint mono" font-size="11">approve · activate</text>
+<text x="486" y="836" class="dim" font-size="12">Approving records a decision</text>
+<text x="486" y="853" class="dim" font-size="12">only</text>
+<text x="486" y="870" class="dim" font-size="12">Activation is a separate,</text>
+<text x="486" y="887" class="dim" font-size="12">explicit act</text>
+<rect x="709" y="766" width="218" height="158" rx="10" fill="#171b24" stroke="#2a3140"/>
+<text x="723" y="792" class="t" font-size="14.5" font-weight="650">Candidate policy</text>
+<text x="723" y="810" class="faint mono" font-size="11">schema-validated, inert</text>
+<text x="723" y="836" class="dim" font-size="12">Conditions from a nine-field</text>
+<text x="723" y="853" class="dim" font-size="12">allowlist</text>
+<text x="723" y="870" class="dim" font-size="12">Action set fixed by the system</text>
+<rect x="945" y="766" width="218" height="158" rx="10" fill="#171b24" stroke="#2a3140"/>
+<text x="959" y="792" class="t" font-size="14.5" font-weight="650">Replay gate</text>
+<text x="959" y="810" class="faint mono" font-size="11">24 labeled historical cases</text>
+<text x="959" y="836" class="dim" font-size="12">One wrong action blocks</text>
+<text x="959" y="853" class="dim" font-size="12">activation</text>
+<text x="959" y="870" class="dim" font-size="12">Re-run server-side at</text>
+<text x="959" y="887" class="dim" font-size="12">activation</text>
+<rect x="1182" y="766" width="218" height="158" rx="10" fill="#171b24" stroke="#2a3140"/>
+<text x="1196" y="792" class="t" font-size="14.5" font-weight="650">Active policy version</text>
+<text x="1196" y="810" class="faint mono" font-size="11">versioned · diffed ·</text>
+<text x="1196" y="824" class="faint mono" font-size="11">retirable</text>
+<text x="1196" y="850" class="dim" font-size="12">Activated by a person with a</text>
+<text x="1196" y="867" class="dim" font-size="12">token</text>
+<text x="1196" y="884" class="dim" font-size="12">A revision may narrow, never</text>
+<text x="1196" y="901" class="dim" font-size="12">widen</text>
+<rect x="236" y="998" width="179" height="158" rx="10" fill="#171b24" stroke="#2a3140"/>
+<text x="250" y="1024" class="t" font-size="14.5" font-weight="650">Returns system</text>
+<text x="250" y="1042" class="faint mono" font-size="11">synthetic · read-only</text>
+<text x="250" y="1068" class="dim" font-size="12">Cases, bill of</text>
+<text x="250" y="1085" class="dim" font-size="12">materials, evidence</text>
+<rect x="433" y="998" width="179" height="158" rx="10" fill="#171b24" stroke="#2a3140"/>
+<text x="447" y="1024" class="t" font-size="14.5" font-weight="650">Parts catalog</text>
+<text x="447" y="1042" class="faint mono" font-size="11">synthetic · read-only</text>
+<text x="447" y="1068" class="dim" font-size="12">Replacement cost and</text>
+<text x="447" y="1085" class="dim" font-size="12">stock status</text>
+<rect x="630" y="998" width="179" height="158" rx="10" fill="#171b24" stroke="#2a3140"/>
+<text x="644" y="1024" class="t" font-size="14.5" font-weight="650">Warehouse</text>
+<text x="644" y="1042" class="faint mono" font-size="11">synthetic · writes</text>
+<text x="644" y="1068" class="dim" font-size="12">Work orders and</text>
+<text x="644" y="1085" class="dim" font-size="12">dispositions</text>
+<text x="644" y="1102" class="dim" font-size="12">Every write takes an</text>
+<text x="644" y="1119" class="dim" font-size="12">idempotency key</text>
+<rect x="827" y="998" width="179" height="158" rx="10" fill="#171b24" stroke="#2a3140"/>
+<text x="841" y="1024" class="t" font-size="14.5" font-weight="650">Audit log</text>
+<text x="841" y="1042" class="faint mono" font-size="11">append-only · hash-</text>
+<text x="841" y="1056" class="faint mono" font-size="11">chained</text>
+<text x="841" y="1082" class="dim" font-size="12">Every event, tool call,</text>
+<text x="841" y="1099" class="dim" font-size="12">approval, action</text>
+<text x="841" y="1116" class="dim" font-size="12">The database refuses</text>
+<text x="841" y="1133" class="dim" font-size="12">UPDATE and DELETE</text>
+<rect x="1024" y="998" width="179" height="158" rx="10" fill="#171b24" stroke="#2a3140"/>
+<text x="1038" y="1024" class="t" font-size="14.5" font-weight="650">Database</text>
+<text x="1038" y="1042" class="faint mono" font-size="11">SQLite or PostgreSQL</text>
+<text x="1038" y="1068" class="dim" font-size="12">One schema, versioned</text>
+<text x="1038" y="1085" class="dim" font-size="12">migrations</text>
+<rect x="1221" y="998" width="179" height="158" rx="10" fill="#171b24" stroke="#2a3140"/>
+<text x="1235" y="1024" class="t" font-size="14.5" font-weight="650">AP ledger</text>
+<text x="1235" y="1042" class="faint mono" font-size="11">synthetic · second</text>
+<text x="1235" y="1056" class="faint mono" font-size="11">domain</text>
+<text x="1235" y="1082" class="dim" font-size="12">Invoices, vendors,</text>
+<text x="1235" y="1099" class="dim" font-size="12">adjustments</text>
+<path d="M 236 187 H 220 V 491 H 311 V 510" fill="none" stroke="#5eead4" stroke-width="1.6" marker-end="url(#arrow-5eead4)" opacity="0.9"/><text x="230" y="262" class="edge-label">check-in event</text>
+<path d="M 311 517 V 472 H 424 V 450" fill="none" stroke="#5eead4" stroke-width="1.6" marker-end="url(#arrow-5eead4)" opacity="0.9"/><text x="436" y="466" class="edge-label">investigate</text>
+<path d="M 454 443 V 488 H 341 V 510" fill="none" stroke="#9aa4b6" stroke-width="1.6" marker-end="url(#arrow-9aa4b6)" opacity="0.9"/><text x="353" y="482" class="edge-label">typed report, advisory</text>
+<path d="M 389 604 H 400" fill="none" stroke="#5eead4" stroke-width="1.6" marker-end="url(#arrow-5eead4)" opacity="0.9"/>
+<path d="M 558 604 H 569" fill="none" stroke="#5eead4" stroke-width="1.6" marker-end="url(#arrow-5eead4)" opacity="0.9"/>
+<path d="M 727 604 H 738" fill="none" stroke="#5eead4" stroke-width="1.6" marker-end="url(#arrow-5eead4)" opacity="0.9"/>
+<path d="M 895 604 H 906" fill="none" stroke="#5eead4" stroke-width="1.6" marker-end="url(#arrow-5eead4)" opacity="0.9"/>
+<path d="M 818 692 V 714 H 345 V 759" fill="none" stroke="#5eead4" stroke-width="1.6" marker-end="url(#arrow-5eead4)" opacity="0.9"/><text x="357" y="708" class="edge-label">no policy applies</text>
+<text x="40" y="1186" class="faint" font-size="12">Numbers follow one case through the system. Full connections, including audit and persistence, are in docs/architecture.html.</text>
+<line x1="40" y1="1210" x2="62" y2="1210" stroke="#5eead4" stroke-width="2"/><text x="70" y="1214" class="dim" font-size="12">control flow</text>
+<line x1="173.2" y1="1210" x2="195.2" y2="1210" stroke="#9aa4b6" stroke-width="2"/><text x="203.2" y="1214" class="dim" font-size="12">advisory output</text>
+<line x1="329.2" y1="1210" x2="351.2" y2="1210" stroke="#7dd3fc" stroke-width="2"/><text x="359.2" y="1214" class="dim" font-size="12">read</text>
+<line x1="401.6" y1="1210" x2="423.6" y2="1210" stroke="#4ade80" stroke-width="2"/><text x="431.6" y="1214" class="dim" font-size="12">write</text>
+<line x1="481.6" y1="1210" x2="503.6" y2="1210" stroke="#fbbf24" stroke-width="2"/><text x="511.6" y="1214" class="dim" font-size="12">human gate</text>
+<line x1="599.6" y1="1210" x2="621.6" y2="1210" stroke="#f87171" stroke-width="2"/><text x="629.6" y="1214" class="dim" font-size="12">escalation</text>
 </svg>

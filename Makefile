@@ -3,11 +3,11 @@ PY   := $(VENV)/bin/python
 PIP  := $(VENV)/bin/pip
 
 # Local PostgreSQL from docker-compose.yml. Override to point elsewhere.
-# Set ONEDECISION_PG_PORT when 5432 is already taken on this machine: it moves the
+# Set PRECEDENZ_PG_PORT when 5432 is already taken on this machine: it moves the
 # published port and follows through into both connection strings.
-export ONEDECISION_PG_PORT ?= 5432
-DATABASE_URL      ?= postgresql://onedecision:localdev@127.0.0.1:$(ONEDECISION_PG_PORT)/onedecision
-TEST_DATABASE_URL ?= postgresql://onedecision:localdev@127.0.0.1:$(ONEDECISION_PG_PORT)/onedecision_test
+export PRECEDENZ_PG_PORT ?= 5432
+DATABASE_URL      ?= postgresql://precedenz:localdev@127.0.0.1:$(PRECEDENZ_PG_PORT)/precedenz
+TEST_DATABASE_URL ?= postgresql://precedenz:localdev@127.0.0.1:$(PRECEDENZ_PG_PORT)/precedenz_test
 
 .DEFAULT_GOAL := help
 
@@ -33,7 +33,7 @@ test: ## Run the test suite (no network, no model calls) on SQLite. See test-pg 
 	$(PY) -m pytest
 
 test-pg: ## Run the whole suite against BOTH SQLite and a local PostgreSQL
-	ONEDECISION_TEST_DATABASE_URL=$(TEST_DATABASE_URL) $(PY) -m pytest
+	PRECEDENZ_TEST_DATABASE_URL=$(TEST_DATABASE_URL) $(PY) -m pytest
 
 smoke: ## Minimal Strands agent smoke test (prints real tool calls)
 	$(PY) scripts/smoke_strands.py
@@ -46,13 +46,13 @@ eval: ## Run the evaluation harness and write docs/evaluation-results.md
 
 db-up: ## Start a local PostgreSQL (docker compose) and apply migrations
 	docker compose up -d --wait db
-	ONEDECISION_DATABASE_URL=$(DATABASE_URL) $(PY) -m app.seed --reset
+	PRECEDENZ_DATABASE_URL=$(DATABASE_URL) $(PY) -m app.seed --reset
 
 db-down: ## Stop the local PostgreSQL (keeps the volume)
 	docker compose down
 
 db-shell: ## psql into the local PostgreSQL
-	docker compose exec db psql -U onedecision -d onedecision
+	docker compose exec db psql -U precedenz -d precedenz
 
 migrate: ## Apply any unapplied migrations to the configured database
 	$(PY) -c "from app import db; print('applied:', db.init_db() or 'nothing new'); print(db.describe())"

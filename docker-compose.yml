@@ -4,23 +4,23 @@
 services:
   db:
     image: postgres:16-alpine
-    container_name: onedecision-db
+    container_name: precedenz-db
     environment:
-      POSTGRES_USER: onedecision
+      POSTGRES_USER: precedenz
       POSTGRES_PASSWORD: localdev
-      POSTGRES_DB: onedecision
+      POSTGRES_DB: precedenz
     ports:
-      # ONEDECISION_PG_PORT publishes this somewhere else when 5432 is already
+      # PRECEDENZ_PG_PORT publishes this somewhere else when 5432 is already
       # taken on the host, which is common if another project runs PostgreSQL.
-      - "127.0.0.1:${ONEDECISION_PG_PORT:-5432}:5432"
+      - "127.0.0.1:${PRECEDENZ_PG_PORT:-5432}:5432"
     volumes:
-      - onedecision-pgdata:/var/lib/postgresql/data
+      - precedenz-pgdata:/var/lib/postgresql/data
       - ./scripts/init-test-db.sql:/docker-entrypoint-initdb.d/10-test-db.sql:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U onedecision -d onedecision"]
+      test: ["CMD-SHELL", "pg_isready -U precedenz -d precedenz"]
       interval: 3s
       timeout: 3s
       retries: 20
 
 volumes:
-  onedecision-pgdata:
+  precedenz-pgdata:

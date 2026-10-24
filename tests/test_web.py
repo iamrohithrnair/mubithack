@@ -133,7 +133,7 @@ def test_the_demo_token_is_discoverable_while_the_placeholder_is_in_use(
 
     # The suite normally overrides the token; this test is about the shipped
     # default a judge would actually meet on a fresh clone.
-    monkeypatch.setenv("ONEDECISION_APPROVAL_TOKEN", config.DEFAULT_APPROVAL_TOKEN)
+    monkeypatch.setenv("PRECEDENZ_APPROVAL_TOKEN", config.DEFAULT_APPROVAL_TOKEN)
     monkeypatch.setattr(main, "settings", config.reload_settings())
 
     r = client.post("/events/CASE-2001", follow_redirects=True)
@@ -142,7 +142,7 @@ def test_the_demo_token_is_discoverable_while_the_placeholder_is_in_use(
 
     assert "Demo token:" in r.text
     assert config.DEFAULT_APPROVAL_TOKEN in r.text
-    assert "ONEDECISION_APPROVAL_TOKEN" in r.text
+    assert "PRECEDENZ_APPROVAL_TOKEN" in r.text
 
 
 def test_the_demo_token_hint_disappears_once_a_real_token_is_set(client, monkeypatch):
@@ -153,7 +153,7 @@ def test_the_demo_token_hint_disappears_once_a_real_token_is_set(client, monkeyp
     r = client.post("/events/CASE-2001", follow_redirects=True)
     exception_id = r.url.path.rsplit("/", 1)[-1]
 
-    monkeypatch.setenv("ONEDECISION_APPROVAL_TOKEN", "a-real-operator-secret")
+    monkeypatch.setenv("PRECEDENZ_APPROVAL_TOKEN", "a-real-operator-secret")
     monkeypatch.setattr(main, "settings", config.reload_settings())
 
     r = client.post(f"/exceptions/{exception_id}/approve", follow_redirects=True)
@@ -171,31 +171,31 @@ def test_dotenv_is_loaded_so_the_readme_instruction_works(tmp_path, monkeypatch)
     env_file = tmp_path / ".env"
     env_file.write_text(
         "# a comment\n"
-        "export ONEDECISION_TEST_PLAIN=plain\n"
-        'ONEDECISION_TEST_QUOTED="has spaces"\n'
-        "ONEDECISION_TEST_PRESET=from_file\n"
+        "export PRECEDENZ_TEST_PLAIN=plain\n"
+        'PRECEDENZ_TEST_QUOTED="has spaces"\n'
+        "PRECEDENZ_TEST_PRESET=from_file\n"
         "\n"
         "not-a-pair\n"
     )
-    monkeypatch.setenv("ONEDECISION_TEST_PRESET", "from_environment")
+    monkeypatch.setenv("PRECEDENZ_TEST_PRESET", "from_environment")
     # Register the names as absent before the loader sets them, so teardown
     # removes them. Deleting them afterward would make monkeypatch record the
     # loaded values as the originals and restore them into the next test.
-    for name in ("ONEDECISION_TEST_PLAIN", "ONEDECISION_TEST_QUOTED"):
+    for name in ("PRECEDENZ_TEST_PLAIN", "PRECEDENZ_TEST_QUOTED"):
         monkeypatch.delenv(name, raising=False)
 
     loaded = load_dotenv(env_file)
 
     import os
 
-    assert os.environ["ONEDECISION_TEST_PLAIN"] == "plain"
-    assert os.environ["ONEDECISION_TEST_QUOTED"] == "has spaces"
+    assert os.environ["PRECEDENZ_TEST_PLAIN"] == "plain"
+    assert os.environ["PRECEDENZ_TEST_QUOTED"] == "has spaces"
     # A real environment variable must win, so a stray file cannot override a
     # deployment's configuration.
-    assert os.environ["ONEDECISION_TEST_PRESET"] == "from_environment"
-    assert "ONEDECISION_TEST_PRESET" not in loaded
+    assert os.environ["PRECEDENZ_TEST_PRESET"] == "from_environment"
+    assert "PRECEDENZ_TEST_PRESET" not in loaded
     # Names are returned, never values, so progress output cannot leak a secret.
-    assert loaded == ["ONEDECISION_TEST_PLAIN", "ONEDECISION_TEST_QUOTED"]
+    assert loaded == ["PRECEDENZ_TEST_PLAIN", "PRECEDENZ_TEST_QUOTED"]
 
 
 def test_a_missing_dotenv_is_not_an_error(tmp_path):

@@ -1,4 +1,4 @@
-# OneDecision — Scope Lock
+# Precedenz — Scope Lock
 
 **Tagline:** Teach the agent once; it safely handles the next hundred decisions.
 **Track:** Professional Agents · **Hackathon:** Agents for Humans
@@ -14,7 +14,7 @@ reseller is pinged twenty times a week with variations of the same question,
 answers each one in thirty seconds, and never gets the time to turn that
 judgment into a written policy — let alone into automation.
 
-OneDecision closes that loop. It asks a human **once**, converts the answer into
+Precedenz closes that loop. It asks a human **once**, converts the answer into
 a constrained, versioned, machine-checkable policy, proves the policy against
 historical cases before anyone trusts it, and then handles matching cases
 without interrupting anybody. Anything outside the approved boundary escalates.
@@ -40,7 +40,7 @@ All data in this repository is invented for the demo.
 | Products | Synthetic SKUs (`NGO-KIT-*`), synthetic serials, synthetic orders |
 | Customers | Synthetic names and IDs; **no real people, no PII** |
 
-Every business system OneDecision touches is a **synthetic adapter** in
+Every business system Precedenz touches is a **synthetic adapter** in
 `app/adapters/` — an in-repo simulation over SQLite. They are labeled as
 synthetic in the UI and in code. They are **not** production integrations, and
 nothing in this project talks to a real WMS, ERP, payment system, or customer.
@@ -74,7 +74,7 @@ The separation between *reasoning* and *acting* is the product.
 3. **Policies are data, not code.** A policy is a Pydantic/JSON structure with
    an allowlist of fields, operators, value types, thresholds, and actions.
    Anything off-allowlist fails validation.
-4. **No generated execution.** OneDecision never executes generated Python,
+4. **No generated execution.** Precedenz never executes generated Python,
    SQL, shell, or natural-language conditions. There is no `eval`.
 5. **Hard invariants outrank policies.** A set of non-overridable guardrails
    (`app/policy/guardrails.py`) is evaluated before any policy. A policy can

@@ -1,5 +1,5 @@
 {
-  "_notice": "SYNTHETIC FIXTURE DATA. Every vendor, invoice, purchase order and approver below is invented for the OneDecision demo. No real supplier, ledger or payment system is represented. See docs/scope.md.",
+  "_notice": "SYNTHETIC FIXTURE DATA. Every vendor, invoice, purchase order and approver below is invented for the Precedenz demo. No real supplier, ledger or payment system is represented. See docs/scope.md.",
   "vendors": [
     {
       "vendor_id": "VEN-101",

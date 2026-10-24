@@ -1,1 +1,1 @@
-"""The single OneDecision Strands agent: tools, prompts, and model providers."""
+"""The single Precedenz Strands agent: tools, prompts, and model providers."""

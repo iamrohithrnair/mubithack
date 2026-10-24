@@ -104,7 +104,7 @@ class PostgresBackend:
     name = "postgres"
 
     def __init__(self, dsn: str, *, min_size: int = 1, max_size: int = 10,
-                 connect_timeout: int = 10, application_name: str = "onedecision") -> None:
+                 connect_timeout: int = 10, application_name: str = "precedenz") -> None:
         self.dsn = dsn
         self._min_size = min_size
         self._max_size = max_size
@@ -129,7 +129,7 @@ class PostgresBackend:
                     "application_name": self._application_name,
                 },
                 open=True,
-                name="onedecision",
+                name="precedenz",
             )
             self._pool.wait(timeout=self._connect_timeout)
         return self._pool

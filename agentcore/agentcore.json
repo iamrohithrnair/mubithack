@@ -1,16 +1,16 @@
 {
   "$schema": "https://schema.agentcore.aws.dev/v1/agentcore.json",
-  "name": "OneDecision",
+  "name": "Precedenz",
   "version": 1,
   "managedBy": "CDK",
   "tags": {
     "agentcore:created-by": "agentcore-cli",
-    "agentcore:project-name": "OneDecision"
+    "agentcore:project-name": "Precedenz"
   },
   "runtimes": [
     {
-      "name": "onedecision",
-      "description": "OneDecision returns-exception agent: Strands Agents on Claude Opus 5 via Amazon Bedrock",
+      "name": "precedenz",
+      "description": "Precedenz returns-exception agent: Strands Agents on Claude Opus 5 via Amazon Bedrock",
       "build": "CodeZip",
       "entrypoint": "agentcore_main.py",
       "codeLocation": ".",
@@ -19,16 +19,16 @@
       "protocol": "HTTP",
       "envVars": [
         {
-          "name": "ONEDECISION_MODEL_PROVIDER",
+          "name": "PRECEDENZ_MODEL_PROVIDER",
           "value": "bedrock"
         },
         {
-          "name": "ONEDECISION_BEDROCK_MODEL_ID",
+          "name": "PRECEDENZ_BEDROCK_MODEL_ID",
           "value": "us.anthropic.claude-opus-5"
         },
         {
-          "name": "ONEDECISION_DB_PATH",
-          "value": "/tmp/onedecision.db"
+          "name": "PRECEDENZ_DB_PATH",
+          "value": "/tmp/precedenz.db"
         }
       ]
     }

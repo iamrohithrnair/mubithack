@@ -3,7 +3,7 @@
 One public surface, two backends:
 
 * **postgres** — the deployment target. Selected by setting
-  `ONEDECISION_DATABASE_URL`.
+  `PRECEDENZ_DATABASE_URL`.
 * **sqlite** — the zero-setup demo backend. The default, so the product runs
   from a fresh clone with no server and no credentials.
 
