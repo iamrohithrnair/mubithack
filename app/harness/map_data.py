@@ -363,6 +363,7 @@ def _fill(conn, out: dict[str, Any]) -> None:
         ws["mubit"] = _plain(stage) if stage else None
         ws.setdefault("task_key", None)
         ws.setdefault("task_key_changed", False)
+        ws.setdefault("task_key_previous", None)
     by_precedent = {p["id"]: p for plist in precedents.values() for p in plist}
     task_keys: dict[str, list[str]] = defaultdict(list)
 

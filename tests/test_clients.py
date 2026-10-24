@@ -13,7 +13,7 @@ from pathlib import Path
 import httpx
 import pytest
 
-from precedenz_client import cli, client as client_module
+from precedenz_client import cli
 from precedenz_client.client import (
     ApprovalRequired,
     AuthError,

@@ -122,7 +122,9 @@ async def map_events(
 class AnswerBody(BaseModel):
     answer: str = Field(min_length=1, max_length=80)
     remember: bool = False
-    up_to: dict[str, Any] | None = None
+    # {field: value} widens those amounts; a bare number is passed through for the
+    # workstream service to apply to the workstream's one amount field.
+    up_to: dict[str, Any] | float | None = None
     ignore: list[str] | None = None
     note: str = Field(default="", max_length=600)
     approval_token: str | None = None
