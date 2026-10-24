@@ -299,15 +299,10 @@ def _prepare_history(
 
 
 def precedent_summary(record: policy_store.PolicyRecord) -> dict[str, Any]:
-    return {
-        "id": record.policy_id,
-        "version": record.version,
-        "text": record.definition.description or record.definition.name,
-        "status": record.status,
-        "decided_by": record.activated_by,
-        "decided_at": record.activated_at,
-        "origin_case": record.origin_case_id,
-    }
+    """The precedent as receipts and events show it (app.harness.store.precedent_view)."""
+    from app.harness.store import precedent_view
+
+    return {**precedent_view(record), "status": record.status}
 
 
 def answer(
@@ -369,7 +364,7 @@ def answer(
                 )
         else:
             domains.load()
-            if family not in domains.families():
+            if family not in BUILT_IN_IDS or family not in domains.families():
                 raise NotFound(f"unknown workstream '{family}'")
             spec = domains.get(family)
             allowed = [a for a in (spec.repeatable_answer, *spec.other_answers) if a]
@@ -424,8 +419,8 @@ def answer(
             precedent_id=precedent.policy_id,
             workstream=precedent.family,
             version=precedent.version,
-            decided_by=actor,
-            origin_case=case_ref,
+            decided_by=summary["decided_by"],
+            origin_case=summary["origin_case"],
             text=summary["text"],
         )
         resolved = resolve_waiting(contract, precedent, skip_case=case_ref)

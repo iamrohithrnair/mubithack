@@ -279,7 +279,7 @@ def make_corpus(contract: WorkstreamContract) -> Callable[["Connection"], list[t
 def make_policy_text(contract: WorkstreamContract) -> Callable[[Any], str]:
     def policy_text(definition: Any) -> str:
         conditions = "; ".join(phrase(contract, c) for c in definition.conditions)
-        always = "; ".join(describe(contract, c) for c in contract.always_ask)
+        always = "; ".join(phrase(contract, c) for c in contract.always_ask)
         text = (
             f'{contract.label}: precedent "{definition.name}". A {contract.subject} may be '
             f'answered "{contract.repeatable_answer}" automatically only when ALL of these hold: '

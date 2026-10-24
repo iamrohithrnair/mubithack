@@ -94,15 +94,20 @@ def isolated_registry():
     """Planted workstreams register in process memory; forget them after each test."""
     from app import domains
     from app.harness import engines
+    from app.workstreams.contract import BUILT_IN_IDS
+    from app.workstreams.engine import PlantedEngine
 
     domains.load()
     before_domains = set(domains.families())
     before_engines = set(engines.families())
     yield
-    for family in set(domains.families()) - before_domains:
+    # Only what a test planted: the built-in engines register once per process
+    # (app.harness.bootstrap), and forgetting them would break later tests.
+    for family in set(domains.families()) - before_domains - BUILT_IN_IDS:
         domains.unregister(family)
     for family in set(engines.families()) - before_engines:
-        engines._ENGINES.pop(family, None)
+        if isinstance(engines._ENGINES.get(family), PlantedEngine):
+            engines._ENGINES.pop(family, None)
 
 
 def template(template_id: str) -> dict[str, Any]:
