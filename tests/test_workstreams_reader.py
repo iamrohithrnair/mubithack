@@ -137,6 +137,20 @@ def test_the_reader_task_is_stable_per_workstream():
 
 @pytest.fixture()
 def sapling_enforced(monkeypatch):
+    """Sapling on, and a meals contract that asks it to confirm the claim's own text.
+
+    The shipped meals template trusts the expense system's record (evidence "none");
+    these tests plant the same contract with evidence "text" to cover the check.
+    """
+    original = service.load_template
+
+    def with_evidence(template_id):
+        loaded = original(template_id)
+        if template_id == MEAL:
+            loaded = {**loaded, "contract": {**loaded["contract"], "evidence": "text"}}
+        return loaded
+
+    monkeypatch.setattr(service, "load_template", with_evidence)
     monkeypatch.setattr(config, "settings", dataclasses.replace(config.get_settings(), sapling_mode="enforce"))
     seen: dict = {"verdict": None, "calls": []}
 

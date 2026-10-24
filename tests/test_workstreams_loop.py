@@ -138,7 +138,7 @@ def test_plant_from_template_registers_spec_engine_and_history(conn):
     assert [f["name"] for f in meals["fields"]][:2] == ["amount_usd", "receipt_attached"]
     assert meals["fields"][0] == {"name": "amount_usd", "kind": "amount", "label": "Amount (USD)",
                                   "ceiling": 200.0, "required": True}
-    assert meals["evidence"] == "text" and meals["reader"] is False
+    assert meals["evidence"] == "none" and meals["reader"] is False
 
     # Planting the same contract again changes nothing; a different one conflicts.
     again = plant_meals()
@@ -198,7 +198,8 @@ def test_engine_asks_without_a_precedent_and_follows_a_matching_one(fake_service
     assert follow["actions"] == [{"type": "answer", "answer": "approve", "max_amount_usd": 75}]
     names = [c["name"] for c in follow["checks"]]
     assert "matches precedent v1" in names
-    assert "Banyan Sapling: not run" in names  # Sapling is off in tests; the receipt says so
+    # Meals trust the expense system's record (evidence "none"), so no Sapling check runs.
+    assert not any(n.startswith("Banyan Sapling") for n in names)
 
     near = send_incoming(fake_service, MEAL, "EXP-1035")
     assert near["verdict"] == "ask"
