@@ -145,7 +145,7 @@ output. The **model provider** behind it is swappable:
 | `scripted` (default) | A deterministic implementation of the Strands `Model` interface, in `app/agent/providers/scripted.py` | nothing |
 | `bedrock` | Strands `BedrockModel` | AWS credentials + Bedrock model access |
 | `anthropic` | Strands `AnthropicModel` | `ANTHROPIC_API_KEY` |
-| `mubit` | Strands `OpenAIModel` via the Mubit gateway (default `gemini-3.8-flash`) | `MUBIT_API_KEY`, plus the Gemini key added under Provider keys in the Mubit console |
+| `mubit` | Strands `OpenAIResponsesModel` via the Mubit gateway (default `gpt-6-luna`) | `MUBIT_API_KEY` |
 
 The `scripted` provider exists so that tests, CI, and a judge with no AWS account all
 exercise the **real** Strands agent loop with **zero** credentials and zero spend. It is

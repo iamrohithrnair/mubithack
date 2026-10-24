@@ -44,11 +44,11 @@ def test_mubit_request_targets_configured_model_through_gateway(monkeypatch):
     monkeypatch.setenv("MUBIT_API_KEY", "test-key-not-real")
     model = resolve_model(_settings("mubit"))
 
-    request = model.format_request(MESSAGES)
+    request = model._format_request(MESSAGES)
 
-    assert request["model"] == "gemini-3.8-flash"
+    assert request["model"] == "gpt-6-luna"
     assert "temperature" not in request
-    assert model.client_args["base_url"] == "https://api.mubit.ai/gemini/v1beta/openai"
+    assert model.client_args["base_url"] == "https://api.mubit.ai/openai/v1"
 
 
 def test_mubit_without_key_is_unavailable(monkeypatch):

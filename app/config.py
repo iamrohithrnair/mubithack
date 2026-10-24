@@ -157,13 +157,13 @@ def load_settings() -> Settings:
             # Current model IDs carry no date suffix.
             "ONEDECISION_ANTHROPIC_MODEL_ID", "claude-opus-5"
         ),
-        # Mubit is an LLM gateway. Its /gemini/ route mirrors Google's own paths,
-        # including Google's OpenAI-compatible endpoint, so the OpenAI client
-        # reaches Gemini through it. The Gemini provider key lives in the Mubit
-        # console, not here; only the Mubit key (MUBIT_API_KEY) is sent.
-        mubit_model_id=os.environ.get("ONEDECISION_MUBIT_MODEL_ID", "gemini-3.8-flash"),
+        # Mubit is an LLM gateway with an OpenAI-compatible route. gpt-6-luna is
+        # served on the Mubit key alone; other providers' models need their key
+        # added under Provider keys in the Mubit console. Only MUBIT_API_KEY is
+        # ever sent.
+        mubit_model_id=os.environ.get("ONEDECISION_MUBIT_MODEL_ID", "gpt-6-luna"),
         mubit_base_url=os.environ.get(
-            "ONEDECISION_MUBIT_BASE_URL", "https://api.mubit.ai/gemini/v1beta/openai"
+            "ONEDECISION_MUBIT_BASE_URL", "https://api.mubit.ai/openai/v1"
         ),
         aws_region=os.environ.get("AWS_REGION", "us-west-2"),
         database_url=resolve_database_url(),

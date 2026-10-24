@@ -6,7 +6,7 @@ The rest of the application never imports a model class directly. It asks for
   scripted  - deterministic, offline, no credentials. Tests, CI, offline demo.
   bedrock   - Amazon Bedrock (Strands `BedrockModel`).
   anthropic - Anthropic API (Strands `AnthropicModel`).
-  mubit     - Mubit gateway, OpenAI-compatible (Strands `OpenAIModel`).
+  mubit     - Mubit gateway, OpenAI Responses API (Strands `OpenAIResponsesModel`).
 
 Every provider drives the *same* Strands `Agent`, the same tools, and the same
 typed structured outputs. Swapping providers changes who does the reasoning, not
@@ -80,20 +80,22 @@ def resolve_model(settings: Settings | None = None, **overrides: Any) -> Model:
 
     if provider == "mubit":
         try:
-            from strands.models.openai import OpenAIModel
+            from strands.models.openai_responses import OpenAIResponsesModel
         except ImportError as exc:  # pragma: no cover - dependency is pinned
-            raise ModelProviderUnavailable(f"OpenAIModel unavailable: {exc}") from exc
+            raise ModelProviderUnavailable(f"OpenAIResponsesModel unavailable: {exc}") from exc
         api_key = os.environ.get("MUBIT_API_KEY", "").strip()
         if not api_key:
             raise ModelProviderUnavailable("the mubit provider requires MUBIT_API_KEY")
         # The key is read at construction and handed to the client; it is never
-        # stored on Settings or logged.
-        return OpenAIModel(
+        # stored on Settings or logged. The Responses API, not Chat Completions:
+        # gpt-6 models refuse function tools alongside reasoning on Chat
+        # Completions.
+        return OpenAIResponsesModel(
             client_args=overrides.pop(
                 "client_args", {"base_url": cfg.mubit_base_url, "api_key": api_key}
             ),
             model_id=overrides.pop("model_id", cfg.mubit_model_id),
-            params=overrides.pop("params", None),
+            params=overrides.pop("params", {}),
             **overrides,
         )
 
