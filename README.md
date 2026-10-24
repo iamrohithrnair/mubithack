@@ -15,6 +15,45 @@ it connects to and which way the data moves. Both views render from `docs/archit
 
 ---
 
+## Decide once, anywhere
+
+> **Never answer the same question twice.**
+> **It doesn't make decisions. It repeats yours.**
+> **If it can't check it, it asks.**
+
+Precedenz now plugs into any recurring decision, for a team, an institution, or one
+person. A *workstream* is a contract (typed fields, ceilings, the one answer a precedent
+may repeat, always-ask rules) plus past answers. Plant one from a template; no code.
+
+- **Follow or ask.** `POST /v1/decide` returns `follow` (repeat a decision a person already
+  made, as a bounded action the caller executes) or `ask` (what differs, or what couldn't
+  be checked). Precedenz never writes to a business system.
+- **Decide once.** A person answers an ask and remembers it. The precedent is drafted
+  exactly from that answer, replayed against past answers, activated with the approval
+  token, and the waiting questions it covers resolve on their own. Overrule stops it at once.
+- **Every way in.** HTTP, the Python client, the `precedenz` CLI, and `precedenz-mcp` for AI
+  agents (it can ask; only a person can answer). See [docs/integrations.md](docs/integrations.md).
+- **Two loops.** Precedenz learns from one answer. Every model call goes through the Mubit
+  gateway as one stable task per workstream with a session per case, and each receipt
+  carries its `x-middleware-request-id`s.
+- **The map.** `/map` is a live bioluminescent dendrogram: Dana at the center, workstreams,
+  precedents, and every case on the rim. Every pulse is a real decision.
+
+```bash
+PRECEDENZ_DB_PATH=var/demo.db .venv/bin/python scripts/demo_setup.py   # fresh data, two precedents
+PRECEDENZ_DB_PATH=var/demo.db make run                                  # open http://127.0.0.1:8000/map
+.venv/bin/precedenz plant expenses.meal_claim                           # a new workstream, live
+.venv/bin/python scripts/demo_traffic.py --workstream expenses.meal_claim --count 6
+.venv/bin/precedenz open                                                # what waits for a person
+.venv/bin/precedenz answer <decision_id> approve --remember --up-to amount_usd=75 --ignore client_meeting --ignore attendees
+.venv/bin/precedenz watch                                               # the live event tail
+```
+
+Templates: `expenses.meal_claim` (team), `calendar.meeting_invite` (one person),
+`it.access_request` (team). The build plan is [docs/decide-once-plan.md](docs/decide-once-plan.md).
+
+---
+
 ## The problem
 
 Rule-based automation handles the cases someone already wrote down. Everything else
