@@ -253,5 +253,10 @@ SPEC = register(
         fixed_actions=fixed_actions,
         policy_text=policy_text,
         evidence_text=evidence_text,
+        question="Should this return be resolved by ordering the missing part?",
+        repeatable_answer="replace the missing part",
+        other_answers=("charge the customer", "send back for inspection"),
+        audience="team",
+        reader=True,  # the investigation agent reads the case through the gateway
     )
 )

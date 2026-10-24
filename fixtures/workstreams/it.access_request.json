@@ -1,0 +1,445 @@
+{
+  "_notice": "Synthetic data for the Precedenz demo. Every person, company, amount and message here is invented (example.* domains); any resemblance to a real person or organization is coincidental.",
+  "demo": {
+    "answer_case": "ACC-1031",
+    "answer": "grant",
+    "remember": true,
+    "ignore": [
+      "same_team_as_owner"
+    ],
+    "expected_precedent": "Grant access requests when the system is wiki, the role is read and the requester's manager approved it."
+  },
+  "contract": {
+    "id": "it.access_request",
+    "label": "Access requests",
+    "subject": "access request",
+    "question": "Should this access request be granted?",
+    "owner": "IT service desk",
+    "audience": "team",
+    "fields": [
+      {
+        "name": "system",
+        "kind": "category",
+        "label": "System",
+        "values": [
+          "wiki",
+          "crm",
+          "billing",
+          "prod_db"
+        ]
+      },
+      {
+        "name": "role",
+        "kind": "category",
+        "label": "Role",
+        "values": [
+          "read",
+          "write",
+          "admin"
+        ]
+      },
+      {
+        "name": "manager_approved",
+        "kind": "flag",
+        "label": "Manager approved",
+        "when_true": "the requester's manager approved it",
+        "when_false": "the requester's manager has not approved it"
+      },
+      {
+        "name": "same_team_as_owner",
+        "kind": "flag",
+        "label": "Same team as the system owner",
+        "when_true": "the requester is on the system owner's team",
+        "when_false": "the requester is not on the system owner's team"
+      }
+    ],
+    "repeatable_answer": "grant",
+    "other_answers": [
+      "deny",
+      "ask_manager"
+    ],
+    "always_ask": [
+      {
+        "field": "system",
+        "operator": "eq",
+        "value": "prod_db"
+      },
+      {
+        "field": "role",
+        "operator": "eq",
+        "value": "admin"
+      }
+    ],
+    "reader": false,
+    "evidence": "none",
+    "version": 1
+  },
+  "history": [
+    {
+      "case_ref": "ACC-0901",
+      "facts": {
+        "system": "wiki",
+        "role": "read",
+        "manager_approved": true,
+        "same_team_as_owner": false
+      },
+      "text": "Ticket ACC-0901: Mei Tanaka (Support) requests read access to the wiki to follow the incident runbooks. Approved by their manager. The wiki is owned by the Platform team; Mei is not on that team.",
+      "answer": "grant",
+      "note": "synthetic past answer"
+    },
+    {
+      "case_ref": "ACC-0902",
+      "facts": {
+        "system": "crm",
+        "role": "read",
+        "manager_approved": true,
+        "same_team_as_owner": true
+      },
+      "text": "Ticket ACC-0902: Omar Haddad (Sales Operations) requests read access to the CRM to build the weekly pipeline report. Approved by their manager. The CRM is owned by the Sales Operations team; Omar is on that team.",
+      "answer": "grant",
+      "note": "synthetic past answer"
+    },
+    {
+      "case_ref": "ACC-0903",
+      "facts": {
+        "system": "billing",
+        "role": "write",
+        "manager_approved": false,
+        "same_team_as_owner": false
+      },
+      "text": "Ticket ACC-0903: Chris Doyle (Marketing) requests write access to the billing system to fix a customer's invoice address. Manager approval: not yet given. The billing system is owned by the Finance Systems team; Chris is not on that team.",
+      "answer": "deny",
+      "note": "synthetic past answer"
+    },
+    {
+      "case_ref": "ACC-0904",
+      "facts": {
+        "system": "wiki",
+        "role": "write",
+        "manager_approved": true,
+        "same_team_as_owner": true
+      },
+      "text": "Ticket ACC-0904: Ines Duarte (Platform) requests write access to the wiki to update the deployment guide. Approved by their manager. The wiki is owned by the Platform team; Ines is on that team.",
+      "answer": "grant",
+      "note": "synthetic past answer"
+    },
+    {
+      "case_ref": "ACC-0905",
+      "facts": {
+        "system": "crm",
+        "role": "write",
+        "manager_approved": false,
+        "same_team_as_owner": true
+      },
+      "text": "Ticket ACC-0905: Lena Fischer (Sales Operations) requests write access to the CRM to clean up duplicate accounts. Manager approval: not yet given. The CRM is owned by the Sales Operations team; Lena is on that team.",
+      "answer": "ask_manager",
+      "note": "synthetic past answer"
+    },
+    {
+      "case_ref": "ACC-0906",
+      "facts": {
+        "system": "prod_db",
+        "role": "read",
+        "manager_approved": true,
+        "same_team_as_owner": true
+      },
+      "text": "Ticket ACC-0906: Ravi Iyer (Platform) requests read access to the production database to investigate a slow query. Approved by their manager. The production database is owned by the Platform team; Ravi is on that team.",
+      "answer": "grant",
+      "note": "synthetic past answer"
+    },
+    {
+      "case_ref": "ACC-0907",
+      "facts": {
+        "system": "wiki",
+        "role": "read",
+        "manager_approved": false,
+        "same_team_as_owner": false
+      },
+      "text": "Ticket ACC-0907: Tom Becker (Contractor, Facilities) requests read access to the wiki to read the office move plan. Manager approval: not yet given. The wiki is owned by the Platform team; Tom is not on that team.",
+      "answer": "ask_manager",
+      "note": "synthetic past answer"
+    },
+    {
+      "case_ref": "ACC-0908",
+      "facts": {
+        "system": "billing",
+        "role": "read",
+        "manager_approved": true,
+        "same_team_as_owner": false
+      },
+      "text": "Ticket ACC-0908: Ana Costa (Customer Success) requests read access to the billing system to check a customer's payment history. Approved by their manager. The billing system is owned by the Finance Systems team; Ana is not on that team.",
+      "answer": "deny",
+      "note": "synthetic past answer"
+    },
+    {
+      "case_ref": "ACC-0909",
+      "facts": {
+        "system": "crm",
+        "role": "admin",
+        "manager_approved": true,
+        "same_team_as_owner": true
+      },
+      "text": "Ticket ACC-0909: Omar Haddad (Sales Operations) requests admin access to the CRM to configure a new pipeline stage. Approved by their manager. The CRM is owned by the Sales Operations team; Omar is on that team.",
+      "answer": "deny",
+      "note": "synthetic past answer"
+    },
+    {
+      "case_ref": "ACC-0910",
+      "facts": {
+        "system": "wiki",
+        "role": "read",
+        "manager_approved": true,
+        "same_team_as_owner": true
+      },
+      "text": "Ticket ACC-0910: Kim Sato (Platform) requests read access to the wiki to read the on-call handbook. Approved by their manager. The wiki is owned by the Platform team; Kim is on that team.",
+      "answer": "grant",
+      "note": "synthetic past answer"
+    },
+    {
+      "case_ref": "ACC-0911",
+      "facts": {
+        "system": "crm",
+        "role": "read",
+        "manager_approved": true,
+        "same_team_as_owner": false
+      },
+      "text": "Ticket ACC-0911: Ben Adeyemi (Marketing) requests read access to the CRM to see which accounts attended the webinar. Approved by their manager. The CRM is owned by the Sales Operations team; Ben is not on that team.",
+      "answer": "grant",
+      "note": "synthetic past answer"
+    },
+    {
+      "case_ref": "ACC-0912",
+      "facts": {
+        "system": "billing",
+        "role": "write",
+        "manager_approved": true,
+        "same_team_as_owner": true
+      },
+      "text": "Ticket ACC-0912: Zoe Martin (Finance Systems) requests write access to the billing system to correct tax codes. Approved by their manager. The billing system is owned by the Finance Systems team; Zoe is on that team.",
+      "answer": "grant",
+      "note": "synthetic past answer"
+    }
+  ],
+  "incoming": [
+    {
+      "case_ref": "ACC-1031",
+      "facts": {
+        "system": "wiki",
+        "role": "read",
+        "manager_approved": true,
+        "same_team_as_owner": false
+      },
+      "text": "Ticket ACC-1031: Noah Kim (Support) requests read access to the wiki to read the returns troubleshooting guide. Approved by their manager. The wiki is owned by the Platform team; Noah is not on that team.",
+      "demo_note": "matches: answer this one first (grant; team doesn't matter)"
+    },
+    {
+      "case_ref": "ACC-1032",
+      "facts": {
+        "system": "wiki",
+        "role": "read",
+        "manager_approved": true,
+        "same_team_as_owner": true
+      },
+      "text": "Ticket ACC-1032: Ines Duarte (Platform) requests read access to the wiki to read the architecture notes. Approved by their manager. The wiki is owned by the Platform team; Ines is on that team.",
+      "demo_note": "matches"
+    },
+    {
+      "case_ref": "ACC-1033",
+      "facts": {
+        "system": "crm",
+        "role": "read",
+        "manager_approved": true,
+        "same_team_as_owner": true
+      },
+      "text": "Ticket ACC-1033: Lena Fischer (Sales Operations) requests read access to the CRM to check renewal dates. Approved by their manager. The CRM is owned by the Sales Operations team; Lena is on that team.",
+      "demo_note": "a different system: asks"
+    },
+    {
+      "case_ref": "ACC-1034",
+      "facts": {
+        "system": "prod_db",
+        "role": "read",
+        "manager_approved": true,
+        "same_team_as_owner": true
+      },
+      "text": "Ticket ACC-1034: Ravi Iyer (Platform) requests read access to the production database to check a data migration. Approved by their manager. The production database is owned by the Platform team; Ravi is on that team.",
+      "demo_note": "production database: always asks"
+    },
+    {
+      "case_ref": "ACC-1035",
+      "facts": {
+        "system": "wiki",
+        "role": "read",
+        "manager_approved": false,
+        "same_team_as_owner": false
+      },
+      "text": "Ticket ACC-1035: Pat Quinn (Contractor, Legal) requests read access to the wiki to read the policy pages. Manager approval: not yet given. The wiki is owned by the Platform team; Pat is not on that team.",
+      "demo_note": "no manager approval: asks"
+    },
+    {
+      "case_ref": "ACC-1036",
+      "facts": {
+        "system": "wiki",
+        "role": "read",
+        "manager_approved": true,
+        "same_team_as_owner": false
+      },
+      "text": "Ticket ACC-1036: Sofia Rossi (Customer Success) requests read access to the wiki to read the product FAQ. Approved by their manager. The wiki is owned by the Platform team; Sofia is not on that team.",
+      "demo_note": "matches"
+    },
+    {
+      "case_ref": "ACC-1037",
+      "facts": {
+        "system": "wiki",
+        "role": "write",
+        "manager_approved": true,
+        "same_team_as_owner": true
+      },
+      "text": "Ticket ACC-1037: Kim Sato (Platform) requests write access to the wiki to update the on-call handbook. Approved by their manager. The wiki is owned by the Platform team; Kim is on that team.",
+      "demo_note": "write access: asks"
+    },
+    {
+      "case_ref": "ACC-1038",
+      "facts": {
+        "system": "billing",
+        "role": "read",
+        "manager_approved": true,
+        "same_team_as_owner": false
+      },
+      "text": "Ticket ACC-1038: Ana Costa (Customer Success) requests read access to the billing system to check a refund. Approved by their manager. The billing system is owned by the Finance Systems team; Ana is not on that team.",
+      "demo_note": "a different system: asks"
+    },
+    {
+      "case_ref": "ACC-1039",
+      "facts": {
+        "system": "wiki",
+        "role": "read",
+        "manager_approved": true,
+        "same_team_as_owner": true
+      },
+      "text": "Ticket ACC-1039: Ravi Iyer (Platform) requests read access to the wiki to read the incident reports. Approved by their manager. The wiki is owned by the Platform team; Ravi is on that team.",
+      "demo_note": "matches"
+    },
+    {
+      "case_ref": "ACC-1040",
+      "facts": {
+        "system": "crm",
+        "role": "admin",
+        "manager_approved": true,
+        "same_team_as_owner": true
+      },
+      "text": "Ticket ACC-1040: Omar Haddad (Sales Operations) requests admin access to the CRM to add a custom field. Approved by their manager. The CRM is owned by the Sales Operations team; Omar is on that team.",
+      "demo_note": "admin role: always asks"
+    },
+    {
+      "case_ref": "ACC-1041",
+      "facts": {
+        "system": "wiki",
+        "role": "read",
+        "manager_approved": true,
+        "same_team_as_owner": false
+      },
+      "text": "Ticket ACC-1041: Ben Adeyemi (Marketing) requests read access to the wiki to read the launch checklist. Approved by their manager. The wiki is owned by the Platform team; Ben is not on that team.",
+      "demo_note": "matches"
+    },
+    {
+      "case_ref": "ACC-1042",
+      "facts": {
+        "system": "wiki",
+        "role": "read",
+        "manager_approved": true,
+        "same_team_as_owner": true
+      },
+      "text": "Ticket ACC-1042: Ines Duarte (Platform) requests read access to the wiki to read the API style guide. Approved by their manager. The wiki is owned by the Platform team; Ines is on that team.",
+      "demo_note": "matches"
+    },
+    {
+      "case_ref": "ACC-1043",
+      "facts": {
+        "system": "crm",
+        "role": "read",
+        "manager_approved": true,
+        "same_team_as_owner": false
+      },
+      "text": "Ticket ACC-1043: Chris Doyle (Marketing) requests read access to the CRM to export a contact list. Approved by their manager. The CRM is owned by the Sales Operations team; Chris is not on that team.",
+      "demo_note": "a different system: asks"
+    },
+    {
+      "case_ref": "ACC-1044",
+      "facts": {
+        "system": "wiki",
+        "role": "read",
+        "manager_approved": true,
+        "same_team_as_owner": false
+      },
+      "text": "Ticket ACC-1044: Mei Tanaka (Support) requests read access to the wiki to read the shipping carrier notes. Approved by their manager. The wiki is owned by the Platform team; Mei is not on that team.",
+      "demo_note": "matches"
+    },
+    {
+      "case_ref": "ACC-1045",
+      "facts": {
+        "system": "prod_db",
+        "role": "write",
+        "manager_approved": true,
+        "same_team_as_owner": true
+      },
+      "text": "Ticket ACC-1045: Kim Sato (Platform) requests write access to the production database to run a data fix. Approved by their manager. The production database is owned by the Platform team; Kim is on that team.",
+      "demo_note": "production database: always asks"
+    },
+    {
+      "case_ref": "ACC-1046",
+      "facts": {
+        "system": "wiki",
+        "role": "read",
+        "manager_approved": true,
+        "same_team_as_owner": true
+      },
+      "text": "Ticket ACC-1046: Leo Park (Platform) requests read access to the wiki to read the onboarding pages. Approved by their manager. The wiki is owned by the Platform team; Leo is on that team.",
+      "demo_note": "matches"
+    },
+    {
+      "case_ref": "ACC-1047",
+      "facts": {
+        "system": "wiki",
+        "role": "read",
+        "manager_approved": false,
+        "same_team_as_owner": true
+      },
+      "text": "Ticket ACC-1047: Ana Lima (Platform) requests read access to the wiki to read the team retro notes. Manager approval: not yet given. The wiki is owned by the Platform team; Ana is on that team.",
+      "demo_note": "no manager approval: asks"
+    },
+    {
+      "case_ref": "ACC-1048",
+      "facts": {
+        "system": "wiki",
+        "role": "read",
+        "manager_approved": true,
+        "same_team_as_owner": false
+      },
+      "text": "Ticket ACC-1048: Sofia Rossi (Customer Success) requests read access to the wiki to read the escalation guide. Approved by their manager. The wiki is owned by the Platform team; Sofia is not on that team.",
+      "demo_note": "matches"
+    },
+    {
+      "case_ref": "ACC-1049",
+      "facts": {
+        "system": "billing",
+        "role": "write",
+        "manager_approved": false,
+        "same_team_as_owner": false
+      },
+      "text": "Ticket ACC-1049: Tom Becker (Contractor, Facilities) requests write access to the billing system to update a supplier's bank details. Manager approval: not yet given. The billing system is owned by the Finance Systems team; Tom is not on that team.",
+      "demo_note": "a different system: asks"
+    },
+    {
+      "case_ref": "ACC-1050",
+      "facts": {
+        "system": "wiki",
+        "role": "read",
+        "manager_approved": true,
+        "same_team_as_owner": true
+      },
+      "text": "Ticket ACC-1050: Kim Sato (Platform) requests read access to the wiki to read the capacity plan. Approved by their manager. The wiki is owned by the Platform team; Kim is on that team.",
+      "demo_note": "matches"
+    }
+  ]
+}

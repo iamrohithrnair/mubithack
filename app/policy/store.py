@@ -29,6 +29,10 @@ class ActivationDenied(Exception):
     """Raised when an activation attempt fails a gate. Never bypassable."""
 
 
+class NotActive(Exception):
+    """Raised when overruling a policy that is not the active one."""
+
+
 @dataclass(frozen=True)
 class PolicyRecord:
     policy_id: str
@@ -55,13 +59,33 @@ def _now() -> str:
     return datetime.now(timezone.utc).isoformat(timespec="milliseconds")
 
 
+def _definition(row: dict) -> PolicyDefinition:
+    """Parse a stored definition, registering planted workstreams on first need.
+
+    A planted workstream's fields exist only once its contract is registered. A
+    process that reads its precedents before `app.harness.bootstrap.load()` ran
+    (a script, a test) registers them from the database and tries once more.
+    """
+    try:
+        return PolicyDefinition.model_validate_json(row["definition"])
+    except (KeyError, ValueError):
+        from app import domains
+
+        if row["family"] in domains.families():
+            raise
+        from app.workstreams import registry
+
+        registry.load_all()
+        return PolicyDefinition.model_validate_json(row["definition"])
+
+
 def _row(row: dict) -> PolicyRecord:
     return PolicyRecord(
         policy_id=row["policy_id"],
         family=row["family"],
         version=row["version"],
         status=row["status"],
-        definition=PolicyDefinition.model_validate_json(row["definition"]),
+        definition=_definition(row),
         origin_case_id=row["origin_case_id"],
         origin_decision_id=row["origin_decision_id"],
         replay_report=json.loads(row["replay_report"]) if row["replay_report"] else None,
@@ -174,6 +198,23 @@ def list_active(conn: "Connection") -> list[PolicyRecord]:
     return [_row(r) for r in rows]
 
 
+def active_for(conn: "Connection", family: str) -> PolicyRecord | None:
+    """The one active policy in a family, if any. The gate allows at most one."""
+    row = conn.execute(
+        "SELECT * FROM policies WHERE family = ? AND status = ? ORDER BY version DESC LIMIT 1",
+        (family, PolicyStatus.ACTIVE),
+    ).fetchone()
+    return _row(row) if row else None
+
+
+def list_for(conn: "Connection", family: str) -> list[PolicyRecord]:
+    """Every version in one family, newest first."""
+    rows = conn.execute(
+        "SELECT * FROM policies WHERE family = ? ORDER BY version DESC", (family,)
+    ).fetchall()
+    return [_row(r) for r in rows]
+
+
 def attach_replay_report(
     conn: "Connection", policy_id: str, report: dict[str, Any], *, trace_id: str
 ) -> None:
@@ -272,6 +313,34 @@ def activate(
             "superseded": superseded,
             "replay_cases": record.replay_report.get("cases_replayed"),
         },
+    )
+    return get(conn, policy_id)
+
+
+def retire(
+    conn: "Connection", policy_id: str, *, by: str, reason: str, trace_id: str
+) -> PolicyRecord:
+    """A person overrules an active policy. It stops at once, and nothing replaces it.
+
+    Retiring is the opposite of activating and needs no replay: stopping
+    automation can only make the system more conservative. Its cases ask again.
+    The record is kept, with who stopped it and why.
+    """
+    record = get(conn, policy_id)
+    if record.status != PolicyStatus.ACTIVE:
+        raise NotActive(f"policy is '{record.status}'; only the active policy can be overruled")
+    conn.execute(
+        "UPDATE policies SET status = ?, retired_at = ? WHERE policy_id = ? AND status = ?",
+        (PolicyStatus.RETIRED, _now(), policy_id, PolicyStatus.ACTIVE),
+    )
+    audit.record(
+        conn,
+        trace_id=trace_id,
+        event_type=AuditEventType.POLICY_RETIRED,
+        actor=by,
+        policy_id=policy_id,
+        payload={"reason": reason, "overruled": True, "version": record.version,
+                 "family": record.family},
     )
     return get(conn, policy_id)
 
