@@ -116,7 +116,7 @@ def test_reset_restores_the_fixtures(client):
     assert r.status_code == 200
     with db.read_only() as conn:
         assert conn.execute("SELECT COUNT(*) c FROM exceptions").fetchone()["c"] == 0
-        assert conn.execute("SELECT COUNT(*) c FROM return_cases").fetchone()["c"] == 30
+        assert conn.execute("SELECT COUNT(*) c FROM return_cases").fetchone()["c"] == 33
 
 
 def test_the_demo_token_is_discoverable_while_the_placeholder_is_in_use(

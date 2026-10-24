@@ -110,8 +110,30 @@ def main() -> int:
         result = handle_event(case_id)
         print(f"{case_id}: {result.outcome} — {result.escalation_reasons[0] if result.escalation_reasons else '?'}")
 
+    # --------------------------------------------------------------- sapling
+    head(7, "Clean fields, telling notes. Banyan Sapling reads what the engine cannot.")
+    if not settings.sapling_enforced:
+        print("semantic check is off: set ONEDECISION_SAPLING_MODE=enforce to run this step")
+    else:
+        for case_id in ("CASE-2007", "CASE-2008", "CASE-2009"):
+            result = handle_event(case_id)
+            with db.read_only() as conn:
+                verdicts = [
+                    e.payload for e in audit.read_for_case(conn, case_id)
+                    if e.event_type.startswith("semantic.")
+                ]
+                note = conn.execute(
+                    "SELECT inspector_notes FROM return_cases WHERE case_id = ?", (case_id,)
+                ).fetchone()["inspector_notes"]
+            print(f"{case_id}: note    : {note[:70]}...")
+            if verdicts:
+                v = verdicts[0]
+                print(f"           sapling : {v['raw_label']} (p supported "
+                      f"{v['probabilities'].get('supported', 0):.2f}, {v['latency_ms']} ms)")
+            print(f"           outcome : {result.outcome}\n")
+
     # ---------------------------------------------------------------- audit
-    head(7, "The audit trail.")
+    head(8, "The audit trail.")
     with db.read_only() as conn:
         chain = audit.verify_chain(conn)
         entries = audit.read_for_case(conn, "CASE-2002")
@@ -122,7 +144,7 @@ def main() -> int:
         print(f"  {e.created_at}  {e.event_type:<28} {e.actor:<12} {str(detail)[:46]}")
 
     # ---------------------------------------------------------------- gate
-    head(8, "Result.")
+    head(9, "Result.")
     ok = (
         first.outcome is Outcome.DECISION_REQUESTED
         and second.outcome is Outcome.AUTO_RESOLVED

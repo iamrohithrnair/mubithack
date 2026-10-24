@@ -24,6 +24,8 @@ import pytest
 # Set before any app module reads settings.
 os.environ.setdefault("ONEDECISION_MODEL_PROVIDER", "scripted")
 os.environ.setdefault("ONEDECISION_APPROVAL_TOKEN", "test-approval-token")
+# The Sapling semantic check calls a hosted endpoint; tests that need it stub it.
+os.environ["ONEDECISION_SAPLING_MODE"] = "off"
 
 TEST_DATABASE_URL = os.environ.get("ONEDECISION_TEST_DATABASE_URL", "").strip()
 
@@ -56,6 +58,7 @@ def temp_db(request, tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
 
     monkeypatch.setenv("ONEDECISION_MODEL_PROVIDER", "scripted")
     monkeypatch.setenv("ONEDECISION_APPROVAL_TOKEN", "test-approval-token")
+    monkeypatch.setenv("ONEDECISION_SAPLING_MODE", "off")
 
     if request.param == "postgres":
         monkeypatch.setenv("ONEDECISION_DATABASE_URL", TEST_DATABASE_URL)

@@ -81,6 +81,11 @@ class DomainSpec:
     verify: Callable[..., Any]
     fixed_actions: Callable[[float], list[dict[str, Any]]]
 
+    # Plain-language renderings for the Sapling semantic check (app/sapling.py).
+    # A domain without them is not semantically checked.
+    policy_text: Callable[[Any], str] | None = None
+    evidence_text: Callable[["Connection", str], str] | None = None
+
     @property
     def allowed_fields(self) -> frozenset[str]:
         return self.bool_fields | self.number_fields | frozenset(self.enum_fields)

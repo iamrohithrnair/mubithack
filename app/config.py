@@ -109,10 +109,18 @@ class Settings:
     model_timeout_seconds: int
     approval_token: str
     otel_enabled: bool
+    sapling_mode: str
+    sapling_url: str
+    sapling_min_support: float
+    sapling_timeout_seconds: int
 
     @property
     def is_offline_provider(self) -> bool:
         return self.model_provider == "scripted"
+
+    @property
+    def sapling_enforced(self) -> bool:
+        return self.sapling_mode == "enforce"
 
     @property
     def db_backend(self) -> str:
@@ -138,12 +146,26 @@ def resolve_database_url() -> str:
     return ""
 
 
+SAPLING_DEFAULT_URL = "https://6adbee0669a00298cd4774c9.endpoints.huggingface.cloud"
+
+
+def _sapling_mode(model_provider: str) -> str:
+    """`enforce` or `off`. Unset follows the model provider: the offline
+    scripted provider promises a demo with no network, so it leaves Sapling off
+    unless asked; every hosted provider gets the check."""
+    raw = os.environ.get("ONEDECISION_SAPLING_MODE", "").strip().lower()
+    if raw in ("enforce", "off"):
+        return raw
+    return "off" if model_provider == "scripted" else "enforce"
+
+
 def load_settings() -> Settings:
     db_path = Path(os.environ.get("ONEDECISION_DB_PATH", "var/onedecision.db"))
     if not db_path.is_absolute():
         db_path = REPO_ROOT / db_path
+    model_provider = os.environ.get("ONEDECISION_MODEL_PROVIDER", "scripted").strip().lower()
     return Settings(
-        model_provider=os.environ.get("ONEDECISION_MODEL_PROVIDER", "scripted").strip().lower(),
+        model_provider=model_provider,
         bedrock_model_id=os.environ.get(
             "ONEDECISION_BEDROCK_MODEL_ID",
             # Opus 5 has no in-Region support on bedrock-runtime, the endpoint
@@ -175,6 +197,10 @@ def load_settings() -> Settings:
         model_timeout_seconds=_env_int("ONEDECISION_MODEL_TIMEOUT_SECONDS", 60),
         approval_token=os.environ.get("ONEDECISION_APPROVAL_TOKEN", DEFAULT_APPROVAL_TOKEN),
         otel_enabled=os.environ.get("ONEDECISION_OTEL_ENABLED", "false").lower() == "true",
+        sapling_mode=_sapling_mode(model_provider),
+        sapling_url=os.environ.get("ONEDECISION_SAPLING_URL", SAPLING_DEFAULT_URL),
+        sapling_min_support=_env_float("ONEDECISION_SAPLING_MIN_SUPPORT", 0.5),
+        sapling_timeout_seconds=_env_int("ONEDECISION_SAPLING_TIMEOUT_SECONDS", 30),
     )
 
 

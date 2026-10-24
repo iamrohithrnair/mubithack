@@ -33,6 +33,8 @@ class AuditEventType:
     POLICY_MATCHED = "policy.matched"
     POLICY_NOT_FOUND = "policy.not_found"
     POLICY_CONFLICT = "policy.conflict"
+    SEMANTIC_SUPPORTED = "semantic.supported"
+    SEMANTIC_BLOCKED = "semantic.blocked"
     DECISION_CARD_CREATED = "decision.card_created"
     DECISION_RECORDED = "decision.recorded"
     POLICY_PROPOSED = "policy.proposed"

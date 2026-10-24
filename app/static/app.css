@@ -359,6 +359,7 @@ table.data tbody th { font-weight: 500; color: var(--ink-dim); }
 table.data .num { text-align: right; font-variant-numeric: tabular-nums; }
 
 ol.timeline .ev-agent { border-left-color: var(--mark); }
+ol.timeline .ev-semantic { border-left-color: var(--good); }
 
 /* -------------------------------------------------------------- responsive */
 /* Long identifiers (tool names, trace and policy IDs) break instead of pushing

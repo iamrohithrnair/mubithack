@@ -860,6 +860,96 @@
       "expected_label": "escalate",
       "scenario_note": "DEMO 3d - boundary: parts catalog outage (tool failure)",
       "is_historical": 0
+    },
+    {
+      "case_id": "CASE-2007",
+      "order_id": "NGO-ORD-48107",
+      "customer_ref": "CUST-SYN-807",
+      "sku": "NGO-KIT-4100",
+      "expected_serial": "4100-SN-02207",
+      "received_serial": "4100-SN-02207",
+      "received_components": [
+        "CMP-BODY-4100",
+        "CMP-BAT-STD",
+        "CMP-CHG-USB",
+        "CMP-STRAP-NEO",
+        "CMP-CABLE-USBC",
+        "CMP-CASE-FOAM",
+        "CMP-CLIP-RAIL"
+      ],
+      "inspection_evidence": {
+        "exterior_photo": "img/synthetic/exterior.jpg",
+        "serial_photo": "img/synthetic/serial.jpg",
+        "component_checklist": "completed",
+        "inspector_id": "INSP-114",
+        "weight_check": "pass"
+      },
+      "new_damage_present": 0,
+      "inspector_notes": "Battery door is scorched and the unit smells of burnt plastic. I could not tick the damage box because the form was already submitted.",
+      "received_at": "2026-08-27T09:40:00Z",
+      "expected_label": "escalate",
+      "scenario_note": "DEMO 5 - hidden in the note: every structured field is clean, but the inspector describes heat damage. Only Sapling reads it",
+      "is_historical": 0
+    },
+    {
+      "case_id": "CASE-2008",
+      "order_id": "NGO-ORD-48108",
+      "customer_ref": "CUST-SYN-808",
+      "sku": "NGO-KIT-4100",
+      "expected_serial": "4100-SN-02208",
+      "received_serial": "4100-SN-02208",
+      "received_components": [
+        "CMP-BODY-4100",
+        "CMP-BAT-STD",
+        "CMP-CHG-USB",
+        "CMP-STRAP-NEO",
+        "CMP-CABLE-USBC",
+        "CMP-CASE-FOAM",
+        "CMP-CLIP-RAIL"
+      ],
+      "inspection_evidence": {
+        "exterior_photo": "img/synthetic/exterior.jpg",
+        "serial_photo": "img/synthetic/serial.jpg",
+        "component_checklist": "completed",
+        "inspector_id": "INSP-114",
+        "weight_check": "pass"
+      },
+      "new_damage_present": 0,
+      "inspector_notes": "Serial label looks re-stuck over another label; the serial engraved on the body underneath reads 4100-SN-09999.",
+      "received_at": "2026-08-27T10:05:00Z",
+      "expected_label": "escalate",
+      "scenario_note": "DEMO 5b - hidden in the note: the serial label matches, the engraved serial under it does not. Only Sapling reads it",
+      "is_historical": 0
+    },
+    {
+      "case_id": "CASE-2009",
+      "order_id": "NGO-ORD-48109",
+      "customer_ref": "CUST-SYN-809",
+      "sku": "NGO-KIT-4100",
+      "expected_serial": "4100-SN-02209",
+      "received_serial": "4100-SN-02209",
+      "received_components": [
+        "CMP-BODY-4100",
+        "CMP-BAT-STD",
+        "CMP-CHG-USB",
+        "CMP-STRAP-NEO",
+        "CMP-CABLE-USBC",
+        "CMP-CASE-FOAM",
+        "CMP-CLIP-RAIL"
+      ],
+      "inspection_evidence": {
+        "exterior_photo": "img/synthetic/exterior.jpg",
+        "serial_photo": "img/synthetic/serial.jpg",
+        "component_checklist": "completed",
+        "inspector_id": "INSP-114",
+        "weight_check": "pass"
+      },
+      "new_damage_present": 0,
+      "inspector_notes": "Returned in original packaging, everything neatly packed. Customer says the strap was lost on holiday.",
+      "received_at": "2026-08-27T10:30:00Z",
+      "expected_label": "auto_resolve",
+      "scenario_note": "DEMO 5c - a harmless note: Sapling reads it and lets the approved policy run",
+      "is_historical": 0
     }
   ]
 }

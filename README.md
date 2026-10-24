@@ -187,6 +187,7 @@ The separation between *reasoning* and *acting* is the product.
 | 8 | Every state-changing action carries an idempotency key. | `app/adapters/warehouse.py` |
 | 9 | Append-only, hash-chained audit log; `UPDATE`/`DELETE` rejected by database triggers. PostgreSQL also revokes those privileges from `PUBLIC`; a non-owner application role is not set up yet (see `docs/database.md`). | `app/audit.py`, `app/db/` |
 | 10 | The decision card's summary is plain language for a supervisor; the output schema asks for no internal reasoning. | `app/domain.py` |
+| 11 | A second, independent reader checks the evidence before any action: Banyan Sapling must return `supported`, or the case escalates. It can stop an action, never start one. | `app/sapling.py` |
 
 **The agent has no state-changing tools at all.** Every tool in `app/agent/tools.py` is
 read-only. `execute_approved_policy`, `verify_action`, and policy activation are ordinary
@@ -198,7 +199,52 @@ way to call.
 Serial mismatch · incomplete evidence · new damage · missing or excessive replacement
 cost · serialized, safety-critical, or essential missing component · more than one
 missing component · conflicting policies · tool failure · confidence below threshold ·
-any disagreement between the agent's report and the source systems.
+any disagreement between the agent's report and the source systems · Banyan Sapling
+not supporting the action, or Sapling being unreachable.
+
+### Semantic verification with Banyan Sapling
+
+The policy engine reads structured fields only. That keeps it predictable, and it
+also means it can't read free text. If an inspector writes "battery door is scorched,
+I could not tick the damage box because the form was already submitted", then
+`new_damage_present` is still false and the engine would approve the case.
+
+So after a policy matches and before anything is written, the orchestrator sends
+[Banyan Sapling](https://huggingface.co/MubitLabs/banyan-sapling) three strings:
+
+- **policy**: the matched policy, rendered as plain language from its conditions
+- **evidence**: the raw source-system record, with serials shown side by side (not
+  compared) and the inspector's free-text notes verbatim. It never includes the agent's report.
+- **claim**: "This case meets every condition of the policy and may be resolved
+  automatically."
+
+Only a `supported` verdict with p >= 0.5 lets the action run. Any other result
+escalates to a person, with Sapling's label in the reason: `violation`,
+`insufficient_information`, `inconsistent_context`, a weak `supported`, or an
+unreachable endpoint (the check fails closed). The verdict and all four probabilities
+go into the hash-chained audit log.
+
+Measured against the live endpoint:
+
+| Case | Structured fields | Inspector note | Engine alone | Sapling | Outcome |
+| --- | --- | --- | --- | --- | --- |
+| CASE-2002 | clean | none | approve | `supported` 0.70 | auto-resolved |
+| CASE-2009 | clean | "strap was lost on holiday" | approve | `supported` 0.66 | auto-resolved |
+| CASE-2007 | clean | "battery door is scorched…" | **approve** | `insufficient_information` | escalated |
+| CASE-2008 | clean | "engraved serial underneath reads 4100-SN-09999" | **approve** | `inconsistent_context` | escalated |
+
+All 30 original fixture cases also got the right raw label (30/30), including both
+prompt-injection notes. With Sapling enforced, `make eval` still scores 24/24 with no
+missed automations.
+
+Sapling's calibrated `status` returns `unsure` on almost every case in this domain, so
+the gate uses the raw label and its probability. The calibrated status is still
+recorded in the audit log.
+
+Sapling is on by default with any hosted model provider. It is off with the offline
+`scripted` provider, which promises no network access. Set
+`ONEDECISION_SAPLING_MODE=enforce` to turn it on there, for example
+`ONEDECISION_SAPLING_MODE=enforce make demo`.
 
 ---
 

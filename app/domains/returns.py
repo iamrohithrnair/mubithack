@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING, Any
 if TYPE_CHECKING:
     from app.db import Connection
 
-from app.adapters import warehouse
+from app.adapters import parts_catalog, returns_system, warehouse
 from app.adapters.returns_system import AdapterError
 from app.config import MAX_MISSING_COMPONENTS_CEILING, MAX_REPLACEMENT_COST_CEILING_USD
 from app.domains import ActionSpec, DomainSpec, register
@@ -145,6 +145,95 @@ def verify(conn: "Connection", case_id: str) -> tuple[list[str], list[str]]:
     return checks, failures
 
 
+# ------------------------------------------------- semantic check renderings
+
+_CONDITION_PROSE = {
+    ("serial_match", True): "the serial number read from the returned unit matches the serial "
+    "number expected on the order",
+    ("evidence_complete", True): "every required inspection evidence item is present (exterior "
+    "photo, serial photo, component checklist, inspector id, weight check)",
+    ("new_damage_present", False): "no new damage is present on the returned item",
+    ("missing_component_serialized", False): "the missing component is not serialized",
+    ("missing_component_safety_critical", False): "the missing component is not safety-critical",
+    ("missing_component_essential", False): "the missing component is not essential",
+}
+
+
+def _condition_prose(condition: Any) -> str:
+    field, op, value = condition.field, condition.operator.value, condition.value
+    if (field, value) in _CONDITION_PROSE and op == "eq":
+        return _CONDITION_PROSE[(field, value)]
+    if field == "missing_component_count" and op == "eq":
+        return f"exactly {int(value)} component{'s are' if int(value) != 1 else ' is'} missing"
+    if field == "missing_component_count" and op == "lte":
+        return f"at most {int(value)} component{'s are' if int(value) != 1 else ' is'} missing"
+    if field == "replacement_cost_usd" and op in ("lte", "lt"):
+        bound = "at most" if op == "lte" else "under"
+        return f"the replacement cost is known and {bound} ${float(value):.2f}"
+    if field == "kit_category" and op == "in":
+        return f"the kit category is one of {', '.join(value)}"
+    return condition.describe()
+
+
+def policy_text(definition: Any) -> str:
+    """The matched policy as a person would write it."""
+    conditions = "; ".join(_condition_prose(c) for c in definition.conditions)
+    return (
+        f"Return exception policy \"{definition.name}\". A return case may be resolved "
+        "automatically, with a replacement part ordered and the kit restocked, only when ALL of "
+        f"these hold: {conditions}. If any condition fails or cannot be established, the case "
+        "must be escalated to a person."
+    )
+
+
+def evidence_text(conn: "Connection", case_id: str) -> str:
+    """The case as the source systems hold it, free-text notes included.
+
+    Raw values only: serials are shown side by side, not compared, so the check
+    reads the record independently of the fact derivation it is checking.
+    """
+    case = returns_system.get_return_case(conn, case_id)
+    bom = returns_system.get_expected_components(conn, case["sku"])
+    received = set(case["received_components"])
+    lines = [
+        f"Returns system record for case {case['case_id']}, order {case['order_id']}: "
+        f"{case['kit_name']} ({case['sku']}, {case['kit_category']}).",
+        f"Serial expected on the order: {case['expected_serial']}. "
+        f"Serial read from the returned unit: {case['received_serial'] or 'none recorded'}.",
+    ]
+    evidence = case["inspection_evidence"]
+    for name in returns_system.REQUIRED_EVIDENCE_FIELDS:
+        value = evidence.get(name)
+        lines.append(f"Inspection evidence {name}: {value if value not in (None, '') else 'MISSING'}.")
+    lines.append(
+        "New damage recorded on the inspection form: "
+        + ("yes." if case["new_damage_present"] else "no.")
+    )
+    missing = [c for c in bom if c["component_id"] not in received]
+    if not missing:
+        lines.append("Every component on the bill of materials was received.")
+    for component in missing:
+        try:
+            priced = parts_catalog.lookup_replacement_cost(conn, component["component_id"])
+            cost = (
+                f"${priced['replacement_cost_usd']:.2f}"
+                if priced["replacement_cost_usd"] is not None
+                else "not in the parts catalog (cost unknown)"
+            )
+        except AdapterError as exc:
+            cost = f"unavailable: {exc}"
+        yes_no = lambda flag: "yes" if flag else "no"  # noqa: E731
+        lines.append(
+            f"Missing component: {component['name']} ({component['component_id']}); "
+            f"serialized: {yes_no(component['serialized'])}; "
+            f"safety-critical: {yes_no(component['safety_critical'])}; "
+            f"essential: {yes_no(component['essential'])}; replacement cost {cost}."
+        )
+    notes = (case["inspector_notes"] or "").strip()
+    lines.append(f"Inspector notes (free text): {notes if notes else 'none'}")
+    return "\n".join(lines)
+
+
 SPEC = register(
     DomainSpec(
         family=FAMILY,
@@ -162,5 +251,7 @@ SPEC = register(
         execute=execute,
         verify=verify,
         fixed_actions=fixed_actions,
+        policy_text=policy_text,
+        evidence_text=evidence_text,
     )
 )

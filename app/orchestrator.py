@@ -24,7 +24,7 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Any
 
-from app import audit, db, progress
+from app import audit, db, progress, sapling
 from app.adapters import warehouse
 from app.adapters.returns_system import AdapterError
 from app.agent.build import decision_card_agent, investigation_agent, policy_proposal_agent
@@ -52,6 +52,57 @@ from app.policy.guardrails import evaluate_guardrails
 from app.policy.proposal import proposal_to_payload, revised_payload
 from app.policy.replay import replay_candidate_policy
 from app.policy.schema import PolicyDefinition, spec_for, PolicyValidationError
+
+
+def semantic_check(
+    conn: "Connection",
+    case_id: str,
+    definition: PolicyDefinition,
+    *,
+    trace_id: str,
+    exception_id: str,
+    policy_id: str,
+) -> str | None:
+    """Banyan Sapling's read of the raw evidence against the matched policy.
+
+    Returns None when the action may proceed, or the reason it may not. Runs
+    after the engine has matched and before anything is written, so it can only
+    ever stop an action, never start one. See app/sapling.py.
+    """
+    spec = spec_for(definition.family)
+    if not settings.sapling_enforced or spec.policy_text is None or spec.evidence_text is None:
+        return None
+    try:
+        evidence = spec.evidence_text(conn, case_id)
+    except AdapterError as exc:
+        return f"could not render evidence for the semantic check: {exc}"
+
+    verdict = sapling.verify(spec.policy_text(definition), evidence, settings=settings)
+    passed = verdict.passed(settings.sapling_min_support)
+    reason = None if passed else verdict.reason(settings.sapling_min_support)
+    audit.record(
+        conn,
+        trace_id=trace_id,
+        event_type=(
+            AuditEventType.SEMANTIC_SUPPORTED if passed else AuditEventType.SEMANTIC_BLOCKED
+        ),
+        actor="sapling",
+        case_id=case_id,
+        exception_id=exception_id,
+        policy_id=policy_id,
+        payload={
+            **verdict.payload(),
+            "min_support": settings.sapling_min_support,
+            "detail": (
+                f"{sapling.MODEL_LABEL}: {verdict.raw_label} "
+                f"(p supported {verdict.support:.2f}) in {verdict.latency_ms} ms"
+                if verdict.error is None
+                else reason
+            ),
+            **({"reasons": [reason]} if reason else {}),
+        },
+    )
+    return reason
 
 
 class OrchestratorError(RuntimeError):
@@ -597,6 +648,18 @@ def _handle_event(
             policy_id=policy_id,
             payload={"policy": record.label, "conditions": definition.condition_summary()},
         )
+        progress.step(case_id, "Asking Banyan Sapling to verify the evidence")
+        blocked_by = semantic_check(
+            conn,
+            case_id,
+            definition,
+            trace_id=trace_id,
+            exception_id=exception_id,
+            policy_id=policy_id,
+        )
+        if blocked_by is not None:
+            return escalate([blocked_by], report)
+
         base_key = idempotency_key(case_id, policy_id, str(record.version))
         actions = execute_approved_policy(
             conn,
