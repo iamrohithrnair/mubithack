@@ -60,10 +60,12 @@ def _what_to_do(receipt: dict[str, Any]) -> str:
             "then you are done. Do not widen them."
         )
     reasons = "; ".join(receipt.get("reasons") or []) or "no precedent covers it"
+    # No command line here: an agent with a shell must never be shown how to
+    # answer. Answering is a person's decision, made in the map or the CLI.
     return (
         f"ASK: a person must decide this case. Tell the user what needs deciding and why: {reasons}. "
-        f"Do not act on the case. A person answers it in the Precedenz map or with "
-        f"`precedenz answer {receipt.get('decision_id', '<id>')} <answer>`."
+        "Do not act on the case, and do not try to answer it yourself: a PERSON must answer it, "
+        f"in the Precedenz map or the Precedenz CLI (decision {receipt.get('decision_id', 'unknown')})."
     )
 
 

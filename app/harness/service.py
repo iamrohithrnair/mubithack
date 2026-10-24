@@ -224,6 +224,8 @@ def _record(
         "source_revision": request.source_revision,
         "created_at": store.iso(created),
         "expires_at": store.iso(created + store.RECEIPT_TTL),
+        # What a person answering this decision saw; remembering drafts from it.
+        "facts": dict(assessment.facts or {}),
     }
     with db.session() as conn:
         if not store.insert_decision(conn, row):

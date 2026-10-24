@@ -12,6 +12,7 @@ ceilings, always-ask) that no precedent can relax.
 
 from __future__ import annotations
 
+import json
 from typing import TYPE_CHECKING, Any, Callable
 
 if TYPE_CHECKING:
@@ -237,40 +238,61 @@ def label_for(contract: WorkstreamContract, answer: str) -> str:
     return LABEL_AUTO if answer == contract.repeatable_answer else LABEL_ESCALATE
 
 
-def make_corpus(contract: WorkstreamContract) -> Callable[["Connection"], list[tuple[str, str, str]]]:
-    """Past answers in this workstream: the template's history, then live answers.
+ANSWER_PREFIX = "answer:"
 
-    A later answer to the same case wins, so a person's most recent word on a
-    case is what a new precedent is replayed against.
+
+def make_corpus(contract: WorkstreamContract) -> Callable[["Connection"], list[tuple[str, str, str]]]:
+    """Past answers in this workstream, each to be replayed on its own facts.
+
+    Ids are "answer:<answer_id>", which `derive_facts` resolves to the facts
+    snapshot taken when that answer was given, never to the latest row in
+    `harness_cases`: a later arrival under the same case_ref cannot rewrite what
+    a person decided. One per question: a person's latest answer to a decision
+    (or to a template's past case) wins.
     """
     prefix = history_decision_id(contract.id, "")
 
     def corpus(conn: "Connection") -> list[tuple[str, str, str]]:
-        found: dict[str, tuple[str, str]] = {}
+        latest: dict[str, tuple[str, str, str, str]] = {}  # question -> (answer_id, case_ref, answer, note)
         rows = conn.execute(
-            """SELECT decision_id, answer, note FROM harness_answers
+            """SELECT answer_id, decision_id, answer, note FROM harness_answers
                 WHERE decision_id LIKE ? ORDER BY created_at, answer_id""",
             (f"{prefix}%",),
         ).fetchall()
         for row in rows:
-            if not row["decision_id"].startswith(prefix):
-                continue
-            case_ref = row["decision_id"][len(prefix):]
-            found[case_ref] = (row["answer"], row["note"] or "past answer")
+            if row["decision_id"].startswith(prefix):
+                latest[row["decision_id"]] = (
+                    row["answer_id"], row["decision_id"][len(prefix):], row["answer"],
+                    row["note"] or "past answer",
+                )
         rows = conn.execute(
-            """SELECT d.case_ref, a.answer, a.note FROM harness_answers a
+            """SELECT a.answer_id, a.decision_id, d.case_ref, a.answer, a.note FROM harness_answers a
                  JOIN harness_decisions d ON d.decision_id = a.decision_id
                 WHERE d.workstream = ? ORDER BY a.created_at, a.answer_id""",
             (contract.id,),
         ).fetchall()
         for row in rows:
-            found[row["case_ref"]] = (row["answer"], row["note"] or "answered by a person")
+            latest[row["decision_id"]] = (
+                row["answer_id"], row["case_ref"], row["answer"], row["note"] or "answered by a person",
+            )
         return [
-            (case_ref, label_for(contract, answer), f"answered '{answer}': {note}")
-            for case_ref, (answer, note) in found.items()
+            (f"{ANSWER_PREFIX}{answer_id}", label_for(contract, answer), f"{case_ref} answered '{answer}': {note}")
+            for answer_id, case_ref, answer, note in latest.values()
         ]
 
     return corpus
+
+
+def answer_facts(conn: "Connection", contract: WorkstreamContract, corpus_id: str) -> cases.PlantedFacts:
+    """The facts one past answer was given on, from its own snapshot."""
+    answer_id = corpus_id[len(ANSWER_PREFIX):]
+    row = conn.execute("SELECT facts FROM harness_answers WHERE answer_id = ?", (answer_id,)).fetchone()
+    if row is None:
+        raise LookupError(f"no answer '{answer_id}'")
+    values = cases.snapshot(contract, json.loads(row["facts"] or "{}"))
+    return cases.PlantedFacts(
+        case_id=corpus_id, values=cases.full_view(contract, values), source=cases.SOURCE_ANSWER
+    )
 
 
 # ------------------------------------------------------------- the spec
@@ -325,6 +347,8 @@ def build_spec(contract: WorkstreamContract) -> DomainSpec:
         return [out]
 
     def derive_facts(conn: "Connection", case_ref: str) -> cases.PlantedFacts:
+        if case_ref.startswith(ANSWER_PREFIX):  # a past answer, replayed on its own snapshot
+            return answer_facts(conn, contract, case_ref)
         return cases.facts_for(conn, contract, case_ref)
 
     with_evidence = contract.evidence == "text"

@@ -53,15 +53,15 @@ class FakeDecisionService:
             conn.execute(
                 """INSERT INTO harness_decisions (decision_id, workstream, case_ref, idempotency_key,
                        input_hash, verdict, precedent_id, precedent_version, actions, reasons, checks,
-                       model_calls, caller, trace_id, resolves, created_at)
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                       model_calls, caller, trace_id, resolves, created_at, facts)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                 (
                     decision_id, request.workstream, request.case_ref, request.idempotency_key,
                     "sha256:test", assessment.verdict, assessment.precedent_id,
                     assessment.precedent_version, json.dumps(list(assessment.actions)),
                     json.dumps(list(assessment.reasons)),
                     json.dumps([c.to_dict() for c in assessment.checks]), "[]",
-                    request.caller, trace_id, resolves, now(),
+                    request.caller, trace_id, resolves, now(), json.dumps(dict(assessment.facts)),
                 ),
             )
         return {

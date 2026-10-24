@@ -97,8 +97,12 @@ _COLUMNS = (
     "source_revision",
     "created_at",
     "expires_at",
+    # The facts this decision was assessed on (migration 0005). The case row is
+    # latest-wins; this is what a person answering this decision actually saw.
+    "facts",
 )
-_JSON_COLUMNS = ("actions", "reasons", "checks", "model_calls")
+_JSON_COLUMNS = ("actions", "reasons", "checks", "model_calls", "facts")
+_JSON_DEFAULTS: dict[str, Any] = {"facts": {}}
 
 
 def insert_decision(conn: "Connection", row: dict[str, Any]) -> bool:
@@ -109,7 +113,9 @@ def insert_decision(conn: "Connection", row: dict[str, Any]) -> bool:
     loser re-reads the winner's receipt instead of failing.
     """
     values = [
-        json.dumps(row[c], default=str) if c in _JSON_COLUMNS else row.get(c)
+        json.dumps(row.get(c, _JSON_DEFAULTS.get(c)) if c in _JSON_DEFAULTS else row[c], default=str)
+        if c in _JSON_COLUMNS
+        else row.get(c)
         for c in _COLUMNS
     ]
     inserted = conn.execute(

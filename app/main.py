@@ -24,6 +24,8 @@ from app.api import decisions as decisions_api
 from app.api import map as map_api
 from app.api import workstreams as workstreams_api
 from app.harness import bootstrap
+from app.harness.service import decision_lock
+from app.workstreams import registry as workstream_registry
 from app.agent.providers import provider_label
 from app.dashboard import build_dashboard
 from app.config import (
@@ -192,7 +194,10 @@ def ingest_event(request: Request, case_id: str):
     """Simulate a returns-dock check-in event arriving for a case."""
     progress.start(case_id, "Handling the check-in", "Check-in received at the dock")
     try:
-        result = handle_event(case_id)
+        # The inbox holds the SQLite writer across a model call, like a decision
+        # does; taking the decision lock keeps the two from timing each other out.
+        with decision_lock():
+            result = handle_event(case_id)
     finally:
         progress.finish(case_id)
     if result.status is ExceptionStatus.WAITING_DECISION:
@@ -261,7 +266,7 @@ def exception_detail(request: Request, exception_id: str) -> HTMLResponse:
 def approve(request: Request, exception_id: str):
     progress.start(exception_id, "Turning your decision into a policy", "Recording your decision")
     try:
-        with db.session() as conn:
+        with decision_lock(), db.session() as conn:
             try:
                 approve_and_teach(conn, exception_id, decided_by=OPERATOR)
             except OrchestratorError as exc:
@@ -316,7 +321,7 @@ def policies(request: Request) -> HTMLResponse:
 @app.post("/policies/{policy_id}/activate")
 def activate(policy_id: str, approval_token: str = Form(...)):
     """Human activation. Requires the approval token; refuses without a passing replay."""
-    with db.session() as conn:
+    with decision_lock(), db.session() as conn:
         try:
             activate_policy(
                 conn, policy_id, approval_token=approval_token, activated_by=OPERATOR
@@ -391,7 +396,12 @@ def dashboard(request: Request, range_key: str = Query("all", alias="range")) ->
 
 @app.post("/demo/reset")
 def reset_demo():
-    seed.seed(reset=True)
+    with decision_lock():
+        seed.seed(reset=True)
+        # The tables are empty again, so nothing planted may stay registered in
+        # memory: forget it, then register what the fresh database holds.
+        workstream_registry.forget_planted()
+        bootstrap.load(force=True)
     progress.clear()
     return RedirectResponse("/", status_code=303)
 

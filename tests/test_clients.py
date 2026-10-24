@@ -363,12 +363,16 @@ def test_cli_reports_a_refusal_on_stderr(fake, capsys):
 def test_cli_defaults_to_the_demo_tokens_and_says_so(monkeypatch, capsys):
     for name in ("PRECEDENZ_URL", "PRECEDENZ_API_TOKEN", "PRECEDENZ_APPROVAL_TOKEN"):
         monkeypatch.delenv(name, raising=False)
+    # The approval token never falls back to the demo one (a person must set it
+    # or type it); the API token still does.
+    monkeypatch.setenv("PRECEDENZ_APPROVAL_TOKEN", "typed-by-a-person")
     p = cli.make_client(cli.build_parser().parse_args(["answer", "dec_1", "approve"]))
     assert p.url == "http://127.0.0.1:8000"
     assert p.api_token == "replace-me-local-api-token"
-    assert p.approval_token == "replace-me-local-demo-token"
+    assert p.approval_token == "typed-by-a-person"
     err = capsys.readouterr().err
-    assert "PRECEDENZ_API_TOKEN is not set" in err and "PRECEDENZ_APPROVAL_TOKEN is not set" in err
+    assert "PRECEDENZ_API_TOKEN is not set" in err
+    monkeypatch.delenv("PRECEDENZ_APPROVAL_TOKEN")
 
     monkeypatch.setenv("PRECEDENZ_API_TOKEN", "real-api")
     monkeypatch.setenv("PRECEDENZ_URL", "http://precedenz.internal:9000")
