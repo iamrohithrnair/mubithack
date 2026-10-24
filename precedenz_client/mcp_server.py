@@ -18,7 +18,7 @@ from typing import Any
 
 from mcp.server.fastmcp import FastMCP
 
-from precedenz_client.client import DEFAULT_URL, Precedenz, PrecedenzError
+from precedenz_client.client import DEFAULT_URL, Precedenz, PrecedenzError, Unreachable
 
 DEMO_API_TOKEN = "replace-me-local-api-token"
 
@@ -31,7 +31,7 @@ INSTRUCTIONS = (
     "overrule or plant anything; only a person can, in the Precedenz map or CLI."
 )
 
-mcp = FastMCP("precedenz", instructions=INSTRUCTIONS)
+mcp = FastMCP("precedenz", instructions=INSTRUCTIONS, log_level="WARNING")
 
 _client: Precedenz | None = None
 
@@ -70,6 +70,8 @@ def _what_to_do(receipt: dict[str, Any]) -> str:
 def _guard(call):
     try:
         return call()
+    except Unreachable as exc:
+        raise RuntimeError(f"Precedenz is unreachable: {exc}") from exc
     except PrecedenzError as exc:
         status = f" (HTTP {exc.status_code})" if exc.status_code else ""
         raise RuntimeError(f"Precedenz refused{status}: {exc}") from exc

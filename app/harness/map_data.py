@@ -224,6 +224,18 @@ def _workstream_list(conn) -> list[dict[str, Any]]:
             if raw.get(extra) is not None:
                 entry[extra] = raw[extra]
         out.append(entry)
+    # The built-ins are always on the map, even from a list of planted ones only.
+    listed_ids = {entry["id"] for entry in out}
+    missing = [family for family in _BUILTIN_DEFAULTS if family not in listed_ids]
+    if missing:
+        try:
+            from app import domains
+
+            domains.load()
+            out[:0] = [_builtin_entry(domains.get(family)) for family in missing
+                       if family in domains.families()]
+        except Exception:
+            log.warning("map snapshot: built-in workstreams unavailable", exc_info=True)
     return out
 
 
@@ -403,9 +415,14 @@ def _fill(conn, out: dict[str, Any]) -> None:
             ws["task_key"] = info.get("value")
             ws["task_key_changed"] = bool(info.get("changed"))
             ws["task_key_since"] = info.get("since")
+            ws["task_key_previous"] = info.get("previous")
         elif task_keys.get(ws_id):
-            ws["task_key"] = task_keys[ws_id][-1]
-            ws["task_key_changed"] = len(task_keys[ws_id]) > 1
+            # The mirror only knows keys built since the server started; the
+            # receipts remember every key a decision was made under.
+            keys = task_keys[ws_id]
+            ws["task_key"] = keys[-1]
+            ws["task_key_changed"] = len(keys) > 1
+            ws["task_key_previous"] = keys[-2] if len(keys) > 1 else None
 
     out["workstreams"] = list(workstreams.values())
     out["templates"] = _guard(lambda: _templates(set(workstreams)), [])

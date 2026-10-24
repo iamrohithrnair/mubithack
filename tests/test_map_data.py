@@ -239,11 +239,13 @@ def test_snapshot_shows_the_mubit_mirror_and_survives_its_failure(seeded, monkey
         {"stage": "Collecting examples", "detail": "18 of 25 examples",
          "source": "Mubit console", "as_of": "2026-10-25T03:00:00Z"} if family == RETURNS else None
     )
-    mirror.task_key_info = lambda family: {"value": "7f3a9c", "changed": False, "since": None}
+    mirror.task_key_info = lambda family: {"value": "7f3a9c", "changed": True, "since": None,
+                                           "previous": "1b2c3d"}
     monkeypatch.setitem(sys.modules, "app.mubit", mirror)
     returns = _returns(map_data.snapshot())
     assert returns["mubit"]["stage"] == "Collecting examples"
-    assert returns["task_key"] == "7f3a9c" and returns["task_key_changed"] is False
+    assert returns["task_key"] == "7f3a9c" and returns["task_key_changed"] is True
+    assert returns["task_key_previous"] == "1b2c3d"
 
     def broken(family):
         raise RuntimeError("snapshot unreadable")
@@ -253,6 +255,35 @@ def test_snapshot_shows_the_mubit_mirror_and_survives_its_failure(seeded, monkey
     returns = _returns(map_data.snapshot())
     assert returns["mubit"] is None
     assert returns["task_key"] == "k2"  # falls back to the receipts' own task keys
+
+
+def test_snapshot_uses_the_workstream_service_and_keeps_the_built_ins(temp_db, monkeypatch):
+    from app.harness import map_data
+
+    planted = {
+        "id": "expenses.meal_claim", "label": "Meal expense claims", "kind": "planted",
+        "audience": "team", "question": "Should this meal claim be approved?", "subject": "meal claim",
+        "repeatable_answer": "approve", "other_answers": ["reject"], "reader": True, "evidence": "text",
+        "fields": [{"name": "amount_usd", "kind": "amount", "label": "Amount", "ceiling": 500.0}],
+    }
+    service = types.ModuleType("app.workstreams.service")
+    service.list_workstreams = lambda: [planted]
+    service.list_templates = lambda: [{"id": "calendar.meeting_invite",
+                                       "contract": {"label": "Meeting invites", "audience": "individual"}}]
+    real = map_data._optional
+    monkeypatch.setattr(map_data, "_optional", lambda module, name: (
+        getattr(service, name, None) if module == "app.workstreams.service" else real(module, name)))
+
+    snap = map_data.snapshot()
+    by_id = {ws["id"]: ws for ws in snap["workstreams"]}
+    assert {RETURNS, "ap.invoice_variance", "expenses.meal_claim"} <= set(by_id)
+    meals = by_id["expenses.meal_claim"]
+    assert meals["kind"] == "planted" and meals["repeatable_answer"] == "approve"
+    assert meals["other_answers"] == ["reject"]
+    assert meals["fields"][0] == {"name": "amount_usd", "kind": "amount", "label": "Amount", "ceiling": 500.0}
+    assert by_id[RETURNS]["kind"] == "built-in"
+    assert snap["templates"] == [{"id": "calendar.meeting_invite", "label": "Meeting invites",
+                                  "audience": "individual", "planted": False}]
 
 
 def test_person_labels():
@@ -390,3 +421,22 @@ def test_stream_after_a_restart_starts_over(bus):
 
     _, frame = asyncio.run(run())
     assert frame.startswith("id: 1\n")
+
+
+def test_stream_follows_the_bus_when_it_is_cleared(bus):
+    from app.api.map import event_stream
+
+    for n in range(3):
+        bus.publish("model.call", workstream=RETURNS, case_ref=f"CASE-{n}", ms=n)
+
+    async def run():
+        stream = event_stream(3, heartbeat=0.05)
+        await stream.__anext__()  # preamble
+        bus.clear()
+        assert await stream.__anext__() == ": heartbeat\n\n"
+        bus.publish("decision.started", workstream=RETURNS, case_ref="CASE-9", caller="test")
+        frame = await asyncio.wait_for(stream.__anext__(), timeout=5)
+        await stream.aclose()
+        return frame
+
+    assert asyncio.run(run()).startswith("id: 1\n")

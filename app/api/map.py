@@ -94,6 +94,8 @@ async def event_stream(
             events.wait, seq, interval, abandon_on_cancel=True, limiter=limiter
         )
         if not batch:
+            if events.last_seq() < seq:  # the bus was cleared: start over with it
+                seq = 0
             yield ": heartbeat\n\n"
             continue
         for event in batch:

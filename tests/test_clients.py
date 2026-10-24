@@ -304,6 +304,12 @@ def test_cli_decide_shows_why_it_asks(fake, capsys):
 def test_cli_json_flag_prints_the_raw_receipt(fake, capsys):
     assert cli.main(["--json", "decide", "expenses.meal_claim", "EXP-1"]) == 0
     assert json.loads(capsys.readouterr().out)["decision_id"] == "dec_1"
+    assert cli.main(["decide", "expenses.meal_claim", "EXP-1", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out)["decision_id"] == "dec_1"
+    args = cli.build_parser().parse_args(["--url", "http://a", "decide", "w.x", "C-1"])
+    assert (args.url, args.json, args.caller) == ("http://a", False, "cli")
+    args = cli.build_parser().parse_args(["decide", "w.x", "C-1", "--url", "http://b", "--caller", "ci"])
+    assert (args.url, args.caller) == ("http://b", "ci")
 
 
 def test_cli_answer_passes_the_widening_and_shows_the_precedent(fake, capsys):

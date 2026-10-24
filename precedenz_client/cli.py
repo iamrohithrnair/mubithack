@@ -362,9 +362,19 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--url", default=None, help="server URL (default: $PRECEDENZ_URL or %s)" % DEFAULT_URL)
     p.add_argument("--caller", default="cli", help="caller label recorded on receipts (default: cli)")
     p.add_argument("--json", action="store_true", help="print the raw JSON instead of a card")
+    # The same flags after the command, too; SUPPRESS keeps an absent one from
+    # overwriting what was given before the command.
+    common = argparse.ArgumentParser(add_help=False)
+    common.add_argument("--url", default=argparse.SUPPRESS, help=argparse.SUPPRESS)
+    common.add_argument("--caller", default=argparse.SUPPRESS, help=argparse.SUPPRESS)
+    common.add_argument("--json", action="store_true", default=argparse.SUPPRESS,
+                        help="print the raw JSON instead of a card")
     sub = p.add_subparsers(dest="command", required=True, metavar="command")
 
-    d = sub.add_parser("decide", help="follow a precedent or ask a person, for one case")
+    def command(name: str, help: str) -> argparse.ArgumentParser:
+        return sub.add_parser(name, help=help, parents=[common])
+
+    d = command("decide", help="follow a precedent or ask a person, for one case")
     d.add_argument("workstream")
     d.add_argument("case_ref")
     d.add_argument("--facts", type=_json_arg, help="typed facts: JSON, @file, or @- for stdin")
@@ -372,13 +382,13 @@ def build_parser() -> argparse.ArgumentParser:
     d.add_argument("--key", help="idempotency key (default: derived from the case)")
     d.add_argument("--revision", help="source revision of the case")
 
-    r = sub.add_parser("receipt", help="show one decision's receipt")
+    r = command("receipt", help="show one decision's receipt")
     r.add_argument("decision_id")
 
-    o = sub.add_parser("open", help="list the questions waiting for a person")
+    o = command("open", help="list the questions waiting for a person")
     o.add_argument("--workstream")
 
-    a = sub.add_parser("answer", help="answer a waiting question (needs the approval token)")
+    a = command("answer", help="answer a waiting question (needs the approval token)")
     a.add_argument("decision_id")
     a.add_argument("answer")
     a.add_argument("--remember", action="store_true", help="make this answer a precedent")
@@ -388,18 +398,18 @@ def build_parser() -> argparse.ArgumentParser:
                    help="fields that don't matter for this answer")
     a.add_argument("--note", default="")
 
-    v = sub.add_parser("overrule", help="stop a precedent at once (needs the approval token)")
+    v = command("overrule", help="stop a precedent at once (needs the approval token)")
     v.add_argument("precedent_id")
     v.add_argument("--reason", required=True)
 
-    pl = sub.add_parser("plant", help="plant a workstream from a template (needs the approval token)")
+    pl = command("plant", help="plant a workstream from a template (needs the approval token)")
     pl.add_argument("template", nargs="?")
     pl.add_argument("--contract", type=_json_arg, help="a contract instead: JSON or @file")
 
-    sub.add_parser("workstreams", help="list the workstreams")
-    sub.add_parser("templates", help="list the templates you can plant")
+    command("workstreams", help="list the workstreams")
+    command("templates", help="list the templates you can plant")
 
-    w = sub.add_parser("watch", help="live, colored tail of every decision")
+    w = command("watch", help="live, colored tail of every decision")
     w.add_argument("--since", type=int, default=None, help="replay from this event seq (default: now)")
     return p
 
