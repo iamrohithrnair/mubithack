@@ -125,12 +125,43 @@ def test_a_receipt_carries_its_provenance(conn, precedent):
     assert receipt["input_hash"].startswith("sha256:")
     assert receipt["source_revision"] == "r3"
     assert receipt["model_calls"] == []  # the test fake makes no gateway call
-    assert receipt["task_key"] is None
+    # Set by the agent build when it is handed the decision's CallLog (Mubit wiring).
+    assert receipt["task_key"] is None or isinstance(receipt["task_key"], str)
     assert receipt["resolves"] is None
     assert receipt["caller"] == "api"
     created = datetime.fromisoformat(receipt["created_at"])
     expires = datetime.fromisoformat(receipt["expires_at"])
     assert (expires - created).total_seconds() == 15 * 60
+
+
+def test_gateway_calls_and_the_task_key_land_on_the_receipt(conn, precedent, monkeypatch):
+    """The decision's CallLog reaches the investigation; what it records reaches the receipt."""
+    from app.agent.providers import ModelCall
+
+    real = orchestrator._run_investigation
+
+    def through_the_gateway(ctx, case_id):
+        outcome = real(ctx, case_id)
+        assert (ctx.call_log.family, ctx.call_log.case_ref) == (RETURNS, "CASE-2002")
+        ctx.call_log.append(
+            ModelCall(request_id="mreq_1", requested_model="gpt-6-luna", status=200, ms=2140)
+        )
+        ctx.call_log.task_key = "7f3a9c"
+        return outcome
+
+    monkeypatch.setattr(orchestrator, "_run_investigation", through_the_gateway)
+    receipt = decide("CASE-2002")
+
+    assert receipt["model_calls"] == [
+        {"via": "mubit", "request_id": "mreq_1", "requested_model": "gpt-6-luna",
+         "status": 200, "ms": 2140}
+    ]
+    assert receipt["task_key"] == "7f3a9c"
+    (entry,) = [
+        e for e in audit.read_for_case(conn, "CASE-2002")
+        if e.event_type == AuditEventType.HARNESS_DECIDED
+    ]
+    assert entry.payload["model_request_ids"] == ["mreq_1"]
 
 
 def test_a_follow_writes_nothing_to_any_business_system(conn, precedent):
