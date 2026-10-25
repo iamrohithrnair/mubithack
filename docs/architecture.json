@@ -1,13 +1,31 @@
 {
   "title": "Precedenz architecture",
-  "subtitle": "One agent may propose. Deterministic code decides, and Banyan Sapling verifies before anything acts. A person teaches the rule.",
-  "note": "Every tier below is in this repository. Two domains ship on it: returns, and accounts-payable invoice variance. Business systems are simulated adapters, not production integrations.",
+  "subtitle": "An agent may read and propose. Deterministic code decides, Banyan Sapling verifies, and only a person teaches, activates or overrules a precedent. Every model call goes through Mubit.",
+  "note": "All in this repository. Built in: returns, AP invoices. Planted from templates, as data: meal claims, access requests, meeting invites. Business systems are simulated.",
   "tiers": [
     {
       "id": "surfaces",
       "name": "Surfaces",
       "role": "How work arrives, and where a person acts on it",
       "nodes": [
+        {
+          "id": "api",
+          "name": "Decision API",
+          "meta": "POST /v1/decide · receipts",
+          "functions": [
+            "Any pipeline: follow or ask",
+            "Idempotent; receipts never change"
+          ]
+        },
+        {
+          "id": "clients",
+          "name": "CLI · MCP · Python",
+          "meta": "precedenz · precedenz-mcp",
+          "functions": [
+            "An AI agent can ask, never answer",
+            "Person-only commands need the token"
+          ]
+        },
         {
           "id": "event",
           "name": "Returns-dock check-in",
@@ -19,11 +37,11 @@
         },
         {
           "id": "web",
-          "name": "Web app",
-          "meta": "Inbox · Decision · Policies · Dashboard",
+          "name": "Web app and live map",
+          "meta": "Inbox · Policies · Dashboard · Map",
           "functions": [
-            "Where a supervisor reads and decides",
-            "Phone, tablet, desktop"
+            "Where a person reads and decides",
+            "Every pulse on the map is a real decision"
           ]
         }
       ]
@@ -31,15 +49,24 @@
     {
       "id": "reasoning",
       "name": "Model reasoning",
-      "role": "May propose. May never act.",
+      "role": "May read and propose. May never act.",
       "nodes": [
         {
           "id": "agent",
           "name": "One Strands agent",
           "meta": "investigate · card · propose",
           "functions": [
-            "Three invocations, one agent",
-            "Typed output, re-derived downstream"
+            "Read-only tools; typed output",
+            "Re-derived and reconciled downstream"
+          ]
+        },
+        {
+          "id": "reader",
+          "name": "Workstream reader",
+          "meta": "planted workstreams",
+          "functions": [
+            "Reads free text into typed fields",
+            "Disagreeing with the caller asks"
           ]
         },
         {
@@ -47,8 +74,8 @@
           "name": "Mubit gateway",
           "meta": "gpt-6-luna · Responses API",
           "functions": [
-            "One key routes every model call",
-            "Provider choice cannot change authority"
+            "One stable task per workstream",
+            "Session per case; request IDs on receipts"
           ]
         },
         {
@@ -66,24 +93,24 @@
     {
       "id": "control",
       "name": "Control plane",
-      "role": "Deterministic. The only thing that acts.",
+      "role": "Deterministic. The only thing that decides.",
       "nodes": [
         {
-          "id": "orchestrator",
-          "name": "Orchestrator",
-          "meta": "handle_event · approve_and_teach",
+          "id": "decide",
+          "name": "Decision service",
+          "meta": "assess_case · follow or ask",
           "functions": [
-            "Runs the golden path end to end",
-            "The only code that changes anything"
+            "One engine per workstream",
+            "Any failure asks, never acts"
           ]
         },
         {
           "id": "facts",
-          "name": "Facts and reconciliation",
-          "meta": "derive_facts",
+          "name": "Facts",
+          "meta": "derive · reconcile · snapshot",
           "functions": [
             "Re-derives every fact from source",
-            "The agent's report stays advisory"
+            "The model's report stays advisory"
           ]
         },
         {
@@ -91,44 +118,44 @@
           "name": "Hard guardrails",
           "meta": "non-overridable",
           "functions": [
-            "Run before any policy is consulted",
-            "Serial, damage, safety-critical, evidence"
+            "Run before any precedent",
+            "Ceilings, always-ask rules, evidence"
           ]
         },
         {
           "id": "engine",
-          "name": "Policy engine",
+          "name": "Precedents",
           "meta": "data, never code",
           "functions": [
-            "Evaluates active policy versions",
+            "Matches active precedents",
             "No dynamic execution, ever"
           ]
         },
         {
           "id": "semantic",
           "name": "Banyan Sapling",
-          "meta": "semantic check · MubitLabs",
+          "meta": "semantic check · Mubit",
           "functions": [
-            "Reads raw evidence and free-text notes",
-            "Only supported lets a policy act"
+            "Reads raw evidence and notes",
+            "Only supported may act"
           ]
         },
         {
           "id": "execute",
           "name": "Execute and verify",
-          "meta": "idempotency key per action",
+          "meta": "inbox path · idempotency keys",
           "functions": [
             "Work order, disposition, close",
-            "Reads every write back before closing"
+            "API callers execute themselves"
           ]
         },
         {
           "id": "domains",
           "name": "Domain packs",
-          "meta": "returns · ap.invoice_variance",
+          "meta": "returns · AP · planted",
           "functions": [
-            "Facts, guardrails, actions, corpus",
-            "A second domain changed no machinery"
+            "Built in, or a contract planted as data",
+            "Facts, guardrails, actions, past answers"
           ]
         }
       ]
@@ -136,12 +163,12 @@
     {
       "id": "governance",
       "name": "Governance",
-      "role": "How one decision becomes a rule",
+      "role": "How one answer becomes a precedent",
       "nodes": [
         {
           "id": "card",
           "name": "Decision card",
-          "meta": "one decision, thirty seconds",
+          "meta": "ask once, with a recommendation",
           "functions": [
             "Evidence, with the tool that produced it",
             "Proposed boundaries and open questions"
@@ -149,38 +176,38 @@
         },
         {
           "id": "human",
-          "name": "Supervisor",
-          "meta": "approve · activate",
+          "name": "A person",
+          "meta": "answer · remember · activate · overrule",
           "functions": [
-            "Approving records a decision only",
-            "Activation is a separate, explicit act"
+            "Answering records a decision only",
+            "Activating needs the approval token"
           ]
         },
         {
           "id": "candidate",
-          "name": "Candidate policy",
+          "name": "Candidate precedent",
           "meta": "schema-validated, inert",
           "functions": [
-            "Conditions from a nine-field allowlist",
-            "Action set fixed by the system"
+            "Drafted from the answer, or proposed",
+            "Conditions from an allowlist"
           ]
         },
         {
           "id": "replay",
           "name": "Replay gate",
-          "meta": "24 labeled historical cases",
+          "meta": "past answers · labeled cases",
           "functions": [
             "One wrong action blocks activation",
-            "Re-run server-side at activation"
+            "Reads fact snapshots, not live rows"
           ]
         },
         {
           "id": "active",
-          "name": "Active policy version",
-          "meta": "versioned · diffed · retirable",
+          "name": "Active precedent",
+          "meta": "versioned · diffed · overrulable",
           "functions": [
-            "Activated by a person with a token",
-            "A revision may narrow, never widen"
+            "Covered waiting questions resolve",
+            "Overrule stops it at once"
           ]
         }
       ]
@@ -216,11 +243,19 @@
           ]
         },
         {
+          "id": "apledger",
+          "name": "AP ledger",
+          "meta": "synthetic · second domain",
+          "functions": [
+            "Invoices, vendors, adjustments"
+          ]
+        },
+        {
           "id": "audit",
           "name": "Audit log",
           "meta": "append-only · hash-chained",
           "functions": [
-            "Every event, tool call, approval, action",
+            "Every event, call, answer, action",
             "The database refuses UPDATE and DELETE"
           ]
         },
@@ -229,44 +264,71 @@
           "name": "Database",
           "meta": "SQLite or PostgreSQL",
           "functions": [
-            "One schema, versioned migrations"
-          ]
-        },
-        {
-          "id": "apledger",
-          "name": "AP ledger",
-          "meta": "synthetic · second domain",
-          "functions": [
-            "Invoices, vendors, adjustments"
+            "One schema, versioned migrations",
+            "Receipts, answers, fact snapshots"
           ]
         }
       ]
     }
   ],
+  "kinds": {
+    "control": {
+      "label": "control flow",
+      "color": "#5eead4"
+    },
+    "advisory": {
+      "label": "advisory output",
+      "color": "#9aa4b6"
+    },
+    "read": {
+      "label": "read",
+      "color": "#7dd3fc"
+    },
+    "write": {
+      "label": "write",
+      "color": "#4ade80"
+    },
+    "gate": {
+      "label": "human gate",
+      "color": "#fbbf24"
+    },
+    "escalate": {
+      "label": "escalation",
+      "color": "#f87171"
+    },
+    "audit": {
+      "label": "audit record",
+      "color": "#6b7488"
+    },
+    "store": {
+      "label": "persistence",
+      "color": "#4b5468"
+    }
+  },
   "edges": [
     {
-      "from": "event",
-      "to": "orchestrator",
+      "from": "api",
+      "to": "decide",
       "kind": "control",
-      "label": "check-in event",
+      "label": "follow or ask?",
       "step": 1
     },
     {
-      "from": "orchestrator",
+      "from": "decide",
       "to": "agent",
       "kind": "control",
-      "label": "investigate",
+      "label": "investigate (returns)",
       "step": 2
     },
     {
       "from": "agent",
-      "to": "orchestrator",
+      "to": "decide",
       "kind": "advisory",
       "label": "typed report, advisory",
       "step": 3
     },
     {
-      "from": "orchestrator",
+      "from": "decide",
       "to": "facts",
       "kind": "control",
       "label": "re-derive",
@@ -290,27 +352,57 @@
       "from": "engine",
       "to": "semantic",
       "kind": "control",
-      "label": "a policy matches",
+      "label": "a precedent matches",
       "step": 7
     },
     {
       "from": "engine",
       "to": "card",
       "kind": "control",
-      "label": "no policy applies",
+      "label": "no precedent: ask once",
       "step": 8
     },
     {
-      "from": "web",
-      "to": "orchestrator",
+      "from": "clients",
+      "to": "api",
       "kind": "control",
-      "label": "check in · approve · activate"
+      "label": "HTTP · CLI · MCP"
+    },
+    {
+      "from": "event",
+      "to": "decide",
+      "kind": "control",
+      "label": "check-in event"
+    },
+    {
+      "from": "web",
+      "to": "decide",
+      "kind": "control",
+      "label": "check in · answer · overrule"
+    },
+    {
+      "from": "decide",
+      "to": "reader",
+      "kind": "control",
+      "label": "read the text (planted)"
+    },
+    {
+      "from": "reader",
+      "to": "decide",
+      "kind": "advisory",
+      "label": "typed fields, reconciled"
     },
     {
       "from": "agent",
       "to": "provider",
       "kind": "control",
       "label": "model call through Mubit"
+    },
+    {
+      "from": "reader",
+      "to": "provider",
+      "kind": "control",
+      "label": "one Mubit task per workstream"
     },
     {
       "from": "agent",
@@ -352,13 +444,43 @@
       "from": "guardrails",
       "to": "human",
       "kind": "escalate",
-      "label": "blocked, so a person decides"
+      "label": "blocked: a person decides"
+    },
+    {
+      "from": "semantic",
+      "to": "api",
+      "kind": "advisory",
+      "label": "follow: bounded actions + receipt"
+    },
+    {
+      "from": "semantic",
+      "to": "execute",
+      "kind": "control",
+      "label": "supported (inbox)"
+    },
+    {
+      "from": "semantic",
+      "to": "human",
+      "kind": "escalate",
+      "label": "anything else: a person decides"
+    },
+    {
+      "from": "semantic",
+      "to": "returns",
+      "kind": "read",
+      "label": "raw case record and notes"
     },
     {
       "from": "execute",
       "to": "wms",
       "kind": "write",
       "label": "work order · disposition"
+    },
+    {
+      "from": "execute",
+      "to": "apledger",
+      "kind": "write",
+      "label": "adjustment · payment release"
     },
     {
       "from": "execute",
@@ -374,15 +496,15 @@
     },
     {
       "from": "human",
-      "to": "orchestrator",
-      "kind": "control",
-      "label": "approve and teach"
-    },
-    {
-      "from": "orchestrator",
       "to": "candidate",
       "kind": "control",
-      "label": "validated proposal"
+      "label": "answer and remember"
+    },
+    {
+      "from": "decide",
+      "to": "candidate",
+      "kind": "control",
+      "label": "the agent's proposal (inbox)"
     },
     {
       "from": "candidate",
@@ -400,91 +522,19 @@
       "from": "human",
       "to": "active",
       "kind": "gate",
-      "label": "explicit activation + token"
+      "label": "activate or overrule + token"
     },
     {
       "from": "active",
       "to": "engine",
       "kind": "control",
-      "label": "the next hundred cases"
-    },
-    {
-      "from": "orchestrator",
-      "to": "audit",
-      "kind": "audit",
-      "label": "every step"
-    },
-    {
-      "from": "tools",
-      "to": "audit",
-      "kind": "audit",
-      "label": "every tool call"
-    },
-    {
-      "from": "guardrails",
-      "to": "audit",
-      "kind": "audit",
-      "label": "every block"
-    },
-    {
-      "from": "execute",
-      "to": "audit",
-      "kind": "audit",
-      "label": "every action and verification"
-    },
-    {
-      "from": "human",
-      "to": "audit",
-      "kind": "audit",
-      "label": "who decided, and when"
+      "label": "the next case follows"
     },
     {
       "from": "active",
-      "to": "audit",
-      "kind": "audit",
-      "label": "who activated, and when"
-    },
-    {
-      "from": "audit",
-      "to": "web",
-      "kind": "read",
-      "label": "timeline · dashboard usage"
-    },
-    {
-      "from": "returns",
-      "to": "db",
-      "kind": "store",
-      "label": "tables"
-    },
-    {
-      "from": "parts",
-      "to": "db",
-      "kind": "store",
-      "label": "tables"
-    },
-    {
-      "from": "wms",
-      "to": "db",
-      "kind": "store",
-      "label": "tables"
-    },
-    {
-      "from": "audit",
-      "to": "db",
-      "kind": "store",
-      "label": "append-only table"
-    },
-    {
-      "from": "candidate",
-      "to": "db",
-      "kind": "store",
-      "label": "policy store"
-    },
-    {
-      "from": "active",
-      "to": "db",
-      "kind": "store",
-      "label": "policy store"
+      "to": "decide",
+      "kind": "control",
+      "label": "covered waiting questions resolve"
     },
     {
       "from": "domains",
@@ -502,13 +552,13 @@
       "from": "domains",
       "to": "engine",
       "kind": "control",
-      "label": "allowlisted fields and the fixed actions"
+      "label": "allowlisted fields and fixed actions"
     },
     {
       "from": "domains",
       "to": "replay",
       "kind": "control",
-      "label": "its labeled corpus"
+      "label": "past answers to replay"
     },
     {
       "from": "domains",
@@ -517,74 +567,70 @@
       "label": "writes and read-backs"
     },
     {
-      "from": "execute",
-      "to": "apledger",
-      "kind": "write",
-      "label": "adjustment · payment release"
+      "from": "decide",
+      "to": "audit",
+      "kind": "audit",
+      "label": "every decision"
     },
     {
-      "from": "apledger",
-      "to": "db",
-      "kind": "store",
-      "label": "tables"
-    },
-    {
-      "from": "semantic",
-      "to": "execute",
-      "kind": "control",
-      "label": "supported"
-    },
-    {
-      "from": "semantic",
-      "to": "human",
-      "kind": "escalate",
-      "label": "anything else, so a person decides"
-    },
-    {
-      "from": "semantic",
-      "to": "returns",
-      "kind": "read",
-      "label": "raw case record and notes"
+      "from": "tools",
+      "to": "audit",
+      "kind": "audit",
+      "label": "every tool call"
     },
     {
       "from": "semantic",
       "to": "audit",
       "kind": "audit",
       "label": "every verdict"
+    },
+    {
+      "from": "execute",
+      "to": "audit",
+      "kind": "audit",
+      "label": "every action and verification"
+    },
+    {
+      "from": "human",
+      "to": "audit",
+      "kind": "audit",
+      "label": "who decided, and when"
+    },
+    {
+      "from": "audit",
+      "to": "web",
+      "kind": "read",
+      "label": "timeline · dashboard · live map"
+    },
+    {
+      "from": "decide",
+      "to": "db",
+      "kind": "store",
+      "label": "receipts · answers · snapshots"
+    },
+    {
+      "from": "returns",
+      "to": "db",
+      "kind": "store",
+      "label": "tables"
+    },
+    {
+      "from": "wms",
+      "to": "db",
+      "kind": "store",
+      "label": "tables"
+    },
+    {
+      "from": "audit",
+      "to": "db",
+      "kind": "store",
+      "label": "append-only table"
+    },
+    {
+      "from": "active",
+      "to": "db",
+      "kind": "store",
+      "label": "policy store"
     }
-  ],
-  "kinds": {
-    "control": {
-      "label": "control flow",
-      "color": "#5eead4"
-    },
-    "advisory": {
-      "label": "advisory output",
-      "color": "#9aa4b6"
-    },
-    "read": {
-      "label": "read",
-      "color": "#7dd3fc"
-    },
-    "write": {
-      "label": "write",
-      "color": "#4ade80"
-    },
-    "gate": {
-      "label": "human gate",
-      "color": "#fbbf24"
-    },
-    "escalate": {
-      "label": "escalation",
-      "color": "#f87171"
-    },
-    "audit": {
-      "label": "audit record",
-      "color": "#6b7488"
-    },
-    "store": {
-      "label": "persistence",
-      "color": "#4b5468"
-    }
-  }
+  ]
 }
