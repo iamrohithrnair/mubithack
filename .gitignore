@@ -37,3 +37,6 @@ Dockerfile.agentcore
 .idea/
 .DS_Store
 *.swp
+
+# Agent worktrees (local only)
+.claude/worktrees/

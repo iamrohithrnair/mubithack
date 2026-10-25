@@ -30,6 +30,8 @@ MAX_MISSING_COMPONENTS_CEILING = 1
 # authorization. Setting PRECEDENZ_APPROVAL_TOKEN replaces it and silences the
 # notice.
 DEFAULT_APPROVAL_TOKEN = "replace-me-local-demo-token"
+# Machine callers of /v1 (pipelines, the CLI, the MCP server). Not the approval token.
+DEFAULT_API_TOKEN = "replace-me-local-api-token"
 
 
 def load_dotenv(path: Path | None = None) -> list[str]:
@@ -113,6 +115,9 @@ class Settings:
     sapling_url: str
     sapling_min_support: float
     sapling_timeout_seconds: int
+    api_token: str = DEFAULT_API_TOKEN
+    # Operator-maintained copy of what the Mubit console shows per workstream.
+    mubit_console_snapshot: Path | None = None
 
     @property
     def sapling_enforced(self) -> bool:
@@ -126,6 +131,10 @@ class Settings:
     def uses_default_approval_token(self) -> bool:
         """True while the shipped placeholder token is still in use."""
         return self.approval_token == DEFAULT_APPROVAL_TOKEN
+
+    @property
+    def uses_default_api_token(self) -> bool:
+        return self.api_token == DEFAULT_API_TOKEN
 
 
 def resolve_database_url() -> str:
@@ -189,6 +198,12 @@ def load_settings() -> Settings:
         confidence_threshold=_env_float("PRECEDENZ_CONFIDENCE_THRESHOLD", 0.75),
         model_timeout_seconds=_env_int("PRECEDENZ_MODEL_TIMEOUT_SECONDS", 60),
         approval_token=os.environ.get("PRECEDENZ_APPROVAL_TOKEN", DEFAULT_APPROVAL_TOKEN),
+        api_token=os.environ.get("PRECEDENZ_API_TOKEN", DEFAULT_API_TOKEN),
+        mubit_console_snapshot=Path(
+            os.environ.get(
+                "PRECEDENZ_MUBIT_CONSOLE_SNAPSHOT", str(REPO_ROOT / "var" / "mubit_console.json")
+            )
+        ),
         otel_enabled=os.environ.get("PRECEDENZ_OTEL_ENABLED", "false").lower() == "true",
         sapling_mode=_sapling_mode(),
         sapling_url=os.environ.get("PRECEDENZ_SAPLING_URL", SAPLING_DEFAULT_URL),

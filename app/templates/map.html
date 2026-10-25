@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en" class="pz-map">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Precedenz · Map</title>
+  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="#02050b">
+  {#- The map is dark only and full bleed: bioluminescence needs the dark, so this
+      one page ignores the theme toggle and does not extend base.html. #}
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="/static/favicon-32.png" sizes="32x32" type="image/png">
+  <link rel="preload" href="/static/fonts/geist-sans-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/static/fonts/geist-sans-latin-600-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/static/fonts/geist-mono-latin-500-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="/static/pages/map.css?v={{ asset_version }}">
+</head>
+<body>
+<a class="skip-link" href="#map-table">Skip to the table of workstreams</a>
+
+<div class="stage" id="stage">
+  <canvas class="layer" id="map-plankton" aria-hidden="true"></canvas>
+  <svg class="layer" id="map-svg" role="group" aria-label="Precedent map: the people who decide at the center, workstreams on the first ring, precedents on the second, and cases on the rim">
+    <defs id="map-defs">
+      <filter id="f-link" x="-10%" y="-10%" width="120%" height="120%" color-interpolation-filters="sRGB">
+        <feGaussianBlur in="SourceGraphic" stdDeviation="2.6" result="b"/>
+        <feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+      </filter>
+      <filter id="f-leaf" x="-10%" y="-10%" width="120%" height="120%" color-interpolation-filters="sRGB">
+        <feGaussianBlur in="SourceGraphic" stdDeviation="2.2" result="b"/>
+        <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+      </filter>
+      <filter id="f-arc" x="-10%" y="-10%" width="120%" height="120%" color-interpolation-filters="sRGB">
+        <feGaussianBlur in="SourceGraphic" stdDeviation="3.2" result="b"/>
+        <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+      </filter>
+      <filter id="f-soma" x="-60%" y="-60%" width="220%" height="220%" color-interpolation-filters="sRGB">
+        <feGaussianBlur in="SourceGraphic" stdDeviation="6" result="b"/>
+        <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+      </filter>
+      <radialGradient id="g-soma-halo">
+        <stop offset="0" stop-color="#9fe6ff" stop-opacity=".42"/>
+        <stop offset=".35" stop-color="#42e8ff" stop-opacity=".14"/>
+        <stop offset="1" stop-color="#42e8ff" stop-opacity="0"/>
+      </radialGradient>
+      <radialGradient id="g-soma-body" cx=".42" cy=".38" r=".7">
+        <stop offset="0" stop-color="#f4fbff"/>
+        <stop offset=".28" stop-color="#bff3ff"/>
+        <stop offset=".62" stop-color="#42c8f0" stop-opacity=".55"/>
+        <stop offset="1" stop-color="#0b3a5c" stop-opacity=".2"/>
+      </radialGradient>
+    </defs>
+    <g id="world">
+      <g id="g-arcs" filter="url(#f-arc)"></g>
+      <g id="g-links" filter="url(#f-link)"></g>
+      <g id="g-hairs"></g>
+      <g id="g-leaves" filter="url(#f-leaf)"></g>
+      <g id="g-soma"></g>
+      <g id="g-nodes"></g>
+      <g id="g-labels"></g>
+      <g id="g-routes" visibility="hidden" aria-hidden="true"></g>
+    </g>
+  </svg>
+  <canvas class="layer" id="map-fx" aria-hidden="true"></canvas>
+</div>
+
+<header class="hud hud-brand glass" data-hud="brand">
+  <div class="wordmark">
+    <svg class="glyph" viewBox="0 0 20 20" aria-hidden="true">
+      <rect x="1.8" y="6.8" width="11.4" height="11.4" rx="1"/>
+      <rect x="8" y="1" width="11" height="11" rx="1"/>
+    </svg>
+    <span>Precedenz</span>
+  </div>
+  <p class="promise">Never answer the same question twice.</p>
+  <p class="meta">
+    <span class="tag-synthetic">Synthetic demo data</span>
+    <span class="conn" id="conn" data-state="loading"><i aria-hidden="true"></i><span>Connecting</span></span>
+  </p>
+  <nav class="back" aria-label="Back to the app"><a href="/">Inbox</a><a href="/policies">Policies</a><a href="/dashboard">Dashboard</a></nav>
+</header>
+
+<section class="hud hud-counters glass" data-hud="counters" aria-label="Totals">
+  <div class="counter" data-total="answered_once"><span class="num" data-num>0</span><span class="lbl"><i class="dot decide" aria-hidden="true"></i>Answered once</span></div>
+  <div class="counter" data-total="repeated"><span class="num" data-num>0</span><span class="lbl"><i class="dot follow" aria-hidden="true"></i>Repeated</span></div>
+  <div class="counter" data-total="asked"><span class="num" data-num>0</span><span class="lbl"><i class="dot ask" aria-hidden="true"></i>Asked</span></div>
+  <div class="counter" data-total="model_calls"><span class="num" data-num>0</span><span class="lbl"><i class="dot mubit" aria-hidden="true"></i>Model calls via Mubit</span></div>
+</section>
+
+<section class="hud hud-legend glass" data-hud="legend" aria-label="Legend">
+  <ul class="legend">
+    <li><svg viewBox="0 0 28 10" aria-hidden="true"><path d="M1 5h18" class="lg-follow-tail"/><circle cx="22" cy="5" r="3.2" class="lg-follow"/></svg>Follow</li>
+    <li><svg viewBox="0 0 28 10" aria-hidden="true"><path d="M1 5h18" class="lg-ask-tail"/><circle cx="22" cy="5" r="3.2" class="lg-ask"/></svg>Ask</li>
+    <li><svg viewBox="0 0 28 10" aria-hidden="true"><circle cx="14" cy="5" r="4" class="lg-decide-ring"/><circle cx="14" cy="5" r="1.8" class="lg-decide"/></svg>Decide</li>
+    <li><svg viewBox="0 0 28 10" aria-hidden="true"><path d="M2 5h24" class="lg-overrule"/></svg>Overrule</li>
+    <li><svg viewBox="0 0 28 10" aria-hidden="true"><path d="M2 8.5A13 13 0 0 1 26 8.5" class="lg-mubit"/></svg>Mubit loop</li>
+  </ul>
+  <p class="pulse-rule">Every pulse is a real decision.</p>
+</section>
+
+<section class="hud hud-ticker glass" data-hud="ticker" aria-label="Latest events">
+  <h2 class="ticker-title">Live</h2>
+  <ol class="ticker" id="ticker"></ol>
+</section>
+
+<div class="sim-badge" id="sim-badge" hidden role="status">
+  <i aria-hidden="true"></i><strong>Simulated</strong><span>scripted events, not real decisions</span>
+</div>
+
+<div class="map-notice glass" id="map-notice" hidden role="alert"></div>
+
+<aside class="drawer glass" id="drawer" role="dialog" aria-modal="false" aria-labelledby="drawer-title" hidden tabindex="-1">
+  <button type="button" class="drawer-close" id="drawer-close" aria-label="Close">
+    <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9"/></svg>
+  </button>
+  <div class="drawer-body" id="drawer-body"></div>
+</aside>
+
+<div class="sr-only" aria-live="polite" aria-atomic="true" id="announcer"></div>
+
+<table class="sr-only" id="map-table">
+  <caption>Workstreams, precedents and counts</caption>
+  <thead><tr><th scope="col">Workstream</th><th scope="col">Precedents</th><th scope="col">Waiting</th><th scope="col">Followed</th><th scope="col">Asked</th><th scope="col">Answered</th><th scope="col">Model calls</th></tr></thead>
+  <tbody id="map-table-body"></tbody>
+</table>
+
+<noscript><p class="noscript">The map needs JavaScript. The same decisions are in the <a href="/">inbox</a> and on the <a href="/policies">policies page</a>.</p></noscript>
+
+<script type="application/json" id="map-config">{{ {
+  "asset_version": asset_version,
+  "company": company,
+  "provider": provider,
+  "operator": operator,
+  "demo_approval_token": demo_approval_token
+} | tojson }}</script>
+<script src="/static/vendor/motion-11.18.2.min.js"></script>
+<script src="/static/pages/map.js?v={{ asset_version }}"></script>
+</body>
+</html>

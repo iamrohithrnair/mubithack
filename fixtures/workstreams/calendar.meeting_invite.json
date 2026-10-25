@@ -1,0 +1,472 @@
+{
+  "_notice": "Synthetic data for the Precedenz demo. Every person, company, amount and message here is invented (example.* domains); any resemblance to a real person or organization is coincidental.",
+  "demo": {
+    "answer_case": "CAL-1031",
+    "answer": "decline",
+    "remember": true,
+    "ignore": [
+      "duration_minutes",
+      "overlaps_focus_time"
+    ],
+    "expected_precedent": "Decline meeting invites when the organizer is outside the company, it has no agenda and it is not from my manager."
+  },
+  "contract": {
+    "id": "calendar.meeting_invite",
+    "label": "Meeting invites",
+    "subject": "meeting invite",
+    "question": "Should I accept this meeting invite?",
+    "owner": "Dana R.",
+    "audience": "individual",
+    "fields": [
+      {
+        "name": "organizer_external",
+        "kind": "flag",
+        "label": "Organizer is external",
+        "when_true": "the organizer is outside the company",
+        "when_false": "the organizer is inside the company"
+      },
+      {
+        "name": "has_agenda",
+        "kind": "flag",
+        "label": "Has an agenda",
+        "when_true": "it has an agenda",
+        "when_false": "it has no agenda"
+      },
+      {
+        "name": "duration_minutes",
+        "kind": "count",
+        "label": "Duration (minutes)",
+        "ceiling": 240
+      },
+      {
+        "name": "from_manager",
+        "kind": "flag",
+        "label": "From my manager",
+        "when_true": "it is from my manager",
+        "when_false": "it is not from my manager"
+      },
+      {
+        "name": "overlaps_focus_time",
+        "kind": "flag",
+        "label": "Overlaps focus time",
+        "when_true": "it overlaps my focus time",
+        "when_false": "it does not overlap my focus time"
+      }
+    ],
+    "repeatable_answer": "decline",
+    "other_answers": [
+      "accept",
+      "propose_new_time"
+    ],
+    "always_ask": [
+      {
+        "field": "from_manager",
+        "operator": "eq",
+        "value": true
+      }
+    ],
+    "reader": true,
+    "evidence": "none",
+    "version": 1
+  },
+  "history": [
+    {
+      "case_ref": "CAL-0901",
+      "facts": {
+        "organizer_external": true,
+        "has_agenda": false,
+        "duration_minutes": 30,
+        "from_manager": false,
+        "overlaps_focus_time": false
+      },
+      "text": "From: Jordan Lee <jordan.lee@brightvendor.example>\nTo: Dana R. <dana.r@wharf-canary-optics.example>\nSubject: Quick sync?\nWhen: Thu 2 Oct, 14:00-14:30 (30 min)\n\nHi Dana, do you have half an hour to hear how BrightVendor could help your team? No agenda, just an intro.\n\n[Calendar: No conflict with your focus time.]",
+      "answer": "decline",
+      "note": "synthetic past answer"
+    },
+    {
+      "case_ref": "CAL-0902",
+      "facts": {
+        "organizer_external": false,
+        "has_agenda": true,
+        "duration_minutes": 45,
+        "from_manager": false,
+        "overlaps_focus_time": false
+      },
+      "text": "From: Priya Shah <priya.shah@wharf-canary-optics.example>\nTo: Dana R. <dana.r@wharf-canary-optics.example>\nSubject: Q4 roadmap review\nWhen: Tue 7 Oct, 10:00-10:45 (45 min)\n\nLet's walk through the Q4 roadmap before it goes to the leadership team.\n\nAgenda:\n1. Review open roadmap items\n2. Agree the top three priorities\n3. Owners and dates\n\n[Calendar: No conflict with your focus time.]",
+      "answer": "accept",
+      "note": "synthetic past answer"
+    },
+    {
+      "case_ref": "CAL-0903",
+      "facts": {
+        "organizer_external": true,
+        "has_agenda": false,
+        "duration_minutes": 60,
+        "from_manager": false,
+        "overlaps_focus_time": true
+      },
+      "text": "From: CloudMetrics Sales <sales@cloudmetrics.example>\nTo: Dana R. <dana.r@wharf-canary-optics.example>\nSubject: Intro call: CloudMetrics demo\nWhen: Wed 8 Oct, 09:00-10:00 (60 min)\n\nWe'd love to show you a live demo of CloudMetrics. Pick any time that suits.\n\n[Calendar: Overlaps your focus time block.]",
+      "answer": "decline",
+      "note": "synthetic past answer"
+    },
+    {
+      "case_ref": "CAL-0904",
+      "facts": {
+        "organizer_external": true,
+        "has_agenda": true,
+        "duration_minutes": 45,
+        "from_manager": false,
+        "overlaps_focus_time": false
+      },
+      "text": "From: Anna Kowalski <anna.kowalski@northwind.example>\nTo: Dana R. <dana.r@wharf-canary-optics.example>\nSubject: Northwind order review\nWhen: Thu 9 Oct, 15:00-15:45 (45 min)\n\nFollowing up on the spring order with the numbers from our side.\n\nAgenda:\n1. Delivery dates for the spring order\n2. Pricing for the second batch\n3. Next steps\n\n[Calendar: No conflict with your focus time.]",
+      "answer": "accept",
+      "note": "synthetic past answer"
+    },
+    {
+      "case_ref": "CAL-0905",
+      "facts": {
+        "organizer_external": false,
+        "has_agenda": false,
+        "duration_minutes": 30,
+        "from_manager": true,
+        "overlaps_focus_time": false
+      },
+      "text": "From: Sam Okafor <sam.okafor@wharf-canary-optics.example>\nTo: Dana R. <dana.r@wharf-canary-optics.example>\nSubject: Catch up\nWhen: Fri 10 Oct, 11:00-11:30 (30 min)\n\nGot a few minutes to catch up on Friday?\n\n[Calendar: Sam Okafor is your manager. No conflict with your focus time.]",
+      "answer": "accept",
+      "note": "synthetic past answer"
+    },
+    {
+      "case_ref": "CAL-0906",
+      "facts": {
+        "organizer_external": false,
+        "has_agenda": true,
+        "duration_minutes": 90,
+        "from_manager": false,
+        "overlaps_focus_time": true
+      },
+      "text": "From: Lee Wong <lee.wong@wharf-canary-optics.example>\nTo: Dana R. <dana.r@wharf-canary-optics.example>\nSubject: Design review: returns portal\nWhen: Tue 14 Oct, 09:00-10:30 (90 min)\n\nDesign review for the new returns portal.\n\nAgenda:\n1. Walk through the flows\n2. Open questions\n3. Decision on the scanner integration\n\n[Calendar: Overlaps your focus time block.]",
+      "answer": "propose_new_time",
+      "note": "synthetic past answer"
+    },
+    {
+      "case_ref": "CAL-0907",
+      "facts": {
+        "organizer_external": true,
+        "has_agenda": false,
+        "duration_minutes": 15,
+        "from_manager": false,
+        "overlaps_focus_time": false
+      },
+      "text": "From: Expo Partners <events@expo-partners.example>\nTo: Dana R. <dana.r@wharf-canary-optics.example>\nSubject: 15 minutes to talk sponsorship?\nWhen: Wed 15 Oct, 16:00-16:15 (15 min)\n\nWould your company like to sponsor our spring expo? Happy to explain the packages.\n\n[Calendar: No conflict with your focus time.]",
+      "answer": "decline",
+      "note": "synthetic past answer"
+    },
+    {
+      "case_ref": "CAL-0908",
+      "facts": {
+        "organizer_external": false,
+        "has_agenda": false,
+        "duration_minutes": 30,
+        "from_manager": false,
+        "overlaps_focus_time": false
+      },
+      "text": "From: Mo Rahman <mo.rahman@wharf-canary-optics.example>\nTo: Dana R. <dana.r@wharf-canary-optics.example>\nSubject: Coffee?\nWhen: Thu 16 Oct, 13:00-13:30 (30 min)\n\nFancy a coffee and a chat on Thursday?\n\n[Calendar: No conflict with your focus time.]",
+      "answer": "accept",
+      "note": "synthetic past answer"
+    },
+    {
+      "case_ref": "CAL-0909",
+      "facts": {
+        "organizer_external": true,
+        "has_agenda": false,
+        "duration_minutes": 45,
+        "from_manager": false,
+        "overlaps_focus_time": true
+      },
+      "text": "From: TalentBridge Recruiting <recruiting@talentbridge.example>\nTo: Dana R. <dana.r@wharf-canary-optics.example>\nSubject: Exploring opportunities\nWhen: Mon 20 Oct, 09:30-10:15 (45 min)\n\nI came across your profile and would love to talk about a role with one of our clients.\n\n[Calendar: Overlaps your focus time block.]",
+      "answer": "decline",
+      "note": "synthetic past answer"
+    },
+    {
+      "case_ref": "CAL-0910",
+      "facts": {
+        "organizer_external": true,
+        "has_agenda": true,
+        "duration_minutes": 60,
+        "from_manager": false,
+        "overlaps_focus_time": true
+      },
+      "text": "From: Kai Chen <kai.chen@contoso.example>\nTo: Dana R. <dana.r@wharf-canary-optics.example>\nSubject: Contoso integration workshop\nWhen: Wed 22 Oct, 09:00-10:00 (60 min)\n\nWorkshop to plan the Contoso integration.\n\nAgenda:\n1. Data flows between our systems\n2. Test plan\n3. Go-live date\n\n[Calendar: Overlaps your focus time block.]",
+      "answer": "propose_new_time",
+      "note": "synthetic past answer"
+    },
+    {
+      "case_ref": "CAL-0911",
+      "facts": {
+        "organizer_external": false,
+        "has_agenda": true,
+        "duration_minutes": 30,
+        "from_manager": true,
+        "overlaps_focus_time": false
+      },
+      "text": "From: Sam Okafor <sam.okafor@wharf-canary-optics.example>\nTo: Dana R. <dana.r@wharf-canary-optics.example>\nSubject: 1:1\nWhen: Fri 24 Oct, 11:00-11:30 (30 min)\n\nOur usual 1:1.\n\nAgenda:\n1. Your priorities for next week\n2. Feedback on the planning doc\n\n[Calendar: Sam Okafor is your manager. No conflict with your focus time.]",
+      "answer": "accept",
+      "note": "synthetic past answer"
+    },
+    {
+      "case_ref": "CAL-0912",
+      "facts": {
+        "organizer_external": true,
+        "has_agenda": false,
+        "duration_minutes": 30,
+        "from_manager": false,
+        "overlaps_focus_time": false
+      },
+      "text": "From: GrowthLoop Partnerships <partnerships@growthloop.example>\nTo: Dana R. <dana.r@wharf-canary-optics.example>\nSubject: Partnership opportunity\nWhen: Mon 27 Oct, 14:00-14:30 (30 min)\n\nWe think there's a great partnership opportunity between our companies. Can we chat?\n\n[Calendar: No conflict with your focus time.]",
+      "answer": "decline",
+      "note": "synthetic past answer"
+    }
+  ],
+  "incoming": [
+    {
+      "case_ref": "CAL-1031",
+      "facts": {
+        "organizer_external": true,
+        "has_agenda": false,
+        "duration_minutes": 30,
+        "from_manager": false,
+        "overlaps_focus_time": false
+      },
+      "text": "From: Riley Park <riley.park@salesforge.example>\nTo: Dana R. <dana.r@wharf-canary-optics.example>\nSubject: Can we connect?\nWhen: Tue 4 Nov, 14:00-14:30 (30 min)\n\nHi Dana, I'd love 30 minutes to introduce SalesForge. No agenda, just a conversation.\n\n[Calendar: No conflict with your focus time.]",
+      "demo_note": "matches: answer this one first (decline; duration and focus time don't matter)"
+    },
+    {
+      "case_ref": "CAL-1032",
+      "facts": {
+        "organizer_external": true,
+        "has_agenda": false,
+        "duration_minutes": 45,
+        "from_manager": false,
+        "overlaps_focus_time": true
+      },
+      "text": "From: Morgan Blake <morgan@datavista.example>\nTo: Dana R. <dana.r@wharf-canary-optics.example>\nSubject: DataVista intro\nWhen: Wed 5 Nov, 09:00-09:45 (45 min)\n\nWould you have time for a short introduction to DataVista?\n\n[Calendar: Overlaps your focus time block.]",
+      "demo_note": "matches"
+    },
+    {
+      "case_ref": "CAL-1033",
+      "facts": {
+        "organizer_external": false,
+        "has_agenda": true,
+        "duration_minutes": 30,
+        "from_manager": false,
+        "overlaps_focus_time": false
+      },
+      "text": "From: Priya Shah <priya.shah@wharf-canary-optics.example>\nTo: Dana R. <dana.r@wharf-canary-optics.example>\nSubject: Budget check-in\nWhen: Wed 5 Nov, 11:00-11:30 (30 min)\n\nQuick check on the Q1 budget.\n\nAgenda:\n1. Spend to date\n2. Requests for Q1\n\n[Calendar: No conflict with your focus time.]",
+      "demo_note": "internal with an agenda: not covered, asks"
+    },
+    {
+      "case_ref": "CAL-1034",
+      "facts": {
+        "organizer_external": true,
+        "has_agenda": false,
+        "duration_minutes": 60,
+        "from_manager": false,
+        "overlaps_focus_time": false
+      },
+      "text": "From: Alex Rivera <alex@cloudpeak.example>\nTo: Dana R. <dana.r@wharf-canary-optics.example>\nSubject: CloudPeak product demo\nWhen: Thu 6 Nov, 15:00-16:00 (60 min)\n\nLet me show you what CloudPeak can do for your returns process.\n\n[Calendar: No conflict with your focus time.]",
+      "demo_note": "matches"
+    },
+    {
+      "case_ref": "CAL-1035",
+      "facts": {
+        "organizer_external": false,
+        "has_agenda": false,
+        "duration_minutes": 30,
+        "from_manager": true,
+        "overlaps_focus_time": false
+      },
+      "text": "From: Sam Okafor <sam.okafor@wharf-canary-optics.example>\nTo: Dana R. <dana.r@wharf-canary-optics.example>\nSubject: Quick chat\nWhen: Thu 6 Nov, 16:30-17:00 (30 min)\n\nCan we grab half an hour on Thursday?\n\n[Calendar: Sam Okafor is your manager. No conflict with your focus time.]",
+      "demo_note": "from my manager: always asks"
+    },
+    {
+      "case_ref": "CAL-1036",
+      "facts": {
+        "organizer_external": true,
+        "has_agenda": true,
+        "duration_minutes": 45,
+        "from_manager": false,
+        "overlaps_focus_time": false
+      },
+      "text": "From: Anna Kowalski <anna.kowalski@northwind.example>\nTo: Dana R. <dana.r@wharf-canary-optics.example>\nSubject: Northwind delivery planning\nWhen: Fri 7 Nov, 10:00-10:45 (45 min)\n\nPlanning the winter deliveries.\n\nAgenda:\n1. Delivery windows\n2. Warehouse contacts\n\n[Calendar: No conflict with your focus time.]",
+      "demo_note": "external with an agenda: not covered, asks"
+    },
+    {
+      "case_ref": "CAL-1037",
+      "facts": {
+        "organizer_external": true,
+        "has_agenda": false,
+        "duration_minutes": 15,
+        "from_manager": false,
+        "overlaps_focus_time": false
+      },
+      "text": "From: Expo Partners <events@expo-partners.example>\nTo: Dana R. <dana.r@wharf-canary-optics.example>\nSubject: Last chance: expo sponsorship\nWhen: Mon 10 Nov, 16:00-16:15 (15 min)\n\nOur sponsorship packages close this week. Quick call?\n\n[Calendar: No conflict with your focus time.]",
+      "demo_note": "matches"
+    },
+    {
+      "case_ref": "CAL-1038",
+      "facts": {
+        "organizer_external": true,
+        "has_agenda": false,
+        "duration_minutes": 30,
+        "from_manager": false,
+        "overlaps_focus_time": true
+      },
+      "text": "From: Jordan Lee <jordan.lee@brightvendor.example>\nTo: Dana R. <dana.r@wharf-canary-optics.example>\nSubject: Following up\nWhen: Tue 11 Nov, 09:30-10:00 (30 min)\n\nFollowing up on my note last month. Do you have 30 minutes?\n\n[Calendar: Overlaps your focus time block.]",
+      "demo_note": "matches"
+    },
+    {
+      "case_ref": "CAL-1039",
+      "facts": {
+        "organizer_external": false,
+        "has_agenda": true,
+        "duration_minutes": 60,
+        "from_manager": false,
+        "overlaps_focus_time": true
+      },
+      "text": "From: Lee Wong <lee.wong@wharf-canary-optics.example>\nTo: Dana R. <dana.r@wharf-canary-optics.example>\nSubject: Returns portal: build review\nWhen: Tue 11 Nov, 09:00-10:00 (60 min)\n\nReview of the first build of the returns portal.\n\nAgenda:\n1. Demo of the build\n2. Bugs found so far\n3. Release date\n\n[Calendar: Overlaps your focus time block.]",
+      "demo_note": "internal with an agenda: not covered, asks"
+    },
+    {
+      "case_ref": "CAL-1040",
+      "facts": {
+        "organizer_external": true,
+        "has_agenda": false,
+        "duration_minutes": 30,
+        "from_manager": false,
+        "overlaps_focus_time": false
+      },
+      "text": "From: Sam Patel <sam.patel@leadhive.example>\nTo: Dana R. <dana.r@wharf-canary-optics.example>\nSubject: Introduction\nWhen: Wed 12 Nov, 13:00-13:30 (30 min)\n\nI'd like to introduce LeadHive and hear about your priorities.\n\n[Calendar: No conflict with your focus time.]",
+      "demo_note": "matches"
+    },
+    {
+      "case_ref": "CAL-1041",
+      "facts": {
+        "organizer_external": true,
+        "has_agenda": false,
+        "duration_minutes": 90,
+        "from_manager": false,
+        "overlaps_focus_time": false
+      },
+      "text": "From: Webinar Team <webinars@saasconf.example>\nTo: Dana R. <dana.r@wharf-canary-optics.example>\nSubject: Webinar: the future of returns\nWhen: Wed 12 Nov, 14:00-15:30 (90 min)\n\nYou're invited to our webinar on the future of returns.\n\n[Calendar: No conflict with your focus time.]",
+      "demo_note": "matches"
+    },
+    {
+      "case_ref": "CAL-1042",
+      "facts": {
+        "organizer_external": false,
+        "has_agenda": false,
+        "duration_minutes": 30,
+        "from_manager": true,
+        "overlaps_focus_time": true
+      },
+      "text": "From: Sam Okafor <sam.okafor@wharf-canary-optics.example>\nTo: Dana R. <dana.r@wharf-canary-optics.example>\nSubject: Planning prep\nWhen: Thu 13 Nov, 09:00-09:30 (30 min)\n\nLet's prep for the planning session.\n\n[Calendar: Sam Okafor is your manager. Overlaps your focus time block.]",
+      "demo_note": "from my manager: always asks"
+    },
+    {
+      "case_ref": "CAL-1043",
+      "facts": {
+        "organizer_external": true,
+        "has_agenda": false,
+        "duration_minutes": 20,
+        "from_manager": false,
+        "overlaps_focus_time": false
+      },
+      "text": "From: Taylor Brooks <taylor@shipfast.example>\nTo: Dana R. <dana.r@wharf-canary-optics.example>\nSubject: Quick question about shipping\nWhen: Thu 13 Nov, 15:00-15:20 (20 min)\n\nDo you have 20 minutes to talk about ShipFast?\n\n[Calendar: No conflict with your focus time.]",
+      "demo_note": "matches"
+    },
+    {
+      "case_ref": "CAL-1044",
+      "facts": {
+        "organizer_external": true,
+        "has_agenda": true,
+        "duration_minutes": 30,
+        "from_manager": false,
+        "overlaps_focus_time": true
+      },
+      "text": "From: Kai Chen <kai.chen@contoso.example>\nTo: Dana R. <dana.r@wharf-canary-optics.example>\nSubject: Contoso integration: test results\nWhen: Fri 14 Nov, 09:30-10:00 (30 min)\n\nResults from the integration tests.\n\nAgenda:\n1. Test results\n2. Fixes needed\n3. Go-live check\n\n[Calendar: Overlaps your focus time block.]",
+      "demo_note": "external with an agenda: not covered, asks"
+    },
+    {
+      "case_ref": "CAL-1045",
+      "facts": {
+        "organizer_external": true,
+        "has_agenda": false,
+        "duration_minutes": 45,
+        "from_manager": false,
+        "overlaps_focus_time": false
+      },
+      "text": "From: Casey Nguyen <casey@insightly-analytics.example>\nTo: Dana R. <dana.r@wharf-canary-optics.example>\nSubject: Analytics for your team\nWhen: Mon 17 Nov, 11:00-11:45 (45 min)\n\nWould love to show you how our analytics could help your team.\n\n[Calendar: No conflict with your focus time.]",
+      "demo_note": "matches"
+    },
+    {
+      "case_ref": "CAL-1046",
+      "facts": {
+        "organizer_external": false,
+        "has_agenda": false,
+        "duration_minutes": 25,
+        "from_manager": false,
+        "overlaps_focus_time": false
+      },
+      "text": "From: Mo Rahman <mo.rahman@wharf-canary-optics.example>\nTo: Dana R. <dana.r@wharf-canary-optics.example>\nSubject: Catch up\nWhen: Mon 17 Nov, 13:00-13:25 (25 min)\n\nCatch up after your trip?\n\n[Calendar: No conflict with your focus time.]",
+      "demo_note": "internal without an agenda: not covered, asks"
+    },
+    {
+      "case_ref": "CAL-1047",
+      "facts": {
+        "organizer_external": true,
+        "has_agenda": false,
+        "duration_minutes": 30,
+        "from_manager": false,
+        "overlaps_focus_time": true
+      },
+      "text": "From: TalentBridge Recruiting <recruiting@talentbridge.example>\nTo: Dana R. <dana.r@wharf-canary-optics.example>\nSubject: A role you might like\nWhen: Tue 18 Nov, 09:00-09:30 (30 min)\n\nI have a role that could be a great fit. 30 minutes?\n\n[Calendar: Overlaps your focus time block.]",
+      "demo_note": "matches"
+    },
+    {
+      "case_ref": "CAL-1048",
+      "facts": {
+        "organizer_external": true,
+        "has_agenda": false,
+        "duration_minutes": 60,
+        "from_manager": false,
+        "overlaps_focus_time": false
+      },
+      "text": "From: GrowthLoop Partnerships <partnerships@growthloop.example>\nTo: Dana R. <dana.r@wharf-canary-optics.example>\nSubject: Partnership deep dive\nWhen: Wed 19 Nov, 14:00-15:00 (60 min)\n\nWe'd love an hour to explore a partnership.\n\n[Calendar: No conflict with your focus time.]",
+      "demo_note": "matches"
+    },
+    {
+      "case_ref": "CAL-1049",
+      "facts": {
+        "organizer_external": false,
+        "has_agenda": true,
+        "duration_minutes": 45,
+        "from_manager": false,
+        "overlaps_focus_time": false
+      },
+      "text": "From: Priya Shah <priya.shah@wharf-canary-optics.example>\nTo: Dana R. <dana.r@wharf-canary-optics.example>\nSubject: Roadmap follow-up\nWhen: Thu 20 Nov, 10:00-10:45 (45 min)\n\nFollow-up on the roadmap decisions.\n\nAgenda:\n1. Decisions made\n2. Open items\n\n[Calendar: No conflict with your focus time.]",
+      "demo_note": "internal with an agenda: not covered, asks"
+    },
+    {
+      "case_ref": "CAL-1050",
+      "facts": {
+        "organizer_external": true,
+        "has_agenda": false,
+        "duration_minutes": 30,
+        "from_manager": false,
+        "overlaps_focus_time": false
+      },
+      "text": "From: Jamie Ortiz <jamie@cloudmetrics.example>\nTo: Dana R. <dana.r@wharf-canary-optics.example>\nSubject: CloudMetrics follow-up\nWhen: Fri 21 Nov, 14:00-14:30 (30 min)\n\nFollowing up on our demo invitation from October.\n\n[Calendar: No conflict with your focus time.]",
+      "demo_note": "matches"
+    }
+  ]
+}

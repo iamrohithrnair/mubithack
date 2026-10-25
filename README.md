@@ -1,182 +1,251 @@
 # Precedenz
 
-**Teach the agent once; it safely handles the next hundred decisions.**
+> **Never answer the same question twice.**
+> **It doesn't make decisions. It repeats yours.**
+> **If it can't check it, it asks.**
 
-Hosted returns workflow: Strands Agents on gpt-6-luna through the **Mubit** gateway,
-with **Banyan Sapling** verifying the evidence before automatic action.
+Every team has small decisions that land on the same person's desk every week. Each one
+takes seconds to answer, but nobody ever writes the answer down, so the same question keeps
+coming back. Rule-based automation can't help, because nobody wrote the rule. And most people
+won't let an AI decide for them.
 
-Last updated: 2026-10-24.
+**Precedenz turns one human answer into a precedent it can safely repeat.** An AI agent
+gathers the facts and asks once. A person answers. That answer becomes a plain rule with firm
+limits, is replayed against past cases, and only goes live when a person switches it on. From
+then on, every matching case is handled on its own; anything that differs, or that can't be
+checked, goes back to a person. It works for any recurring decision: a returns desk, a finance
+team, an institution, or one person and their own calendar.
 
-![Precedenz architecture](docs/architecture.png)
+**Built on Mubit, end to end.** Every model call goes through the
+[Mubit](https://mubit.ai) gateway. Each kind of decision becomes exactly one clean, repeating
+Mubit task, which is the traffic Mubit trains smaller task models on. Every automatic action is
+first checked by **Banyan Sapling**, Mubit's verification model. And whatever model Mubit
+serves next, it can only ever repeat what a person decided.
 
-For the interactive version, open [docs/architecture.html](docs/architecture.html) in a
-browser from a local clone (GitHub shows it as source) and hover any component to see what
-it connects to and which way the data moves. Both views render from `docs/architecture.json`.
+![The live precedent map: Dana at the center, four kinds of decision, their precedents, and every case on the rim](docs/images/precedent-map.jpg)
 
----
-
-## The problem
-
-Rule-based automation handles the cases someone already wrote down. Everything else
-becomes an interruption.
-
-A returns supervisor at a small electronics reseller gets pinged twenty times a week
-with variations of the same question. *A kit came back missing its lens cap, what do I
-do?* She answers each one in thirty seconds, and never gets the hour it would take to
-turn that judgment into a written policy, let alone into automation. The knowledge stays
-in their head. The interruptions keep coming.
-
-## What Precedenz does
-
-It closes that loop, once:
-
-1. An unfamiliar exception arrives **as an event**, not a chat prompt.
-2. A Strands agent investigates it with tools and reconciles the evidence.
-3. No approved policy covers it, so the agent produces **one compact decision card**:
-   evidence, recommendation, what it is unsure about, and the boundaries it thinks the
-   decision should live inside.
-4. The supervisor clicks **Approve and Teach**.
-5. The agent proposes a **tightly bounded, schema-validated policy**. It is inert.
-6. Deterministic code **replays** the candidate against 24 labeled historical cases.
-7. A **policy diff** shows exactly what changes, and flags anything that gets
-   *wider*. The supervisor can **revise** the boundary (tighten the spend cap,
-   raise the confidence floor, restrict it to one kit category), which creates a
-   new candidate that is replayed again from scratch.
-8. The supervisor **explicitly activates** the version.
-9. The next matching case resolves automatically: work order raised, disposition set,
-   writes verified, exception closed against the policy version.
-10. A risky near-match still escalates.
-11. Every step is in an append-only, hash-chained audit log.
-
-Every model call on that path takes tens of seconds, so the page reports what the run is
-doing while it runs: each phase and each tool call, with real timings, as the server
-reaches them. A forty-second wait that shows nothing reads as a hung app, and a
-supervisor who thinks the tool is broken will not trust what it says next.
-
-This is not an agent that writes SOPs. It converts recurring human judgment into
-governed, testable automation, and it can prove what that automation would have done
-before anyone trusts it.
+*The live map (`/map`). Dana, the person who decides, is at the center. The four branches are
+workstreams (returns, accounts payable, meal claims, meeting invites). On each branch, a "v1" node is a
+precedent and the amber nodes are questions waiting for a person; every dot on the rim is a real case.
+Every pulse is a real decision.*
 
 ---
 
-## Run with Mubit
+## Contents
 
-Install the dependencies with `make setup`. If you do not already have a `.env`,
-copy `.env.example` to `.env`, then set:
-
-```dotenv
-PRECEDENZ_MODEL_PROVIDER=mubit
-MUBIT_API_KEY=your-mubit-key
-PRECEDENZ_MUBIT_MODEL_ID=gpt-6-luna
-PRECEDENZ_SAPLING_MODE=enforce
-```
-
-Start the synthetic demo:
-
-```bash
-make seed
-make run       # http://127.0.0.1:8000
-```
-
-Every Strands model call in this configuration goes through
-`https://api.mubit.ai/openai/v1`. Banyan Sapling uses its separately configured
-verification endpoint. Hosted runs need network access and may incur usage charges.
-Provider keys, when required, belong in the Mubit console, not in requests from
-Precedenz. Never commit `.env`.
-
-**What teaching changes today:** Approve and Teach creates a replay-tested policy
-version. It does not fine-tune model weights or activate a Mubit adapter.
-
-## Demo walkthrough
-
-Then, in the app: check in **CASE-2001** → *Approve and teach* → activate the policy →
-check in **CASE-2002** (resolves itself) → check in **CASE-2003** (escalates).
-
-The **Dashboard** tab shows the history and usage behind it: cases by outcome, the share
-handled automatically, human decisions and policy activations, agent runs, tool calls by
-tool, and model tokens when the provider reports them. Every number is counted from the
-cases table, the policy store, and the audit log.
-
-Activating a policy asks for an approval token, because a human authorizing
-automation is the whole point. On a fresh clone that token is:
-
-```
-replace-me-local-demo-token
-```
-
-It is a placeholder, not a secret, and the activation screen prints it for you.
-Set `PRECEDENZ_APPROVAL_TOKEN` to replace it, and the on-screen notice disappears
-when you do.
-
-The app and synthetic business systems run locally. Model calls use Mubit and
-require a Mubit key.
-
-### On PostgreSQL, the deployment target
-
-```bash
-make db-up     # docker compose PostgreSQL + migrations + seed
-make test-pg   # the whole suite against BOTH backends
-make run
-```
-
-If 5432 is already taken on your machine, publish the container somewhere else and
-everything follows, including both connection strings:
-
-```bash
-PRECEDENZ_PG_PORT=55432 make db-up
-PRECEDENZ_PG_PORT=55432 make test-pg
-```
-
-Or point at any PostgreSQL and the app follows:
-
-```bash
-export PRECEDENZ_DATABASE_URL=postgresql://user:pass@host:5432/precedenz
-make migrate && make seed && make run
-```
-
-Or watch the whole thing in the terminal:
-
-```bash
-make demo      # the golden path, start to finish
-make test      # offline regression suite with test-only model fakes
-make eval      # hosted evaluation -> docs/evaluation-results.md; uses API credits
-make smoke     # configured hosted model + real tool calls + typed output
-```
-
-`make seed` is also the **Reset Demo** button in the UI.
+- [How Precedenz uses Mubit](#how-precedenz-uses-mubit)
+- [See it work: one decision, taught once](#see-it-work-one-decision-taught-once)
+- [Decide once, anywhere](#decide-once-anywhere)
+- [Architecture](#architecture)
+- [Quickstart](#quickstart)
+- [Every way in](#every-way-in)
+- [The safety architecture](#the-safety-architecture)
+- [Evidence](#evidence)
+- [Honest limits](#honest-limits)
+- [Repository layout](#repository-layout) · [Database](#database) · [Configuration](#configuration) · [Tests](#tests)
 
 ---
 
-## Is the agent real?
+## How Precedenz uses Mubit
 
-Yes. `make smoke` prints it:
+Precedenz runs two learning loops, and each one belongs to a different system:
 
+```mermaid
+flowchart LR
+  subgraph P["Precedenz: learns from ONE answer"]
+    Q[New case] --> M{Matches a precedent<br/>and every check passes?}
+    M -- yes --> F[FOLLOW: repeat the person's answer]
+    M -- "no, or can't check" --> A[ASK a person]
+    A --> R[Answer + remember]
+    R --> RP[Replay against past answers]
+    RP --> PR[Precedent, switched on by a person]
+    PR --> M
+  end
+  subgraph MU["Mubit: learns from EVERY repeat"]
+    G[Gateway: every model call] --> T[One stable task per kind of decision]
+    T --> AD[Train, test, silent test, partial rollout, live]
+  end
+  Q -. reading the case .-> G
+  F -. evidence check .-> BS[Banyan Sapling]
 ```
-tool calls made by the agent:
-  [ok  ] get_return_case({'case_id': 'CASE-2001'}) -> Meridian 4100 Mirrorless Body Kit ...
-  [ok  ] compare_expected_and_received({'case_id': 'CASE-2001'}) -> 1 missing, serial matches ...
-  [ok  ] lookup_replacement_cost({'component_id': 'CMP-STRAP-NEO'}) -> CMP-STRAP-NEO: $14.00
-  [ok  ] find_approved_policy({'case_id': 'CASE-2001'}) -> no active policies exist ...
-structured output  : InvestigationReport
+
+Precedenz learns at the level of **authority**: one human answer, replayed, activated by a
+person, instantly. Mubit learns at the level of **the model**: every repeat is a well-formed
+example of the same task, and Mubit can train and promote a smaller model for it over time.
+The two never cross. A better model makes reading the case faster and cheaper; it can never widen what is allowed.
+
+| # | How Mubit is used | Why it matters | Where |
+| --- | --- | --- | --- |
+| 1 | **The Mubit gateway is the model path.** The Strands agent and the workstream reader call `https://api.mubit.ai/openai/v1` (OpenAI Responses API, `gpt-6-luna`) with a Mubit key. The model ID never changes in code, so Mubit can swap what serves it. | In the default configuration there is no direct provider path: every LLM call is routed through Mubit and recorded there. | `app/agent/providers/__init__.py` |
+| 2 | **Precedenz produces Mubit tasks.** Each workstream has fixed instructions, tools and output schema, so it is exactly one Mubit task. A local *task key* (a hash of model, instructions and tool specs) goes on every receipt; if it ever drifts, the change is written to the audit log and flagged in the map data, before a prompt edit can strand collected examples. | Organizations get clean, single-purpose adapter traffic without anyone learning what a task fingerprint is. | `app/mubit.py`, `app/agent/build.py` |
+| 3 | **Real sessions.** Every decision's model calls carry `metadata.session_id = <workstream>:<case_ref>`, so one case's calls group into one Mubit session. | Mubit splits test cases by session; genuine sessions make its quality gates meaningful. | `app/agent/providers/__init__.py` |
+| 4 | **Repeat-heavy traffic.** Once a person decides, a precedent turns one answer into many identically shaped decisions. | This is the workload where a small task-specific model can match a frontier model. Precedenz makes that traffic on purpose. | `app/workstreams/`, `app/harness/` |
+| 5 | **A guarantee that makes automatic promotion safe.** A follow needs an active, person-approved precedent and every check passed, and its actions come only from that precedent. Whatever model Mubit promotes changes how the case is *read*, never what may be *done*. | Risk teams can leave Mubit's automatic promotion on. | `app/harness/service.py` |
+| 6 | **Banyan Sapling checks the evidence.** Before any automatic action on free-text evidence, Sapling gets the policy in plain words, the raw evidence (inspector notes included) and the claim. Anything but a confident `supported` sends the case to a person. It can stop an action, never start one. | Forms don't tell the whole story: the policy engine reads fields, while Sapling reads what the fields miss. | `app/sapling.py`, `app/orchestrator.py`, `app/workstreams/engine.py` |
+| 7 | **Every receipt names its gateway calls.** Each decision records every Mubit `x-middleware-request-id` (one per HTTP call, retries and streams included), the requested model, the task key and the session. Serving identity reads "not reported by the gateway", because Mubit documents no such field and we don't guess. | Any business decision traces straight to its calls in the Mubit console. | `app/harness/store.py`, `/map/receipt/{id}` |
+| 8 | **The Mubit stage on the map.** Each workstream's arc on the map shows the stage the Mubit console reports (Collecting examples … Live), with its source and time. It is display only; nothing is inferred. | People see both loops in one place: what was decided, and how the model behind it is maturing. | `app/mubit.py::console_stage`, `app/static/pages/map.js` |
+
+<table>
+<tr>
+<td width="50%"><img src="docs/images/mubit-receipt.jpg" alt="A live receipt: CASE-2002 followed returns precedent v1, with five Mubit request IDs on gpt-6-luna and Banyan Sapling supporting it"/><br/><sub><b>A real receipt.</b> CASE-2002 followed Dana's precedent. All five model calls went through the Mubit gateway, each with its own request ID, and Banyan Sapling confirmed the evidence. Each kind of decision is one Mubit task.</sub></td>
+<td width="50%"><img src="docs/images/sapling-stops.jpg" alt="CASE-2007: every box is clean, but the inspector wrote that the battery door is scorched; Banyan Sapling reads the note"/><br/><sub><b>Banyan Sapling reads what the form misses.</b> Every box is clean, but the inspector wrote that the battery door is scorched. The policy engine alone would approve; Sapling answers <code>insufficient_information</code>, so a person decides.</sub></td>
+</tr>
+</table>
+
+---
+
+## See it work: one decision, taught once
+
+The worked example runs on a fictional camera-rental company, **Wharf Canary Optics**. All its
+data is synthetic.
+
+1. **A question arrives as an event.** A rental kit is checked in at the returns dock missing a
+   $14 neoprene strap. No rule covers it.
+2. **The agent gathers the facts and asks once.** A Strands agent, running through the Mubit
+   gateway, uses four *read-only* tools: it reads the case, reconciles what arrived against the
+   bill of materials, prices the missing part and looks for a precedent. Facts are then
+   re-derived from the source systems and the agent's report is reconciled against them. It
+   produces one decision card with a clear recommendation.
+3. **The person teaches.** Dana approves, and her answer becomes a **precedent**: a plain rule
+   in a constrained language (allowlisted fields, fixed actions, a $25 cap).
+4. **It is proven before it goes live.** Deterministic code replays the candidate against 24
+   labeled past cases: 11 correctly automated, 13 correctly escalated, **0 wrong**. With even one
+   wrong, there is no activate button.
+5. **Only a person switches it on**, with an approval token. The model has no tool that can.
+6. **The next case is handled on its own.** CASE-2002 (missing body cap) is resolved under
+   precedent v1, its writes read back and verified. Dana never sees it.
+7. **Anything different asks.** CASE-2003 looks identical, but the serial doesn't match, so a
+   hard guardrail sends it to a person. CASE-2007's form is clean, but the note says the
+   battery door is scorched, and Banyan Sapling stops it.
+
+<table>
+<tr>
+<td width="50%"><img src="docs/images/decision-card.jpg" alt="The decision card for CASE-2001: the agent's evidence and recommendation"/><br/><sub><b>Asks once.</b> The decision card: the evidence the agent gathered, and a clear recommendation.</sub></td>
+<td width="50%"><img src="docs/images/teach-precedent.jpg" alt="The proposed precedent with its limits highlighted, replay passed, checked against past cases"/><br/><sub><b>Taught once.</b> The answer becomes a plain rule with firm limits, replayed against past cases, inert until a person activates it.</sub></td>
+</tr>
+</table>
+
+---
+
+## Decide once, anywhere
+
+Returns is the worked example, not the limit. A **workstream** is a contract plus past answers:
+typed fields with ceilings, the one answer a precedent may repeat, and always-ask rules. You
+plant one from a template, with no code:
+
+```bash
+precedenz plant expenses.meal_claim       # a finance team
+precedenz plant it.access_request         # an institution's IT desk
+precedenz plant calendar.meeting_invite   # one person and their own calendar (the model reads the invite through Mubit)
 ```
 
-One `strands.Agent`, real `@tool` functions, real tool calls, typed Pydantic structured
-output. The default model path is:
+Then the loop runs in the open:
 
-| `PRECEDENZ_MODEL_PROVIDER` | What it is | Needs |
+- **Questions ask until someone decides.** Six meal claims arrive with no precedent, so all six ask.
+  An alcohol-only claim always asks, under a hard rule.
+- **Answer one, remember it.** Dana approves the $62.40 Northwind lunch "up to $75, client
+  meeting and headcount don't matter". Precedenz drafts the precedent *exactly* from that
+  answer: "Approve meal claims up to $75.00 when a receipt is attached and it is not alcohol
+  only". It replays that against 13 past answers (0 contradictions) and activates it with her
+  token.
+- **The waiting questions it covers resolve on their own.** Three waiting claims become follows
+  instantly. The $140 claim and the alcohol-only one stay with a person.
+- **Overrule anytime.** An overrule retires the precedent at once; the next claim asks again.
+
+![Decide once on the live map: a waiting claim flies to the new precedent](docs/images/decide-once.jpg)
+
+<sub>The decide-once moment on the live map: a precedent is born from one answer, and the waiting claims it covers fly to it one by one.</sub>
+
+| Template | Audience | The question | Repeats | Always asks |
+| --- | --- | --- | --- | --- |
+| `expenses.meal_claim` | team | Should this meal claim be approved? | approve | over $150, alcohol only |
+| `it.access_request` | institution | Should this access request be granted? | grant | production database, admin role |
+| `calendar.meeting_invite` | one person | Should I accept this meeting invite? | decline | from my manager |
+| `returns.missing_accessory` | built in | What happens to this returned kit? | replace the missing part | serial mismatch, new damage, … |
+| `ap.invoice_variance` | built in | Do we pay this invoice variance? | approve the variance | duplicate, vendor on hold, … |
+
+---
+
+## Architecture
+
+```mermaid
+flowchart TB
+  subgraph Callers
+    AG["AI agent (MCP: can ask, never answer)"]
+    CLI["precedenz CLI"]
+    PIPE["Any pipeline (HTTP)"]
+    HUM["A person (map / CLI, approval token)"]
+  end
+  subgraph Precedenz
+    API["/v1 API"] --> SVC["Decision service: idempotent, receipts never change"]
+    SVC --> ENG{"Engine per workstream"}
+    ENG --> RET["Returns: agent investigates, facts re-derived, reconciled"]
+    ENG --> AP["AP invoices: rules only, no model call"]
+    ENG --> PL["Planted: caller facts and/or the reader"]
+    RET & AP & PL --> CHK["Hard rules, then precedent match"]
+    CHK --> SAP["Banyan Sapling: evidence check"]
+    SAP --> REC["Receipt + audit + live event"]
+    REC --> MAP["/map: live map over SSE"]
+  end
+  subgraph Mubit
+    GW["Mubit gateway"]
+    BS["Banyan Sapling"]
+  end
+  AG & CLI & PIPE --> API
+  HUM --> API
+  RET -. model calls .-> GW
+  PL -. model calls .-> GW
+  SAP -.-> BS
+  REC --> EX["Caller's own executor: follow means bounded actions; Precedenz never writes"]
+```
+
+The original returns app (inbox, decision card, policies, audit, dashboard) is unchanged and
+shares the same assessment code (`assess_case()` in `app/orchestrator.py`), then executes only
+after a person-approved precedent matches. A static diagram is also in
+[docs/architecture.png](docs/architecture.png), and an interactive one in
+[docs/architecture.html](docs/architecture.html).
+
+---
+
+## Quickstart
+
+```bash
+make setup                         # venv + pinned dependencies
+cp .env.example .env               # then set MUBIT_API_KEY (and keep PRECEDENZ_MODEL_PROVIDER=mubit)
+
+PRECEDENZ_DB_PATH=var/demo.db .venv/bin/python scripts/demo_setup.py   # fresh synthetic data + Dana's two precedents
+PRECEDENZ_DB_PATH=var/demo.db make run                                  # http://127.0.0.1:8000/map
+
+# in another terminal
+.venv/bin/precedenz plant expenses.meal_claim
+.venv/bin/python scripts/demo_traffic.py --workstream expenses.meal_claim --count 6
+.venv/bin/precedenz open                                                # what waits for a person
+.venv/bin/precedenz answer <decision_id> approve --remember \
+    --up-to amount_usd=75 --ignore client_meeting --ignore attendees    # asks for the approval token
+.venv/bin/precedenz decide returns.missing_accessory CASE-2002          # live through Mubit + Sapling
+.venv/bin/precedenz watch                                               # the live event tail
+```
+
+The original returns flow is in the app's inbox: check in **CASE-2001**, then *Approve and
+teach*, activate the policy, then check in **CASE-2002** (it resolves itself) and **CASE-2003**
+(it escalates). The approval token on a fresh clone is the placeholder
+`replace-me-local-demo-token`; the screens print it while it is still the default.
+
+---
+
+## Every way in
+
+| Way in | For | Example |
 | --- | --- | --- |
-| `mubit` (default) | Strands `OpenAIResponsesModel` via the Mubit gateway (default `gpt-6-luna`) | `MUBIT_API_KEY` |
+| HTTP | any pipeline, any language | `POST /v1/decide {workstream, case_ref, idempotency_key, facts?, text?}` → `follow` with bounded actions, or `ask` with reasons |
+| Python | scripts and services | `Precedenz(url, api_token).decide("expenses.meal_claim", "EXP-1042", facts=...)` |
+| CLI | people and shell pipelines | `precedenz decide`, `open`, `answer`, `overrule`, `plant`, `watch` |
+| MCP | AI agents (Claude Code, Claude Desktop, any MCP client) | `claude mcp add precedenz -- precedenz-mcp` gives four tools: `decide`, `get_receipt`, `list_open_questions`, `list_workstreams` |
 
-Regression tests inject a deterministic model fake from `tests/fake_model.py`.
-It is not shipped as a runtime provider. Tests still exercise the real Strands
-agent loop, schema validation, guardrails, replay, and human activation gate.
-
-`make smoke` uses the configured provider. In Mubit mode it makes hosted model
-calls; the default test suite uses test-only fakes. Additional provider
-adapters remain available in `app/agent/providers/` and `.env.example`.
-
-Tools run sequentially because they share a database connection. Source-system
-reconciliation, not model confidence alone, determines whether a report is usable.
+The MCP server deliberately has **no tool that answers, remembers, overrules or plants**, and
+never reads the approval token. The CLI's person-only commands refuse to run without the approval
+token set or typed by the person. Your agent can ask; only a person can answer. Full guide:
+[docs/integrations.md](docs/integrations.md).
 
 ---
 
@@ -186,267 +255,141 @@ The separation between *reasoning* and *acting* is the product.
 
 | # | Guarantee | Where it lives |
 | --- | --- | --- |
-| 1 | The model may propose. It may **never** activate. | `app/policy/store.py::activate` |
-| 2 | Deterministic code decides, not the model. Facts are re-derived from the systems and the agent's report is reconciled against them; a disagreement escalates. | `app/facts.py` |
-| 3 | Policies are **data**, not code: allowlisted fields, operators, value types, thresholds and actions. | `app/policy/schema.py` |
-| 4 | No generated Python, SQL, shell, or natural-language conditions. No `eval` anywhere. | `app/policy/engine.py` |
-| 5 | Hard invariants outrank policies. A policy can only ever *narrow* automation. | `app/policy/guardrails.py` |
-| 6 | Replay gates activation: one false automatic action blocks it outright, for a human revision exactly as for an agent proposal. | `app/policy/replay.py` |
-| 6b | A revision can tighten or loosen a boundary within the guardrails, but has no way to remove a safety condition or add an action. | `app/policy/proposal.py` |
-| 7 | Default to escalation on anything ambiguous. | throughout |
-| 8 | Every state-changing action carries an idempotency key. | `app/adapters/warehouse.py` |
-| 9 | Append-only, hash-chained audit log; `UPDATE`/`DELETE` rejected by database triggers. PostgreSQL also revokes those privileges from `PUBLIC`; a non-owner application role is not set up yet (see `docs/database.md`). | `app/audit.py`, `app/db/` |
-| 10 | The decision card's summary is plain language for a supervisor; the output schema asks for no internal reasoning. | `app/domain.py` |
-| 11 | A second, independent reader checks the evidence before any action: Banyan Sapling must return `supported`, or the case escalates. It can stop an action, never start one. | `app/sapling.py` |
+| 1 | The decision path never writes to a business system. `follow` returns bounded actions with an expiry; the caller's own executor acts. A test patches every execute, verify and adapter write to raise. | `app/harness/`, `tests/test_harness_*` |
+| 2 | A follow needs a known workstream, an active precedent of that workstream that matches, and every check passed. Any failure, outage, timeout or missing field asks, with the reason. | `app/harness/service.py` |
+| 3 | Actions come only from the precedent and the workstream's capped action set, never from model output or caller input. | `app/domains/__init__.py`, `app/policy/schema.py` |
+| 4 | The model may propose. It may **never** activate. Only a person with the approval token can plant a workstream, remember an answer, activate or overrule. | `app/policy/store.py::activate`, `app/api/` |
+| 5 | Replay gates activation: one false automatic action against past answers blocks it outright. | `app/policy/replay.py` |
+| 6 | Precedents are drafted from a snapshot of the facts the person actually answered on, and replay reads snapshots, so a later caller can't rewrite history to widen a precedent. | `app/workstreams/drafting.py`, migration `0005` |
+| 7 | Policies are data, not code: allowlisted fields, operators, thresholds and actions. No generated code, no `eval`. | `app/policy/schema.py`, `app/policy/engine.py` |
+| 8 | Hard invariants outrank precedents; a precedent can only narrow automation. | `app/policy/guardrails.py` |
+| 9 | Banyan Sapling must return `supported` before any automatic action on free-text evidence. It can stop an action, never start one, and an unreachable Sapling asks. | `app/sapling.py` |
+| 10 | Receipts never change; answers and outcomes are appended. Same idempotency key + same input returns the first decision; different input returns 409. | `app/harness/store.py` |
+| 11 | Append-only, hash-chained audit log; `UPDATE`/`DELETE` rejected by database triggers. | `app/audit.py`, `app/db/` |
 
-**The agent has no state-changing tools at all.** Every tool in `app/agent/tools.py` is
-read-only. `execute_approved_policy`, `verify_action`, and policy activation are ordinary
-Python functions in `app/orchestrator.py` and `app/policy/store.py` that the model has no
-way to call.
+**Always asks:** a serial mismatch, incomplete evidence, new damage, a safety-critical or
+serialized part, conflicting precedents, tool failure, low confidence, or a report that
+disagrees with the source systems. It also asks when an amount is over a ceiling, a required
+field is missing, an always-ask rule applies, the reader disagrees with the caller, or Banyan
+Sapling doesn't support the claim or can't be reached.
 
-### Always escalates
+### Banyan Sapling, measured on the live endpoint
 
-Serial mismatch · incomplete evidence · new damage · missing or excessive replacement
-cost · serialized, safety-critical, or essential missing component · more than one
-missing component · conflicting policies · tool failure · confidence below threshold ·
-any disagreement between the agent's report and the source systems · Banyan Sapling
-not supporting the action, or Sapling being unreachable.
-
-### Semantic verification with Banyan Sapling
-
-The policy engine reads structured fields only. That keeps it predictable, and it
-also means it can't read free text. If an inspector writes "battery door is scorched,
-I could not tick the damage box because the form was already submitted", then
-`new_damage_present` is still false and the engine would approve the case.
-
-So after a policy matches and before anything is written, the orchestrator sends
-[Banyan Sapling](https://huggingface.co/MubitLabs/banyan-sapling) three strings:
-
-- **policy**: the matched policy, rendered as plain language from its conditions
-- **evidence**: the raw source-system record, with serials shown side by side (not
-  compared) and the inspector's free-text notes verbatim. It never includes the agent's report.
-- **claim**: "This case meets every condition of the policy and may be resolved
-  automatically."
-
-Only a `supported` verdict with p >= 0.5 lets the action run. Any other result
-escalates to a person, with Sapling's label in the reason: `violation`,
-`insufficient_information`, `inconsistent_context`, a weak `supported`, or an
-unreachable endpoint (the check fails closed). The verdict and all four probabilities
-go into the hash-chained audit log.
-
-Measured against the live endpoint:
-
-| Case | Structured fields | Inspector note | Engine alone | Sapling | Outcome |
+| Case | Structured fields | Inspector note | Policy engine alone | Sapling | Outcome |
 | --- | --- | --- | --- | --- | --- |
-| CASE-2002 | clean | none | approve | `supported` 0.70 | auto-resolved |
-| CASE-2009 | clean | "strap was lost on holiday" | approve | `supported` 0.66 | auto-resolved |
-| CASE-2007 | clean | "battery door is scorched…" | **approve** | `insufficient_information` | escalated |
-| CASE-2008 | clean | "engraved serial underneath reads 4100-SN-09999" | **approve** | `inconsistent_context` | escalated |
+| CASE-2002 | clean | none | approve | `supported` 0.70 | follows |
+| CASE-2009 | clean | "strap was lost on holiday" | approve | `supported` 0.66 | follows |
+| CASE-2007 | clean | "battery door is scorched…" | **approve** | `insufficient_information` | asks |
+| CASE-2008 | clean | "engraved serial underneath reads 4100-SN-09999" | **approve** | `inconsistent_context` | asks |
 
-All 30 original fixture cases also got the right raw label (30/30), including both
-prompt-injection notes. With Sapling enforced, `make eval` still scores 24/24 with no
-missed automations.
-
-Sapling's calibrated `status` returns `unsure` on almost every case in this domain, so
-the gate uses the raw label and its probability. The calibrated status is still
-recorded in the audit log.
-
-Sapling is enforced by default. Regression tests explicitly disable or stub the
-endpoint so they do not send case data to a hosted service.
+Sapling is deliberately conservative. On short meal-claim notes that don't spell out every
+fact, it answers `insufficient_information` even for clean claims, so the meal-claim template
+trusts the expense system's typed record and checks it deterministically. Sapling guards the
+returns evidence, where notes carry the risk. A contract opts in with `"evidence": "text"`.
 
 ---
 
-## Regression results
+## Evidence
 
-The offline regression harness exercises the real orchestration with a test-only
-model fake. These results describe application behavior on synthetic fixtures,
-not Mubit model accuracy. Full report: [docs/evaluation-results.md](docs/evaluation-results.md).
-`make eval` runs the configured hosted model and replaces that report with its
-measured results; it uses API credits.
-
-| Metric | Result | Target |
-| --- | --- | --- |
-| Cases evaluated | 24 fixed synthetic cases | n/a |
-| Task-completion rate | 100.0% | high |
-| Correct auto-resolution rate | 100.0% | high |
-| Correct-escalation rate | 100.0% | 100% |
-| **False automatic actions** | **0** | **0** |
-| **Prohibited actions** | **0** | **0** |
-| **Duplicate actions** | **0** | **0** |
-
-The number that matters is **false automatic actions**: cases the system acted on by
-itself that a person should have seen. Zero is a design constraint, not an average.
+- **Live, through Mubit (2026-10-24):** CASE-2002 followed Dana's returns precedent in 11 s:
+  5 gateway calls, each with its own Mubit request ID (`mreq_01a17033…`), and Banyan Sapling
+  `supported`. All checks passed: known case, investigation, facts re-derived, report
+  reconciled, hard guardrails, precedent match, confidence, Sapling.
+- **Regression suite:** 423 tests pass offline (`make test`); 4 PostgreSQL-only tests skip
+  without a server and 3 live-model tests are opt-in. The tests use a test-only model fake and
+  still run the real Strands agent loop, schema validation, guardrails, replay, activation, the
+  API, the CLI, the MCP tool list and the map routes.
+- **Behaviour on 24 labeled cases:** 100% correct auto-resolution, 100% correct escalation,
+  **0 false automatic actions, 0 prohibited actions, 0 duplicate actions**
+  ([docs/evaluation-results.md](docs/evaluation-results.md)).
+- **Independent review:** a separate review agent attacked the merged decision path against
+  the invariants above. It found two high-severity holes: a later caller could rewrite the
+  facts replay read, and could widen a precedent being remembered. Both are fixed with fact
+  snapshots and covered by 21 new tests.
 
 ---
 
-## Beyond returns
+## Honest limits
 
-The subject is returns because a demo needs one. The governance machinery underneath
-serves a second domain as well. Counting non-blank Python lines, the domain packs and their
-adapters are about 850 lines against about 5,550 in the rest of `app/`, and each domain's
-facts, guardrails, actions and corpus live in its pack under `app/domains/`. The rest is
-not fully domain-neutral yet: the agent's tools and prompts, the web templates, and a few
-defaults in the policy code (the default policy family, the fields the revision form
-offers) still speak returns.
-
-A pack supplies six things and nothing else:
-
-1. the fact record a policy may test, and how those facts are derived,
-2. the non-overridable guardrails,
-3. the fixed action set, with its caps,
-4. an executor for those actions and a read-back verifier,
-5. a labeled historical corpus to replay against,
-6. the hard ceilings no policy may exceed.
-
-**A second domain ships in this repository.** `ap.invoice_variance` governs an
-accounts-payable exception: an invoice that does not match its purchase order. Its facts,
-guardrails, actions and systems of record have nothing in common with returns.
-
-| | Returns | Accounts payable |
-| --- | --- | --- |
-| Family | `returns.missing_accessory` | `ap.invoice_variance` |
-| The recurring question | *a kit came back missing its lens cap, what do I do?* | *the invoice is $42 over the PO, do I pay it?* |
-| Fields a policy may test | 9 | 9 |
-| Hard ceilings | $50 replacement, 1 component | $250 variance, 5% of the PO |
-| Fixed actions | hold for parts, raise a replacement work order, close | post a variance adjustment, release for payment, close |
-| Guardrails | serial mismatch, new damage, safety-critical or essential part, incomplete evidence | duplicate invoice, vendor on hold, no PO, receipt mismatch, tax mismatch, missing approver |
-| Labeled corpus | 24 return cases | 24 invoices |
-| Replay of the taught policy | 11 automated, 13 escalated, **0 wrong** | 12 automated, 12 escalated, **0 wrong** |
-
-What the second domain reuses: the constrained policy language, the deterministic engine,
-the replay gate, the activation gate and its token, idempotent execution, read-back
-verification, the hash-chained audit log, the policy diff, and both database backends.
-Making room for it reshaped that code once, in the same commit: the policy schema became
-domain-driven, and returns-specific dispatch moved out of the orchestrator into the pack,
-which deleted 56 lines there and added 17.
-
-`tests/test_domain_ap_invoices.py` is the evidence: 17 tests that touch no returns code.
-They cover fact derivation from the ledger, every
-guardrail boundary, a policy language that refuses a field from another domain and an
-adjustment cap above its own condition, a replay that scores 24 labeled invoices, an
-activation refused without a passing replay and without a token, execution that pays once
-when run twice, verification that reads the ledger back, and the audit chain intact.
-
-**What a new domain costs:** about 480 lines of Python (a fact record and its derivation, the
-guardrails, the action set, an executor and verifier, a synthetic adapter), plus its
-fixtures, its labeled corpus and its tests.
-
-**What it does not include yet, honestly:** the web app's screens and the agent's tools and
-prompts are still returns-shaped, so the AP domain is exercised through the governance path
-and its tests rather than through the agent loop and the UI. Making a domain first-class in
-the interface is UI work on top of the seam, not another rewrite of the machinery.
-
-**Where this design refuses to go:** a domain has to reduce its judgment to allowlisted
-fields. Where the decision genuinely turns on free-text nuance that cannot be derived
-deterministically, there is nothing to replay and nothing to bound, so this system will
-not automate it. That is a constraint by construction, not an omission.
+- **Teaching changes authority, not weights.** Approve and remember creates a replay-tested
+  precedent. It does not fine-tune a model or activate a Mubit adapter. Mubit's adapter loop
+  runs in Mubit, on the traffic Precedenz sends it.
+- **Adapter promotion for these tasks is not yet observed.** The workspace's gates (kept
+  examples, judged cases, sessions, silent test, partial rollout) need more traffic than a
+  hackathon generates. The map shows only what the Mubit console reports.
+- **Serving identity is "not reported by the gateway"**, because no documented response field
+  names the version that served a call.
+- **Single process.** Live events for the map are in memory, so run one worker. SQLite holds
+  one writer, so decisions are serialized; PostgreSQL is the deployment target.
+- **Local demo.** The default tokens are placeholders. Never deploy publicly with them.
 
 ---
 
 ## The synthetic world
 
-Everything is invented. The company is **Wharf Canary Optics**, a fictional camera and
-optics rental/resale business. All SKUs, serials, orders, customer references, inspection
-notes, and warehouse records are fabricated for this demo, and every "business system"
-is a labeled synthetic adapter in `app/adapters/` backed by local SQLite.
-
-**No real customer data, no PII, no private SOPs, no credentials, and no production
-integrations anywhere in this repository.** The UI says so on every page.
+Everything is invented. **Wharf Canary Optics** is a fictional camera and optics rental
+company. Every SKU, serial, order, customer reference, inspection note, invoice, meal claim,
+access request and invite is fabricated, and every "business system" is a labeled synthetic
+adapter backed by a local database. **No real customer data, no PII, no credentials, and no
+production integrations anywhere in this repository.** The UI says so on every page.
 
 ---
 
-## Core layout
+## Repository layout
 
 ```
 app/
-  agent/           the one Strands agent: tools, prompts, model providers
-    providers/     Mubit gateway and optional hosted backends
-    tools.py       READ-ONLY tools. Nothing here writes.
-  adapters/        SYNTHETIC business systems (returns, parts, warehouse, AP ledger)
-  domains/         domain packs: facts, guardrails, actions, corpus
-    returns.py     the returns domain
-    ap_invoices.py a second domain on the same machinery
-  policy/
-    schema.py      the allowlist: fields, operators, values, actions
-    diff.py        policy-version diff, classified narrower / wider
-    guardrails.py  non-overridable invariants
-    engine.py      deterministic evaluation, no dynamic execution
-    replay.py      the replay gate
-    store.py       persistence + THE ACTIVATION GATE
-  orchestrator.py  the golden path; the only code that acts
-  sapling.py       Banyan Sapling semantic verification client
-  facts.py         deterministic facts + reconciliation
-  audit.py         append-only, hash-chained
-  progress.py      in-memory progress for the waiting panel; never read by anything
-                   that decides, acts, or records
-  evaluation.py    the measurement harness
-  main.py          FastAPI: inbox / decision+replay / policies+audit / dashboard
-  dashboard.py     history and usage, counted from case records and the audit log
-  static/          app.css and waiting.js (the panel shown during a model call)
-  db/
-    postgres_backend.py  deployment target: pooling, advisory lock, NUMERIC
-    sqlite_backend.py    zero-setup demo backend
-    migrations/          versioned SQL, one file per dialect
-fixtures/          synthetic catalog + 24 historical + 9 demo return cases + AP corpus
-tests/             offline regression suite; supports both database backends
-docs/              scope, architecture, database, evaluation, provenance
-tools/diagram/     renders docs/architecture.{svg,html} from architecture.json
+  harness/         the decision service: engines, receipts, idempotency, live events, map data
+  workstreams/     planted workstreams: contracts, reader, drafting, decide once, overrule
+  api/             /v1 (decide, receipts, outcomes, workstreams, answers) and /map routes
+  agent/           the one Strands agent: read-only tools, prompts, the Mubit model provider
+  mubit.py         task keys, drift flag, console stage mirror
+  sapling.py       Banyan Sapling client
+  domains/         built-in domain packs: returns, AP invoices
+  policy/          schema (allowlist), engine, guardrails, replay gate, store + THE ACTIVATION GATE
+  orchestrator.py  the returns app's path; shares assess_case() with the harness
+  adapters/        SYNTHETIC business systems
+  static/pages/map.{js,css}  the live precedent map
+precedenz_client/  Python client, `precedenz` CLI, `precedenz-mcp` server (HTTP only, never imports app/)
+scripts/           demo_setup.py (fresh state), demo_traffic.py (paced, budgeted traffic)
+fixtures/          synthetic returns, AP and workstream templates (with past answers)
+tests/             the offline suite, both database backends
+docs/              plan, integrations, Mubit research, architecture, database, evaluation
 ```
 
 ## Database
 
-**PostgreSQL is the deployment target. SQLite is a labeled zero-setup demo
-backend**, kept so the product runs from a fresh clone with no server. One
-environment variable switches between them. **The same suite supports both
-backends**; `make test-pg` exercises PostgreSQL when the configured test server is
-reachable.
-
-Porting off SQLite surfaced three defects that were only invisible because
-SQLite has a single writer:
-
-1. **The audit hash chain could fork.** Appending is read-head-then-insert, a
-   race with concurrent writers. Fixed with a transaction-scoped advisory lock,
-   plus `UNIQUE(prev_hash)` as a backstop. Remove the lock and
-   `test_concurrent_audit_appends_keep_the_chain_intact` fails immediately with
-   a duplicate-key violation on the forked head. The test has teeth.
-2. **Event de-duplication was select-then-insert.** Two copies of one warehouse
-   event both passed the check. Now `ON CONFLICT (event_key) DO NOTHING
-   RETURNING`, so the database decides the race and the loser is a no-op.
-3. **Money was floating point.** `REAL` gating an authorized spend cap is a
-   latent rounding bug. Now `NUMERIC(12,2)`, coerced at the adapter boundary.
-
-Full write-up, including what still stands between this and production:
+PostgreSQL is the deployment target. SQLite is a labeled zero-setup demo backend, so the
+product runs from a fresh clone. One environment variable switches between them, and the same
+suite runs on both (`make test-pg`). Porting off SQLite surfaced and fixed three
+concurrency defects that only a single writer had hidden: an audit-chain fork, a
+select-then-insert de-duplication race, and floating-point money. The write-up is in
 [docs/database.md](docs/database.md).
 
 ## Configuration
 
-Copy `.env.example` to `.env` if you do not already have one, and set
-`MUBIT_API_KEY`. The app reads it on startup. Model access uses Mubit by default;
-regression tests do not need a key.
+| Variable | Purpose |
+| --- | --- |
+| `MUBIT_API_KEY` | Mubit key (starts `mbt_`); read at startup, never logged or stored |
+| `PRECEDENZ_MODEL_PROVIDER` | `mubit` (default) |
+| `PRECEDENZ_MUBIT_MODEL_ID` / `PRECEDENZ_MUBIT_BASE_URL` | `gpt-6-luna` / `https://api.mubit.ai/openai/v1` |
+| `PRECEDENZ_SAPLING_MODE` / `PRECEDENZ_SAPLING_URL` | `enforce` (default) or `off` / the Sapling endpoint |
+| `PRECEDENZ_API_TOKEN` | machine callers of `/v1` (pipelines, CLI, MCP) |
+| `PRECEDENZ_APPROVAL_TOKEN` | a person: activate, remember, overrule, plant |
+| `PRECEDENZ_MUBIT_CONSOLE_SNAPSHOT` | operator-maintained copy of the Mubit console's stages for the map |
+| `PRECEDENZ_DB_PATH` / `PRECEDENZ_DATABASE_URL` | SQLite file / PostgreSQL DSN |
 
-A real environment variable always beats the file, so a deployment cannot be overridden
-by a stray `.env` on disk. `.env` is gitignored and a test asserts it stays that way.
-**Never commit a real `.env`**. It is where an API key goes.
+A real environment variable always beats `.env`. `.env` is gitignored, and a test asserts it
+stays that way.
 
 ## Tests
 
 ```bash
-make test        # hermetic. No network, no model calls. SQLite only.
-make test-pg     # the whole suite against BOTH backends; start PostgreSQL with make db-up
-pytest -m integration    # opt-in, needs a live model provider
+make test                                   # hermetic: no network, no model calls, SQLite
+make test-pg                                # the whole suite on SQLite AND PostgreSQL (make db-up first)
+pytest -m integration                       # opt-in, live model through Mubit
 ```
-
-Coverage includes: policy-schema validation, allowlisted fields/operators/actions,
-default escalation, approval and policy-version checks, threshold boundaries,
-conflicting policies, replay gating, action idempotency, duplicate events, append-only
-audit behavior and tamper detection, malformed and incomplete evidence, prompt
-injection inside case notes, model timeout and tool failure, unknown case → decision
-card, approval → candidate without activation, failed replay blocking activation,
-explicit activation after successful replay, later matching case completing
-automatically, and a risky near-match escalating, plus, on PostgreSQL,
-concurrent audit appends, concurrent duplicate events, and concurrent
-idempotency-key collisions.
 
 ## License
 
-Apache-2.0. See [LICENSE](LICENSE). GitHub detects it, so it shows in the About sidebar.
+Apache-2.0. See [LICENSE](LICENSE).

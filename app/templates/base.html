@@ -41,7 +41,7 @@
 </head>
 <body>
 {%- set path = request.url.path %}
-{%- set section = 'policies' if path.startswith('/policies') else 'dashboard' if path.startswith('/dashboard') else 'inbox' %}
+{%- set section = 'policies' if path.startswith('/policies') else 'dashboard' if path.startswith('/dashboard') else 'map' if path.startswith('/map') else 'inbox' %}
 <header class="topbar">
   <div class="brand">
     <a href="/" class="wordmark" aria-label="Precedenz home">
@@ -54,7 +54,7 @@
     <span class="tagline">Teach the agent once; it safely handles the next hundred decisions.</span>
   </div>
   <nav class="nav" aria-label="Primary">
-    {%- for key, href, label in [('inbox', '/', 'Inbox'), ('policies', '/policies', 'Policies & Audit'), ('dashboard', '/dashboard', 'Dashboard')] %}
+    {%- for key, href, label in [('inbox', '/', 'Inbox'), ('policies', '/policies', 'Policies & Audit'), ('dashboard', '/dashboard', 'Dashboard'), ('map', '/map', 'Map')] %}
     <a href="{{ href }}" class="nav-link{% if section == key %} is-active{% endif %}"{% if section == key %} aria-current="page"{% endif %}>
       {%- if section == key %}<span class="nav-indicator" aria-hidden="true"></span>{% endif -%}
       <span class="nav-label">{{ label }}</span></a>

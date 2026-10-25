@@ -41,6 +41,9 @@ def seed(reset: bool = False) -> dict[str, int]:
     }
 
     with db.session() as conn:
+        for table in ("harness_outcomes", "harness_answers", "harness_decisions",
+                      "harness_cases", "workstreams"):
+            conn.execute(f"DELETE FROM {table}")
         conn.execute("DELETE FROM kit_components")
         conn.execute("DELETE FROM parts_catalog")
         conn.execute("DELETE FROM work_orders")

@@ -86,6 +86,15 @@ class DomainSpec:
     policy_text: Callable[[Any], str] | None = None
     evidence_text: Callable[["Connection", str], str] | None = None
 
+    # How the workstream reads to a person (docs/decide-once-plan.md, 5.2). The
+    # repeatable answer is the one answer a precedent may repeat; it is a label
+    # for people, and the action set above stays what actually bounds a follow.
+    question: str = ""
+    repeatable_answer: str | None = None
+    other_answers: tuple[str, ...] = ()
+    audience: str = "team"
+    reader: bool = False  # a model reads each case before the rules run
+
     @property
     def allowed_fields(self) -> frozenset[str]:
         return self.bool_fields | self.number_fields | frozenset(self.enum_fields)
@@ -113,6 +122,23 @@ def register(spec: DomainSpec) -> DomainSpec:
         raise ValueError(f"domain '{spec.family}' is already registered")
     _REGISTRY[spec.family] = spec
     return spec
+
+
+def upsert(spec: DomainSpec) -> DomainSpec | None:
+    """Register a planted workstream's domain, replacing any earlier version.
+
+    Built-in packs register once with `register`; a planted workstream comes from
+    a stored contract and re-registers whenever the process loads it. Returns the
+    spec it replaced, so a caller validating a contract can put it back.
+    """
+    previous = _REGISTRY.get(spec.family)
+    _REGISTRY[spec.family] = spec
+    return previous
+
+
+def unregister(family: str) -> DomainSpec | None:
+    """Forget a planted workstream's domain. Used to undo a provisional registration."""
+    return _REGISTRY.pop(family, None)
 
 
 def get(family: str) -> DomainSpec:

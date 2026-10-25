@@ -11,16 +11,29 @@ Every provider drives the *same* Strands `Agent`, the same tools, and the same
 typed structured outputs. Swapping providers changes who does the reasoning, not
 what the system is allowed to do — the guardrails, the policy schema, and the
 activation gate sit downstream of all of them.
+
+A decision that passes a `CallLog` gets the Mubit model in recording form: the
+same requests, plus Mubit's session field, with every gateway response's request
+ID kept for the decision's receipt.
 """
 
 from __future__ import annotations
 
+import logging
 import os
+import time
+from dataclasses import dataclass
 from typing import Any
 
+import httpx
+import openai
 from strands.models.model import Model
+from strands.models.openai_responses import OpenAIResponsesModel
 
 from app.config import Settings, get_settings
+from app.harness import events
+
+logger = logging.getLogger(__name__)
 
 
 class ModelProviderUnavailable(RuntimeError):
@@ -29,9 +42,164 @@ class ModelProviderUnavailable(RuntimeError):
 
 SUPPORTED_PROVIDERS = ("mubit", "bedrock", "anthropic")
 
+# Mubit stamps every gateway response with this. Support goes from a receipt
+# straight to the console with it.
+REQUEST_ID_HEADER = "x-middleware-request-id"
 
-def resolve_model(settings: Settings | None = None, **overrides: Any) -> Model:
-    """Build the configured Strands model provider."""
+
+@dataclass
+class ModelCall:
+    """One HTTP call to the model gateway, as observed at the transport."""
+
+    request_id: str | None  # x-middleware-request-id; None when the header is absent
+    requested_model: str
+    status: int
+    ms: int
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "via": "mubit",
+            "request_id": self.request_id,
+            "requested_model": self.requested_model,
+            "status": self.status,
+            "ms": self.ms,
+        }
+
+
+class CallLog(list):
+    """The gateway calls one decision made.
+
+    Bound to a model when the model is built, so correlation never depends on
+    which thread or event loop Strands happens to run the request on.
+    """
+
+    def __init__(self, family: str = "", case_ref: str = "", session_id: str = "") -> None:
+        super().__init__()
+        self.family = family
+        self.case_ref = case_ref
+        self.session_id = session_id or (f"{family}:{case_ref}" if family else case_ref)
+        # app.mubit.task_key of the first agent built for this decision; set at build.
+        self.task_key: str | None = None
+
+
+def _record(call_log: CallLog, call: ModelCall) -> None:
+    """Keep one gateway response on the decision's log and tell the map.
+
+    Never raises: an exception escaping an httpx event hook would surface as a
+    failed model call, and losing a record must never cost the decision.
+    """
+    try:
+        call_log.append(call)
+        events.publish(
+            "model.call",
+            workstream=call_log.family,
+            case_ref=call_log.case_ref,
+            request_id=call.request_id,
+            requested_model=call.requested_model,
+            status=call.status,
+            ms=call.ms,
+        )
+    except Exception:  # pragma: no cover - defensive; neither call raises today
+        logger.warning("could not record a gateway call", exc_info=True)
+
+
+def _recording_client(
+    call_log: CallLog,
+    requested_model: str,
+    *,
+    timeout: httpx.Timeout,
+    transport: httpx.AsyncBaseTransport | None = None,
+) -> httpx.AsyncClient:
+    """A fresh HTTP client for one model request, recording every response it receives.
+
+    The SDK's retries and any redirect each pass through the hooks as a request
+    of their own, so each one records its own call. `ms` runs from sending the
+    request to the response headers: for a streamed reply, the time to first byte.
+    """
+    started: dict[int, float] = {}
+
+    async def stamp(request: httpx.Request) -> None:
+        started[id(request)] = time.perf_counter()
+
+    async def record(response: httpx.Response) -> None:
+        begun = started.pop(id(response.request), None)
+        ms = 0 if begun is None else round((time.perf_counter() - begun) * 1000)
+        _record(
+            call_log,
+            ModelCall(
+                request_id=response.headers.get(REQUEST_ID_HEADER),
+                requested_model=requested_model,
+                status=response.status_code,
+                ms=ms,
+            ),
+        )
+
+    # The SDK's own default client, so connection limits and redirect handling
+    # match the unrecorded path; only the hooks and the timeout are added.
+    return openai.DefaultAsyncHttpxClient(
+        timeout=timeout,
+        transport=transport,
+        event_hooks={"request": [stamp], "response": [record]},
+    )
+
+
+class RecordingResponsesModel(OpenAIResponsesModel):
+    """The Mubit model, bound to one decision's `CallLog` when it is built.
+
+    Strands opens `openai.AsyncOpenAI(**self._resolve_client_args())` for every
+    model request and closes it on the way out, and closing the SDK client
+    closes the `http_client` handed to it. So each request gets a fresh client
+    whose hooks write to this model's log: correlation needs no context
+    variable, and holds on whichever thread or event loop Strands runs on.
+    """
+
+    def __init__(
+        self,
+        *,
+        call_log: CallLog,
+        timeout: httpx.Timeout,
+        transport: httpx.AsyncBaseTransport | None = None,
+        **kwargs: Any,
+    ) -> None:
+        super().__init__(**kwargs)
+        self.call_log = call_log
+        self._timeout = timeout
+        self._transport = transport  # None in production: httpx's own transport
+
+    def _resolve_client_args(self) -> dict[str, Any]:
+        return {
+            **super()._resolve_client_args(),
+            "http_client": _recording_client(
+                self.call_log,
+                str(self.config.get("model_id", "")),
+                timeout=self._timeout,
+                transport=self._transport,
+            ),
+        }
+
+
+def _with_session(params: dict[str, Any] | None, session_id: str) -> dict[str, Any]:
+    """`params` plus `metadata.session_id`, Mubit's session field on the Responses API.
+
+    Every other parameter, and any other metadata, is kept as given. Mubit's task
+    fingerprint covers the model, instructions, tools, tool choice and output
+    format, not metadata, so a session never splits a task.
+    """
+    merged = dict(params or {})
+    if session_id:
+        merged["metadata"] = {**(merged.get("metadata") or {}), "session_id": session_id}
+    return merged
+
+
+def resolve_model(
+    settings: Settings | None = None, *, call_log: CallLog | None = None, **overrides: Any
+) -> Model:
+    """Build the configured Strands model provider.
+
+    `call_log`, when given, receives one `ModelCall` per gateway HTTP response,
+    and the requests carry `metadata.session_id = call_log.session_id`. Only the
+    mubit provider has a gateway; the others ignore it.
+    """
     cfg = settings or get_settings()
     provider = cfg.model_provider
 
@@ -73,10 +241,6 @@ def resolve_model(settings: Settings | None = None, **overrides: Any) -> Model:
         )
 
     if provider == "mubit":
-        try:
-            from strands.models.openai_responses import OpenAIResponsesModel
-        except ImportError as exc:  # pragma: no cover - dependency is pinned
-            raise ModelProviderUnavailable(f"OpenAIResponsesModel unavailable: {exc}") from exc
         api_key = os.environ.get("MUBIT_API_KEY", "").strip()
         if not api_key:
             raise ModelProviderUnavailable("the mubit provider requires MUBIT_API_KEY")
@@ -84,12 +248,25 @@ def resolve_model(settings: Settings | None = None, **overrides: Any) -> Model:
         # stored on Settings or logged. The Responses API, not Chat Completions:
         # gpt-6 models refuse function tools alongside reasoning on Chat
         # Completions.
-        return OpenAIResponsesModel(
-            client_args=overrides.pop(
-                "client_args", {"base_url": cfg.mubit_base_url, "api_key": api_key}
-            ),
-            model_id=overrides.pop("model_id", cfg.mubit_model_id),
-            params=overrides.pop("params", {}),
+        client_args = overrides.pop(
+            "client_args", {"base_url": cfg.mubit_base_url, "api_key": api_key}
+        )
+        model_id = overrides.pop("model_id", cfg.mubit_model_id)
+        params = overrides.pop("params", {})
+        if call_log is None:
+            return OpenAIResponsesModel(
+                client_args=client_args, model_id=model_id, params=params, **overrides
+            )
+        # The same requests plus the session, with every response recorded on
+        # `call_log`. The model timeout bounds each read of a request; the SDK
+        # retries a timed-out attempt as it would any other.
+        return RecordingResponsesModel(
+            call_log=call_log,
+            timeout=httpx.Timeout(float(cfg.model_timeout_seconds), connect=5.0),
+            transport=overrides.pop("transport", None),
+            client_args=client_args,
+            model_id=model_id,
+            params=_with_session(params, call_log.session_id),
             **overrides,
         )
 

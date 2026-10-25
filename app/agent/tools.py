@@ -67,6 +67,8 @@ class AgentContext:
     calls: list[ToolCall] = field(default_factory=list)
     failures: list[str] = field(default_factory=list)
     transcript: list[dict[str, Any]] = field(default_factory=list)
+    # app.agent.providers.CallLog: the gateway calls this run made, for its receipt.
+    call_log: Any = None
 
     def record(self, name: str, arguments: dict[str, Any], ok: bool, summary: str) -> None:
         self.calls.append(ToolCall(name=name, arguments=arguments, ok=ok, summary=summary))

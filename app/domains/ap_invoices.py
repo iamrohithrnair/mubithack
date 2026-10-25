@@ -334,5 +334,10 @@ SPEC = register(
         execute=execute,
         verify=verify,
         fixed_actions=fixed_actions,
+        question="Should this invoice variance be approved and the invoice paid?",
+        repeatable_answer="approve the variance",
+        other_answers=("hold the invoice", "reject the invoice"),
+        audience="team",
+        reader=False,  # facts come from the AP ledger alone; no model call
     )
 )
